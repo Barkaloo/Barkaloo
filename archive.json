@@ -1,0 +1,19 @@
+{
+  "files": [
+    "app-00.b64",
+    "app-01.b64",
+    "app-02.b64",
+    "app-03.b64",
+    "app-04.b64",
+    "app-05.b64",
+    "app-06.b64",
+    "app-07.b64",
+    "app-08.b64",
+    "app-09.b64",
+    "app-10.b64",
+    "app-tail.b64"
+  ],
+  "htmlBytes": 2108610,
+  "htmlSha256": "c85e58e6510fdd0cb0c84d2d439537466c7854d0e8bd040aaa2727477a325253",
+  "gzipSha256": "daa2150faf56c53fc84dc6e4ea182e2c47b576a7f89d2e6abfb441068126aea9"
+}
