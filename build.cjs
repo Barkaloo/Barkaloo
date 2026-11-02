@@ -3,11 +3,19 @@ const path = require('node:path');
 const { readArchive } = require('./archive.cjs');
 
 const { html } = readArchive();
+const cloud = fs.readFileSync(path.join(__dirname, 'source/cloud-sync.js'), 'utf8');
+const cloudUI = fs.readFileSync(path.join(__dirname, 'source/cloud-ui.js'), 'utf8');
+for (const marker of ['<!-- BARKALOO_CLOUD_RUNTIME -->', '<!-- BARKALOO_CLOUD_UI -->']) {
+  if (html.toString('utf8').split(marker).length !== 2) throw new Error('Missing or duplicated cloud integration marker');
+}
 const output = path.join(__dirname, 'dist');
 fs.mkdirSync(output, { recursive: true });
 const pwa = '<link rel="manifest" href="./manifest.webmanifest">\n';
 const startup = `<script>if('serviceWorker' in navigator&&location.protocol!=='file:'){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(console.error));}</script>\n`;
-const page = html.toString('utf8').replace('</head>', pwa + '</head>').replace('</body>', startup + '</body>');
+const page = html.toString('utf8')
+  .replace('<!-- BARKALOO_CLOUD_RUNTIME -->', () => '<script>\n' + cloud + '\n</script>')
+  .replace('<!-- BARKALOO_CLOUD_UI -->', () => '<script>\n' + cloudUI + '\n</script>')
+  .replace('</head>', pwa + '</head>').replace('</body>', startup + '</body>');
 // Both static hosting from the checkout and hosting dist serve the complete app.
 // Neither entry point needs the archive manifest or chunks at runtime.
 fs.writeFileSync(path.join(__dirname, 'index.html'), page);

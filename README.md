@@ -1,12 +1,48 @@
 # Barkaloo
 
-Personal English-learning PWA restored from the supplied `Barkaloo-English-v2.4.html`.
-This version stores progress locally; the supplied HTML has no Supabase integration.
+Personal English-learning PWA based on the supplied `Barkaloo-English-v2.4.html`,
+with account-based Supabase synchronization added in v2.5.
+
+Open https://barkaloo-web.vercel.app on both devices. On Home, use the
+**Синхронизация** panel to create an account or sign in. If confirmation is enabled,
+confirm the email before signing in. Use the same account on phone and computer.
+Words, vocabulary and grammar progress, calendar, statistics, translations and
+settings are synchronized automatically after edits, on reconnect/focus and every
+15 seconds while visible. Local use remains available offline. Signing out on one
+device does not sign out the other.
+
+When both devices have unsent changes, choose the cloud or local version explicitly.
+Before loading cloud data, the app retains the first local snapshot and the most
+recent pre-sync snapshot; their download buttons are in the synchronization panel.
+No password or privileged Supabase key is stored by the app.
+
+### Supabase backend
+
+The app reuses the original project `jhvqlhwoiyyuzsekwqut` and its public browser
+key, configured in `source/cloud-ui.js`. The backend needs email/password Auth and
+`public.app_state` with `user_id` (UUID primary key), `state` (JSONB), and
+`updated_at` (timestamptz). If the table or its policies have not been set up, run
+`supabase/schema.sql` in that project's SQL Editor. The script enforces access
+only to the signed-in user's row, including a restrictive policy to constrain any
+pre-existing permissive policies. Never replace the browser key with a service key.
+
+Conditional writes compare the last `updated_at` revision to prevent an intervening
+save from another device being silently overwritten. The provided database trigger
+sets monotonic server timestamps; the client also supports the original schema.
+Configure Auth's site URL/allowed redirects to the production site for email links.
+
+This environment's network policy blocks direct access to the Supabase host.
+Backend availability, email delivery and production RLS were therefore **not**
+verified here. The automated integration tests below simulate Supabase; they do
+not establish the state of the live database. A missing table is reported in the UI
+without replacing local data or displaying a successful synchronization status.
+
+### Development
 
 Requires Node.js 18+ and Python 3 for the local HTTP server. No npm install is needed.
 
 ```sh
-node --test archive.test.cjs
+node --test archive.test.cjs cloud-sync.test.cjs
 node build.cjs
 python3 -m http.server 8000 --bind 127.0.0.1 --directory dist
 ```
@@ -15,8 +51,13 @@ Both `index.html` and `dist/index.html` contain the complete app. They do not fe
 `archive.json` or base64 chunks at runtime. Serve the repository root or `dist`
 over HTTP/HTTPS. HTTP on localhost or HTTPS enables service-worker installation
 for offline use after the first load.
-External dictionary downloads require Internet access; cloud account sync is not
-included in v2.4.
+External dictionary downloads and cloud sync require Internet access.
+
+`node test/cloud-browser.cjs` exercises sign-in, two independent desktop/mobile
+browser contexts, automatic sync, offline reload/reconnect, conflict resolution,
+backups and logout against an explicitly simulated Supabase API. It requires the
+Playwright module and Chromium at `/usr/bin/chromium`, both provided in this cloud
+environment. It does not contact or create accounts in the production project.
 
 For Vercel, `vercel.json` sets the build command to `node build.cjs` and the output
 directory to `dist`. Publish the full checkout, including the build tools, source,
@@ -24,11 +65,12 @@ directory to `dist`. Publish the full checkout, including the build tools, sourc
 of `dist`. If uploading only `index.html`, the app still opens, but installable PWA
 and offline caching require the accompanying `sw.js`, manifest and icon.
 
-`source/app.html` preserves the uploaded file byte for byte. Edit this readable
-source, then run `node pack.cjs` and `node build.cjs`. Do not edit base64 chunks by
+Edit the readable `source/app.html`, `source/cloud-sync.js` and `source/cloud-ui.js`,
+then run `node pack.cjs` and `node build.cjs`. The original uploaded HTML is preserved
+in Git at commit `6c8ee6f` before the v2.5 changes. Do not edit base64 chunks by
 hand. `archive.json` lists the active chunks and SHA-256 digests of the gzip and
-original HTML; the build rejects damaged archives.
-The build adds only the manifest link and service-worker registration around the
-original document. Old `app-11*.b64` and `bundle-*.b64` files are unused historical
+HTML source; the build rejects damaged archives. Cloud modules, the manifest link
+and service-worker registration are inlined during the build, keeping the app
+self-contained at runtime. Old `app-11*.b64` and `bundle-*.b64` are unused historical
 artifacts and are not loaded or cached. `index.html` is generated by the build;
 change `source/app.html` rather than editing the generated page.

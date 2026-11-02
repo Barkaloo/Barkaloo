@@ -6,7 +6,7 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const { readArchive } = require('./archive.cjs');
 
-test('archive restores every byte of the supplied HTML, including inline scripts', () => {
+test('archive restores every byte of the editable HTML source, including inline scripts', () => {
   const { html } = readArchive();
   assert.deepEqual(html, fs.readFileSync(path.join(__dirname, 'source/app.html')));
 });
@@ -40,6 +40,9 @@ test('build works outside the checkout and contains the original scripts and PWA
   }
   assert.match(html, /rel="manifest"/);
   assert.match(html, /serviceWorker\.register/);
+  assert.ok(html.includes(fs.readFileSync(path.join(__dirname, 'source/cloud-sync.js'), 'utf8')));
+  assert.ok(html.includes(fs.readFileSync(path.join(__dirname, 'source/cloud-ui.js'), 'utf8')));
+  assert.ok(!html.includes('<!-- BARKALOO_CLOUD_'));
   assert.equal(html, fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8'));
   assert.ok(!html.includes('archive.json'), 'browser must not need an archive manifest');
   assert.ok(!fs.existsSync(path.join(dist, 'archive.json')));

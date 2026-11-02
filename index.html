@@ -128,6 +128,8 @@ input,textarea,select{background:rgba(255,255,255,.82);color:var(--text);border:
 
 @media (max-width:820px){.sidebar{transform:translateX(-100%)} .sidebar.show{transform:translateX(0)} .main{margin-left:0;width:100%;padding:16px} .toolbar{grid-template-columns:1fr} .table-row{grid-template-columns:1fr 1fr;gap:8px} .table-row.head{display:none} .verbs-table .table-row{grid-template-columns:1fr 1fr} .practice-grid{grid-template-columns:1fr} .stats-grid,.module-grid{grid-template-columns:1fr} .calendar-wrap{width:100%} .calendar-card{padding:12px} .day{aspect-ratio:1.2/1;padding:6px 7px;font-size:12px} .home-stage{padding:14px 14px 4vh} .page-title{font-size:24px}}
 
+
+#cloudPanel [hidden]{display:none!important;}
 </style>
 <link rel="manifest" href="./manifest.webmanifest">
 </head>
@@ -168,6 +170,29 @@ input,textarea,select{background:rgba(255,255,255,.82);color:var(--text);border:
         <div class="card"><h3>Trainer accuracy</h3><div class="num" id="homeAcc">—</div><div class="row-muted" id="homeTrainerMeta">No answers yet</div></div>
         <div class="card"><h3>Study streak</h3><div class="num" id="homeStreak">0</div><div class="row-muted" id="homeStreakMeta">days in a row</div></div>
       </div>
+<div class="panel" id="cloudPanel" style="width:min(920px,100%);margin:0 auto 18px;background:rgba(255,255,255,.62)">
+  <div class="panel-head"><h2 style="font-size:17px">Синхронизация</h2></div>
+  <p class="muted">Один аккаунт на телефоне и компьютере — общий словарь, календарь и прогресс.</p>
+  <form id="cloudAuthForm" style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
+    <label style="display:grid;gap:5px;flex:1;min-width:180px">Email<input id="cloudEmail" type="email" autocomplete="email" required></label>
+    <label style="display:grid;gap:5px;flex:1;min-width:180px">Пароль<input id="cloudPassword" type="password" autocomplete="current-password" minlength="6" required></label>
+    <button class="btn primary" id="cloudSignIn" type="submit">Войти</button>
+    <button class="btn" id="cloudSignUp" type="button">Создать аккаунт</button>
+  </form>
+  <div id="cloudLoggedIn" hidden>
+    <span id="cloudUser"></span>
+    <button class="btn primary" id="cloudSyncNow" type="button">Синхронизировать</button>
+    <button class="btn" id="cloudSignOut" type="button">Выйти</button>
+  </div>
+  <p id="cloudStatus" role="status" aria-live="polite">Данные сохраняются на этом устройстве</p>
+  <div id="cloudConflict" hidden>
+    <p>Одна версия заменит другую. Локальные данные перед загрузкой сохранятся в резервную копию.</p>
+    <button class="btn" id="cloudUseLocal" type="button">Сохранить версию этого устройства</button>
+    <button class="btn" id="cloudUseCloud" type="button">Загрузить версию из облака</button>
+  </div>
+  <button class="btn" id="cloudBackup" type="button" hidden>Скачать копию до синхронизации</button>
+  <button class="btn" id="cloudOriginalBackup" type="button" hidden>Скачать исходные данные устройства</button>
+</div>
 <div class="panel" style="width:min(920px,100%);margin:0 auto;background:rgba(255,255,255,.62)">
         <div class="panel-head" style="margin-bottom:10px">
           <h2 style="font-size:17px">Backup</h2>
@@ -306,9 +331,304 @@ input,textarea,select{background:rgba(255,255,255,.82);color:var(--text);border:
 </main>
 </div>
 <script>
+(function (root) {
+  'use strict';
+  const SESSION = 'barkaloo_cloud_session_v1';
+  const OWNER = 'barkaloo_sync_owner_v2';
+  const BACKUP = 'barkaloo_before_cloud_v2';
+  const ORIGINAL = 'barkaloo_first_cloud_backup_v2';
+  const fields = ['words', 'stats', 'units', 'studyDays', 'coreProgress', 'coreBank', 'settings'];
+  const copy = value => JSON.parse(JSON.stringify(value));
+  function state(value) {
+    if (!value || !Array.isArray(value.words)) throw new Error('Некорректные данные в облаке');
+    const result = {};
+    for (const key of fields) result[key] = copy(value[key] || (key === 'words' || key === 'coreBank' ? [] : {}));
+    // Match the app's word migration so reloads don't look like user edits.
+    result.words = result.words.map(word => ({ ...word,
+      productionHistory: Array.isArray(word.productionHistory) ? word.productionHistory : [],
+      uses: word.uses == null ? (word.correct || 0) + (word.wrong || 0) : word.uses
+    }));
+    return result;
+  }
+  function canonical(value) {
+    if (Array.isArray(value)) return '[' + value.map(canonical).join(',') + ']';
+    if (value && typeof value === 'object') return '{' + Object.keys(value).sort().map(k => JSON.stringify(k) + ':' + canonical(value[k])).join(',') + '}';
+    return JSON.stringify(value);
+  }
+  const equal = (a, b) => canonical(state(a)) === canonical(state(b));
+
+  class CloudSync {
+    constructor(options) {
+      Object.assign(this, options);
+      this.fetch = options.fetch || root.fetch.bind(root);
+      this.storage = options.storage || root.localStorage;
+      this.online = options.online || (() => !root.navigator || root.navigator.onLine);
+      this.session = this.stored(SESSION);
+      if (!this.session?.user?.id || !this.session.access_token) this.session = null;
+      this.generation = 0;
+      this.base = this.session ? this.stored(this.baseKey()) : null;
+      this.conflict = null;
+      this.phase = 'local';
+      this.message = 'Войдите в один аккаунт на телефоне и компьютере';
+      this.running = null;
+      this.refreshing = null;
+      this.queued = false;
+      this.applying = false;
+    }
+    stored(key) {
+      try { return JSON.parse(this.storage.getItem(key) || 'null'); } catch { return null; }
+    }
+    baseKey() { return 'barkaloo_sync_base_v2:' + this.session.user.id; }
+    notify(phase, message) {
+      this.phase = phase;
+      this.message = message;
+      this.onChange?.({ phase, message, session: this.session, conflict: this.conflict,
+        hasBackup: !!this.stored(BACKUP), hasOriginalBackup: !!this.stored(ORIGINAL) });
+    }
+    assertCurrent(generation) {
+      if (generation !== this.generation || !this.session) {
+        const error = new Error('Аккаунт изменился'); error.cancelled = true; throw error;
+      }
+    }
+    async json(path, options = {}) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+      try {
+        const response = await this.fetch(this.url + path, {
+          ...options, signal: controller.signal,
+          headers: { apikey: this.key, 'Content-Type': 'application/json', ...options.headers }
+        });
+        const text = await response.text();
+        let data;
+        try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+        if (!response.ok) {
+          const error = new Error(data?.msg || data?.message || data?.error_description || `Ошибка облака: HTTP ${response.status}`);
+          error.status = response.status;
+          error.code = data?.code;
+          throw error;
+        }
+        return data;
+      } finally { clearTimeout(timeout); }
+    }
+    async ensureSession(force = false) {
+      if (!this.session) throw new Error('Войдите в аккаунт');
+      const expiration = this.session.expires_at ? this.session.expires_at * 1000 : (this.session.received_at || 0) + (this.session.expires_in || 3600) * 1000;
+      if (!force && Date.now() < expiration - 60000) return;
+      if (this.refreshing) return this.refreshing;
+      const generation = this.generation;
+      const previous = this.session;
+      this.refreshing = (async () => {
+        try {
+          if (!previous.refresh_token) throw Object.assign(new Error('Войдите в аккаунт снова'), { status: 401 });
+          const data = await this.json('/auth/v1/token?grant_type=refresh_token', {
+            method: 'POST', body: JSON.stringify({ refresh_token: previous.refresh_token })
+          });
+          this.assertCurrent(generation);
+          if (!data?.access_token) throw new Error('Не удалось обновить вход');
+          this.session = { ...data, user: data.user || previous.user, received_at: Date.now() };
+          this.storage.setItem(SESSION, JSON.stringify(this.session));
+        } catch (error) {
+          if (generation === this.generation && (error.status === 400 || error.status === 401)) {
+            this.generation++;
+            this.session = null;
+            this.storage.removeItem(SESSION);
+            error.message = 'Сессия истекла. Войдите снова — локальный прогресс сохранён';
+          }
+          throw error;
+        }
+      })().finally(() => { this.refreshing = null; });
+      return this.refreshing;
+    }
+    async request(path, options = {}) {
+      const generation = this.generation;
+      await this.ensureSession();
+      this.assertCurrent(generation);
+      const send = () => this.json(path, { ...options, headers: { ...options.headers, Authorization: 'Bearer ' + this.session.access_token } });
+      let result;
+      try { result = await send(); }
+      catch (error) {
+        if (error.status !== 401) throw error;
+        await this.ensureSession(true);
+        this.assertCurrent(generation);
+        result = await send();
+      }
+      this.assertCurrent(generation);
+      return result;
+    }
+    async signIn(email, password) {
+      const generation = this.generation;
+      const data = await this.json('/auth/v1/token?grant_type=password', { method: 'POST', body: JSON.stringify({ email, password }) });
+      if (generation !== this.generation) return;
+      await this.connect(data);
+    }
+    async signUp(email, password) {
+      const generation = this.generation;
+      const data = await this.json('/auth/v1/signup', { method: 'POST', body: JSON.stringify({ email, password }) });
+      if (generation !== this.generation) return;
+      if (data?.access_token) await this.connect(data);
+      else this.notify('confirm', 'Подтвердите почту по ссылке из письма, затем войдите');
+    }
+    async connect(data) {
+      if (!data?.access_token || !data.user?.id) throw new Error('Не удалось войти в аккаунт');
+      this.generation++;
+      this.session = { ...data, received_at: Date.now() };
+      this.storage.setItem(SESSION, JSON.stringify(this.session));
+      this.base = this.stored(this.baseKey());
+      this.conflict = null;
+      await this.sync();
+    }
+    async signOut() {
+      const token = this.session?.access_token;
+      this.generation++;
+      clearTimeout(this.timer);
+      this.session = null;
+      this.base = null;
+      this.conflict = null;
+      this.queued = false;
+      this.storage.removeItem(SESSION);
+      this.notify('local', 'Вы вышли. Данные остаются на этом устройстве');
+      if (token) {
+        try { await this.json('/auth/v1/logout?scope=local', { method: 'POST', headers: { Authorization: 'Bearer ' + token } }); } catch { /* Local sign-out remains effective offline. */ }
+      }
+    }
+    changed() {
+      if (this.applying || !this.session || this.conflict) return;
+      this.notify('pending', this.online() ? 'Изменения сохранены на устройстве. Синхронизация…' : 'Нет сети. Прогресс сохранён на устройстве');
+      clearTimeout(this.timer);
+      this.timer = setTimeout(() => this.sync(), 700);
+    }
+    async fetchRow() {
+      const rows = await this.request('/rest/v1/app_state?user_id=eq.' + encodeURIComponent(this.session.user.id) + '&select=state,updated_at');
+      if (!Array.isArray(rows)) throw new Error('Некорректный ответ облака');
+      if (rows[0]) state(rows[0].state);
+      return rows[0] || null;
+    }
+    remember(row) {
+      this.base = { state: state(row.state), updated_at: row.updated_at };
+      this.storage.setItem(this.baseKey(), JSON.stringify(this.base));
+      this.storage.setItem(OWNER, this.session.user.id);
+    }
+    backup() {
+      const data = { savedAt: new Date().toISOString(), state: state(this.read()) };
+      if (!this.stored(ORIGINAL)) this.storage.setItem(ORIGINAL, JSON.stringify(this.stored(BACKUP) || data));
+      this.storage.setItem(BACKUP, JSON.stringify(data));
+      return data;
+    }
+    async pull(row) {
+      const generation = this.generation;
+      this.backup();
+      this.applying = true;
+      try { await this.apply(copy(row.state)); }
+      finally { this.applying = false; }
+      this.assertCurrent(generation);
+      this.remember(row);
+      this.conflict = null;
+      this.notify('synced', 'Прогресс загружен из облака');
+    }
+    showConflict(row, reason = 'changed') {
+      this.conflict = { row, reason };
+      this.notify('conflict', reason === 'account'
+        ? 'На устройстве данные другого аккаунта. Перенести их в новый аккаунт?'
+        : 'На двух устройствах есть изменения. Выберите, какую версию сохранить');
+    }
+    async push(snapshot, row) {
+      const user = this.session.user.id;
+      const timestamp = new Date(Math.max(Date.now(), (Date.parse(row?.updated_at) || 0) + 1)).toISOString();
+      const update = row
+        ? '/rest/v1/app_state?user_id=eq.' + encodeURIComponent(user) + '&updated_at=eq.' + encodeURIComponent(row.updated_at)
+        : '/rest/v1/app_state?on_conflict=user_id';
+      const rows = await this.request(update, {
+        method: row ? 'PATCH' : 'POST',
+        headers: { Prefer: row ? 'return=representation' : 'resolution=ignore-duplicates,return=representation' },
+        body: JSON.stringify(row ? { state: snapshot, updated_at: timestamp } : { user_id: user, state: snapshot, updated_at: timestamp })
+      });
+      if (!Array.isArray(rows) || !rows.length) {
+        this.showConflict(await this.fetchRow());
+        return;
+      }
+      this.remember(rows[0]);
+      this.conflict = null;
+      // Changes made while the request was in flight must be sent in another pass.
+      if (!equal(this.read(), snapshot)) {
+        this.queued = true;
+        this.notify('pending', 'Отправляются новые изменения…');
+      } else this.notify('synced', 'Синхронизировано в ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    }
+    async reconcile(choice) {
+      const row = await this.fetchRow();
+      const local = state(this.read());
+      if (choice === 'cloud') {
+        if (!row) { this.showConflict(null); return; }
+        await this.pull(row);
+        return;
+      }
+      if (choice === 'local') { this.backup(); await this.push(local, row); return; }
+      if (this.conflict) return;
+      if (!this.base) {
+        if (row) { await this.pull(row); return; }
+        const owner = this.storage.getItem(OWNER);
+        if (owner && owner !== this.session.user.id) { this.showConflict(null, 'account'); return; }
+        await this.push(local, null);
+        return;
+      }
+      if (!row) { this.showConflict(null); return; }
+      const localChanged = !equal(local, this.base.state);
+      const remoteChanged = !equal(row.state, this.base.state);
+      if (equal(local, row.state)) {
+        this.remember(row);
+        this.notify('synced', 'Прогресс на устройствах совпадает');
+      } else if (localChanged && remoteChanged) this.showConflict(row);
+      else if (localChanged) await this.push(local, row);
+      else await this.pull(row);
+    }
+    sync(choice) {
+      if (!this.session) { this.notify('local', this.message); return Promise.resolve(); }
+      if (this.conflict && !choice) return Promise.resolve();
+      if (this.running) { this.queued = true; return this.running; }
+      if (!this.online()) { this.notify('offline', 'Нет сети. Прогресс сохранён на устройстве'); return Promise.resolve(); }
+      this.notify('syncing', 'Синхронизация…');
+      const generation = this.generation;
+      this.running = this.reconcile(choice).catch(error => {
+        if (error.cancelled || generation !== this.generation && this.session) return;
+        this.notify('error', error.code === 'PGRST205' || error.status === 404
+          ? 'Хранилище синхронизации ещё не настроено. Локальный прогресс сохранён'
+          : 'Не удалось синхронизировать: ' + error.message);
+      }).finally(() => {
+        this.running = null;
+        if (this.queued && this.session && !this.conflict) {
+          this.queued = false;
+          clearTimeout(this.timer);
+          this.timer = setTimeout(() => this.sync(), 100);
+        }
+      });
+      return this.running;
+    }
+    downloadBackup(original = false) {
+      const saved = this.stored(original ? ORIGINAL : BACKUP);
+      if (!saved) return;
+      const blob = new Blob([JSON.stringify(saved.state, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = original ? 'barkaloo-first-device-backup.json' : 'barkaloo-before-sync.json'; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+    dispose() {
+      clearTimeout(this.timer);
+      this.queued = false;
+      this.generation++;
+      this.onChange = null;
+    }
+  }
+  if (typeof module !== 'undefined' && module.exports) module.exports = { CloudSync, state, equal };
+  else root.BarkalooCloud = CloudSync;
+})(typeof globalThis === 'undefined' ? window : globalThis);
+
+</script>
+<script>
 const verbs=[["arise", "arose", "arisen", "возникать"], ["awake", "awoke", "awoken", "просыпаться"], ["be", "was/were", "been", "быть"], ["bear", "bore", "borne/born", "нести; терпеть"], ["beat", "beat", "beaten", "бить"], ["become", "became", "become", "становиться"], ["begin", "began", "begun", "начинать"], ["bend", "bent", "bent", "сгибать"], ["bet", "bet", "bet", "держать пари"], ["bind", "bound", "bound", "связывать"], ["bite", "bit", "bitten", "кусать"], ["bleed", "bled", "bled", "кровоточить"], ["blow", "blew", "blown", "дуть"], ["break", "broke", "broken", "ломать"], ["breed", "bred", "bred", "разводить"], ["bring", "brought", "brought", "приносить"], ["broadcast", "broadcast", "broadcast", "транслировать"], ["build", "built", "built", "строить"], ["burn", "burnt/burned", "burnt/burned", "гореть; жечь"], ["burst", "burst", "burst", "лопаться"], ["buy", "bought", "bought", "покупать"], ["cast", "cast", "cast", "бросать; назначать роль"], ["catch", "caught", "caught", "ловить"], ["choose", "chose", "chosen", "выбирать"], ["cling", "clung", "clung", "цепляться"], ["come", "came", "come", "приходить"], ["cost", "cost", "cost", "стоить"], ["creep", "crept", "crept", "ползти"], ["cut", "cut", "cut", "резать"], ["deal", "dealt", "dealt", "иметь дело"], ["dig", "dug", "dug", "копать"], ["do", "did", "done", "делать"], ["draw", "drew", "drawn", "рисовать; тянуть"], ["dream", "dreamt/dreamed", "dreamt/dreamed", "мечтать"], ["drink", "drank", "drunk", "пить"], ["drive", "drove", "driven", "водить"], ["eat", "ate", "eaten", "есть"], ["fall", "fell", "fallen", "падать"], ["feed", "fed", "fed", "кормить"], ["feel", "felt", "felt", "чувствовать"], ["fight", "fought", "fought", "драться"], ["find", "found", "found", "находить"], ["flee", "fled", "fled", "убегать"], ["fly", "flew", "flown", "летать"], ["forbid", "forbade", "forbidden", "запрещать"], ["forecast", "forecast", "forecast", "прогнозировать"], ["forget", "forgot", "forgotten", "забывать"], ["forgive", "forgave", "forgiven", "прощать"], ["freeze", "froze", "frozen", "замерзать"], ["get", "got", "got/gotten", "получать"], ["give", "gave", "given", "давать"], ["go", "went", "gone", "идти"], ["grind", "ground", "ground", "молоть"], ["grow", "grew", "grown", "расти"], ["hang", "hung", "hung", "висеть"], ["have", "had", "had", "иметь"], ["hear", "heard", "heard", "слышать"], ["hide", "hid", "hidden", "прятать"], ["hit", "hit", "hit", "ударять"], ["hold", "held", "held", "держать"], ["hurt", "hurt", "hurt", "причинять боль"], ["keep", "kept", "kept", "держать"], ["kneel", "knelt/kneeled", "knelt/kneeled", "становиться на колени"], ["know", "knew", "known", "знать"], ["lay", "laid", "laid", "класть"], ["lead", "led", "led", "вести"], ["lean", "leant/leaned", "leant/leaned", "наклоняться"], ["leap", "leapt/leaped", "leapt/leaped", "прыгать"], ["learn", "learnt/learned", "learnt/learned", "учить"], ["leave", "left", "left", "оставлять"], ["lend", "lent", "lent", "одалживать"], ["let", "let", "let", "позволять"], ["lie", "lay", "lain", "лежать"], ["light", "lit/lighted", "lit/lighted", "зажигать"], ["lose", "lost", "lost", "терять"], ["make", "made", "made", "делать"], ["mean", "meant", "meant", "значить"], ["meet", "met", "met", "встречать"], ["mistake", "mistook", "mistaken", "ошибочно принимать"], ["pay", "paid", "paid", "платить"], ["prove", "proved", "proven/proved", "доказывать"], ["put", "put", "put", "класть"], ["quit", "quit", "quit", "бросать"], ["read", "read", "read", "читать"], ["ride", "rode", "ridden", "ездить верхом"], ["ring", "rang", "rung", "звонить"], ["rise", "rose", "risen", "подниматься"], ["run", "ran", "run", "бежать"], ["say", "said", "said", "говорить"], ["see", "saw", "seen", "видеть"], ["seek", "sought", "sought", "искать"], ["sell", "sold", "sold", "продавать"], ["send", "sent", "sent", "отправлять"], ["set", "set", "set", "устанавливать"], ["shake", "shook", "shaken", "трясти"], ["shine", "shone", "shone", "сиять"], ["shoot", "shot", "shot", "стрелять"], ["show", "showed", "shown", "показывать"], ["shrink", "shrank", "shrunk", "сжиматься"], ["shut", "shut", "shut", "закрывать"], ["sing", "sang", "sung", "петь"], ["sink", "sank", "sunk", "тонуть"], ["sit", "sat", "sat", "сидеть"], ["sleep", "slept", "slept", "спать"], ["slide", "slid", "slid", "скользить"], ["smell", "smelt/smelled", "smelt/smelled", "пахнуть"], ["speak", "spoke", "spoken", "говорить"], ["spell", "spelt/spelled", "spelt/spelled", "писать по буквам"], ["spend", "spent", "spent", "тратить"], ["spill", "spilt/spilled", "spilt/spilled", "проливать"], ["spin", "spun", "spun", "вращать"], ["spit", "spat/spit", "spat/spit", "плевать"], ["split", "split", "split", "разделять"], ["spread", "spread", "spread", "распространять"], ["spring", "sprang", "sprung", "прыгать; возникать"], ["stand", "stood", "stood", "стоять"], ["steal", "stole", "stolen", "красть"], ["stick", "stuck", "stuck", "приклеивать"], ["sting", "stung", "stung", "жалить"], ["stink", "stank", "stunk", "вонять"], ["strike", "struck", "struck/stricken", "ударять"], ["swear", "swore", "sworn", "клясться"], ["sweep", "swept", "swept", "подметать"], ["swim", "swam", "swum", "плавать"], ["swing", "swung", "swung", "качаться"], ["take", "took", "taken", "брать"], ["teach", "taught", "taught", "учить"], ["tear", "tore", "torn", "рвать"], ["tell", "told", "told", "рассказывать"], ["think", "thought", "thought", "думать"], ["throw", "threw", "thrown", "бросать"], ["understand", "understood", "understood", "понимать"], ["wake", "woke", "woken", "просыпаться"], ["wear", "wore", "worn", "носить"], ["weep", "wept", "wept", "плакать"], ["win", "won", "won", "побеждать"], ["wind", "wound", "wound", "наматывать"], ["write", "wrote", "written", "писать"], ["abide", "abode/abided", "abode/abided", "соблюдать"], ["alight", "alit/alighted", "alit/alighted", "сходить; приземляться"], ["behold", "beheld", "beheld", "созерцать"], ["beset", "beset", "beset", "осаждать"], ["bid", "bid/bade", "bid/bidden", "предлагать цену; велеть"], ["clothe", "clad/clothed", "clad/clothed", "одевать"], ["dive", "dived/dove", "dived", "нырять"], ["dwell", "dwelt/dwelled", "dwelt/dwelled", "обитать"], ["fit", "fit/fitted", "fit/fitted", "подходить"], ["foresee", "foresaw", "foreseen", "предвидеть"], ["foretell", "foretold", "foretold", "предсказывать"], ["forsake", "forsook", "forsaken", "покидать"], ["input", "input/inputted", "input/inputted", "вводить данные"], ["interweave", "interwove", "interwoven", "переплетать"], ["mislead", "misled", "misled", "вводить в заблуждение"], ["misread", "misread", "misread", "неправильно читать"], ["offset", "offset", "offset", "компенсировать"], ["outbid", "outbid", "outbid", "перебивать цену"], ["outdo", "outdid", "outdone", "превосходить"], ["outgrow", "outgrew", "outgrown", "перерастать"], ["outrun", "outran", "outrun", "обгонять"], ["overcome", "overcame", "overcome", "преодолевать"], ["overdo", "overdid", "overdone", "переусердствовать"], ["overdraw", "overdrew", "overdrawn", "превышать баланс"], ["overeat", "overate", "overeaten", "переедать"], ["overhear", "overheard", "overheard", "подслушивать"], ["overpay", "overpaid", "overpaid", "переплачивать"], ["override", "overrode", "overridden", "отменять; переопределять"], ["overrun", "overran", "overrun", "захватывать; переполнять"], ["oversee", "oversaw", "overseen", "контролировать"], ["oversleep", "overslept", "overslept", "проспать"], ["overtake", "overtook", "overtaken", "обгонять"], ["overthrow", "overthrew", "overthrown", "свергать"], ["partake", "partook", "partaken", "принимать участие"], ["plead", "pleaded/pled", "pleaded/pled", "умолять; заявлять в суде"], ["preset", "preset", "preset", "предустанавливать"], ["rebuild", "rebuilt", "rebuilt", "перестраивать"], ["redo", "redid", "redone", "переделывать"], ["remake", "remade", "remade", "переделывать"], ["repay", "repaid", "repaid", "возвращать долг"], ["rerun", "reran", "rerun", "запускать снова"], ["resell", "resold", "resold", "перепродавать"], ["reset", "reset", "reset", "сбрасывать"], ["retake", "retook", "retaken", "пересдавать; брать снова"], ["rewrite", "rewrote", "rewritten", "переписывать"], ["rid", "rid", "rid", "избавлять"], ["saw", "sawed", "sawn/sawed", "пилить"], ["sew", "sewed", "sewn/sewed", "шить"], ["shave", "shaved", "shaven/shaved", "бриться"], ["shear", "sheared", "shorn/sheared", "стричь"], ["shed", "shed", "shed", "проливать; сбрасывать"], ["slay", "slew", "slain", "убивать"], ["sling", "slung", "slung", "швырять"], ["slit", "slit", "slit", "разрезать"], ["sow", "sowed", "sown/sowed", "сеять"], ["speed", "sped/speeded", "sped/speeded", "ускорять"], ["stride", "strode", "stridden", "шагать"], ["strive", "strove/strived", "striven/strived", "стремиться"], ["tread", "trod", "trodden/trod", "ступать"], ["undergo", "underwent", "undergone", "подвергаться"], ["undertake", "undertook", "undertaken", "предпринимать"], ["undo", "undid", "undone", "отменять; развязывать"], ["upset", "upset", "upset", "расстраивать"], ["withhold", "withheld", "withheld", "удерживать"], ["withstand", "withstood", "withstood", "противостоять"], ["wring", "wrung", "wrung", "выжимать"]];
 const murphyTitles=["am / is / are", "am / is / are — questions", "Present continuous", "Present continuous questions", "Present simple", "Present simple negatives", "Present simple questions", "Present continuous vs present simple", "have / have got", "was / were", "Past simple", "Past simple negatives & questions", "Past continuous", "Past continuous vs past simple", "Present perfect 1", "Present perfect 2", "Present perfect 3", "Present perfect 4", "for / since / ago", "Present perfect vs past simple", "Passive 1", "Passive 2", "be / have / do", "Regular & irregular verbs", "Future arrangements", "going to", "will / shall 1", "will / shall 2", "might", "can / could", "must / mustn’t / needn’t", "should", "have to", "would like", "Imperatives & let’s", "used to", "there is / there are", "there was / has been / will be", "it", "Auxiliary verbs", "Question echoes", "too / either / so / neither", "Negatives", "Questions 1", "Questions 2", "Questions 3", "What / Which / How", "How long does it take?", "Indirect questions", "Reported speech", "Verb + -ing", "to-infinitive & -ing", "Verb + object + to", "Purpose with to", "go expressions", "get", "do / make", "have", "Object pronouns", "Possessive adjectives", "Possessive pronouns", "Pronoun forms", "Reflexive pronouns", "Possessive ’s", "a / an", "Singular & plural", "Countable / uncountable 1", "Countable / uncountable 2", "a / an vs the", "the", "go to work / home / cinema", "General nouns without the", "Place names with the", "this / that / these / those", "one / ones", "some / any", "no / none / any", "nobody / nothing", "somebody / anything / nowhere", "every / all", "all / most / some / any", "both / either / neither", "a lot / much / many", "a little / a few", "Adjectives", "Adverbs", "Comparatives 1", "Comparatives 2", "not as ... as", "Superlatives", "enough", "too", "Word order 1", "Word order 2", "still / yet / already", "Object order", "and / but / or / so / because", "when clauses", "First conditional", "Second conditional", "Relative clauses 1", "Relative clauses 2", "Time prepositions", "from / to / until / since / for", "before / after / during / while", "Place prepositions 1", "Place prepositions 2", "Place prepositions 3", "Position prepositions", "Movement prepositions", "on / at / by / with / about", "Adjective + preposition", "Verb + preposition", "Phrasal verbs 1", "Phrasal verbs 2"];
 const murphyUnits=murphyTitles.map((title,i)=>({id:i+1,title}));
+let cloudSyncClient = null;
 const K={words:'english_words_v3',stats:'english_stats_v2',units:'english_units_v2',days:'english_study_days_v1',core:'english_core_progress_v2',coreData:'english_core_1500_v1',settings:'english_settings_v1'};
 function loadWords(){const c=localStorage.getItem(K.words);return c?JSON.parse(c):[]}
 function loadStats(){const c=localStorage.getItem(K.stats);if(c)return JSON.parse(c);const l=localStorage.getItem('eh_stats');if(l){const o=JSON.parse(l);return {verbCorrect:o.correct||0,verbWrong:o.wrong||0,vocabCorrect:0,vocabWrong:0}}return {verbCorrect:0,verbWrong:0,vocabCorrect:0,vocabWrong:0}}
@@ -542,7 +862,8 @@ function renderCoreStats(){
 }
 async function loadCoreBank(){
   try{
-    const cached=JSON.parse(localStorage.getItem(K.coreData)||'[]');
+    let cached=JSON.parse(localStorage.getItem(K.coreData)||'[]');
+    if((!Array.isArray(cached)||cached.length<1000)&&Array.isArray(coreBank)&&coreBank.length>=1000){cached=coreBank;localStorage.setItem(K.coreData,JSON.stringify(coreBank));}
     if(Array.isArray(cached)&&cached.length>=1000){
       coreBank=cached.slice(0,1500);applyTranslationOverrides();
       coreLoadStatus.textContent=`${coreBank.length} words loaded`;
@@ -656,7 +977,7 @@ function calibrationKeyHandler(e){
 }
 
 const pageMeta={home:['English',''],dictionary:['Dictionary',''],grammar:['Grammar',''],trainer:['Trainer','']};
-function saveAll(){localStorage.setItem(K.words,JSON.stringify(words));localStorage.setItem(K.stats,JSON.stringify(stats));localStorage.setItem(K.units,JSON.stringify(units));localStorage.setItem(K.days,JSON.stringify(studyDays));localStorage.setItem(K.core,JSON.stringify(coreProgress));localStorage.setItem(K.settings,JSON.stringify(settings))}
+function saveAll(){words.forEach(migrateWord);localStorage.setItem(K.words,JSON.stringify(words));localStorage.setItem(K.stats,JSON.stringify(stats));localStorage.setItem(K.units,JSON.stringify(units));localStorage.setItem(K.days,JSON.stringify(studyDays));localStorage.setItem(K.core,JSON.stringify(coreProgress));localStorage.setItem(K.settings,JSON.stringify(settings));if(cloudSyncClient)cloudSyncClient.changed()}
 function esc(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))} function norm(s=''){return String(s).trim().toLowerCase()} function acc(c,w){const t=c+w;return t?Math.round(c/t*100)+'%':'—'}
 function totals(){return {correct:(stats.verbCorrect||0)+(stats.vocabCorrect||0),wrong:(stats.verbWrong||0)+(stats.vocabWrong||0)}}
 function updateHome(){
@@ -781,7 +1102,7 @@ function importLessonData(){importStatus.textContent='';importStatus.className='
 function buildBackup(){
   return {
     app:"Barkaloo English",
-    version:"2.4",
+    version:"2.5",
     exportedAt:new Date().toISOString(),
     words:JSON.parse(JSON.stringify(words)),
     stats:JSON.parse(JSON.stringify(stats)),
@@ -819,7 +1140,7 @@ function restoreBackupObject(data){
   units=(data.units && typeof data.units==="object")?data.units:{};
   studyDays=(data.studyDays && typeof data.studyDays==="object")?data.studyDays:((data.studiedDays && typeof data.studiedDays==="object")?data.studiedDays:{});
   coreProgress=(data.coreProgress&&typeof data.coreProgress==="object")?data.coreProgress:{};
-  if(Array.isArray(data.coreBank)&&data.coreBank.length)coreBank=data.coreBank;
+  if(Array.isArray(data.coreBank)){coreBank=data.coreBank;localStorage.setItem(K.coreData,JSON.stringify(coreBank));}
   settings=(data.settings&&typeof data.settings==="object")?data.settings:settings;
 
   applyPromotions();
@@ -879,6 +1200,67 @@ calibrationSkip.onclick=()=>{if(calibrationIndex<coreBank.length-1)calibrationIn
 document.querySelectorAll('[data-cal-level]').forEach(b=>b.onclick=()=>setCalibrationLevel(b.dataset.calLevel));
 document.addEventListener('keydown',calibrationKeyHandler);pastInput.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();if(verbAnswered)newVerb();else checkVerb()}};partInput.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();if(verbAnswered)newVerb();else checkVerb()}};vocabAnswer.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();if(vocabAnswered)newVocab();else checkVocab()}};prevMonth.onclick=()=>{calDate=new Date(calDate.getFullYear(),calDate.getMonth()-1,1);renderCalendar()};nextMonth.onclick=()=>{calDate=new Date(calDate.getFullYear(),calDate.getMonth()+1,1);renderCalendar()};todayMonth.onclick=()=>{const n=new Date();calDate=new Date(n.getFullYear(),n.getMonth(),1);renderCalendar()};importToggle.onclick=()=>importBox.classList.toggle('show');importLesson.onclick=importLessonData;
 applyEmbeddedBackupOnce();words.forEach(migrateWord);applyPromotions();saveAll();syncVoiceControls();renderDictionary();renderUnits();renderVerbs();renderCalendar();updateHome();updateVerbStats();updateVocabStats();newVerb();newVocab();setMenu(innerWidth>820);loadCoreBank();
+</script>
+<script>
+// Public browser key. Access to rows must be enforced by user JWTs and RLS.
+cloudSyncClient = new BarkalooCloud({
+  url: 'https://jhvqlhwoiyyuzsekwqut.supabase.co',
+  key: 'sb_publishable_gDyhq1WBrANw3kNdMSR7nQ_492sYBxF',
+  read: buildBackup,
+  apply: restoreBackupObject,
+  onChange(view) {
+    document.getElementById('cloudAuthForm').hidden = !!view.session;
+    document.getElementById('cloudLoggedIn').hidden = !view.session;
+    document.getElementById('cloudUser').textContent = view.session?.user?.email || '';
+    const status = document.getElementById('cloudStatus');
+    status.textContent = view.message;
+    status.style.color = view.phase === 'error' || view.phase === 'conflict' ? 'var(--bad)' : '';
+    document.getElementById('cloudConflict').hidden = !view.conflict;
+    document.getElementById('cloudUseCloud').disabled = !view.conflict?.row;
+    document.getElementById('cloudUseLocal').textContent = view.conflict?.reason === 'account'
+      ? 'Перенести данные в этот аккаунт' : 'Сохранить версию этого устройства';
+    document.getElementById('cloudBackup').hidden = !view.hasBackup;
+    document.getElementById('cloudOriginalBackup').hidden = !view.hasOriginalBackup;
+    document.getElementById('cloudSyncNow').disabled = view.phase === 'syncing';
+  }
+});
+async function cloudAuthenticate(createAccount) {
+  const form = document.getElementById('cloudAuthForm');
+  if (!form.reportValidity()) return;
+  const email = document.getElementById('cloudEmail').value.trim();
+  const password = document.getElementById('cloudPassword');
+  const signIn = document.getElementById('cloudSignIn');
+  const signUp = document.getElementById('cloudSignUp');
+  signIn.disabled = signUp.disabled = true;
+  cloudSyncClient.notify('auth', createAccount ? 'Создание аккаунта…' : 'Вход…');
+  try {
+    if (createAccount) await cloudSyncClient.signUp(email, password.value);
+    else await cloudSyncClient.signIn(email, password.value);
+  } catch (error) {
+    cloudSyncClient.notify('error', 'Не удалось войти: ' + error.message);
+  } finally {
+    password.value = '';
+    signIn.disabled = signUp.disabled = false;
+  }
+}
+document.getElementById('cloudAuthForm').onsubmit = event => { event.preventDefault(); cloudAuthenticate(false); };
+document.getElementById('cloudSignUp').onclick = () => cloudAuthenticate(true);
+document.getElementById('cloudSignOut').onclick = () => cloudSyncClient.signOut();
+document.getElementById('cloudSyncNow').onclick = () => cloudSyncClient.sync();
+document.getElementById('cloudUseCloud').onclick = () => cloudSyncClient.sync('cloud');
+document.getElementById('cloudUseLocal').onclick = () => cloudSyncClient.sync('local');
+document.getElementById('cloudBackup').onclick = () => cloudSyncClient.downloadBackup();
+document.getElementById('cloudOriginalBackup').onclick = () => cloudSyncClient.downloadBackup(true);
+cloudSyncClient.notify('local', 'Войдите в один аккаунт на телефоне и компьютере');
+if (cloudSyncClient.session) cloudSyncClient.sync();
+window.addEventListener('online', () => cloudSyncClient.sync());
+window.addEventListener('offline', () => {
+  if (cloudSyncClient.session) cloudSyncClient.notify('offline', 'Нет сети. Прогресс сохранён на устройстве');
+});
+window.addEventListener('focus', () => { if (!document.hidden) cloudSyncClient.sync(); });
+document.addEventListener('visibilitychange', () => cloudSyncClient.sync());
+setInterval(() => { if (!document.hidden) cloudSyncClient.sync(); }, 15000);
+
 </script>
 <script>if('serviceWorker' in navigator&&location.protocol!=='file:'){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(console.error));}</script>
 </body></html>
