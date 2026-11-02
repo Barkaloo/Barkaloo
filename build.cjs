@@ -1,0 +1,12 @@
+const fs=require('fs');
+const zlib=require('zlib');
+const path=require('path');
+const files=[...Array.from({length:11},(_,i)=>`app-${String(i).padStart(2,'0')}.b64`),'app-tail.b64'];
+const b64=files.map(f=>fs.readFileSync(f,'utf8').replace(/\s+/g,'')).join('');
+if(!/^[A-Za-z0-9+/]*={0,2}$/.test(b64)) throw new Error('Invalid base64 archive');
+const gz=Buffer.from(b64,'base64');
+const html=zlib.gunzipSync(gz).toString('utf8');
+if(!html.toLowerCase().includes('<!doctype html')) throw new Error('Archive did not unpack to HTML');
+fs.mkdirSync('dist',{recursive:true});
+fs.writeFileSync(path.join('dist','index.html'),html);
+console.log(`Built Barkaloo: ${Buffer.byteLength(html)} bytes`);
