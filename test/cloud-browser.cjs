@@ -82,8 +82,70 @@ async function main() {
       await page.locator('#cloudSyncNow').click();
       await phase(page, 'synced');
     }
-    await login(a); await add(a, 'sync-computer'); await phase(a, 'synced');
+    // Upgrade an existing user's data without rewriting translations or progress.
+    const legacy = await browser.newContext();
+    const upgraded = await legacy.newPage();
+    await upgraded.goto(origin);
+    const original = await upgraded.evaluate(() => {
+      const item=coreBank.find(x=>x.word==='bank');
+      item.translation='мой берег; набережная';
+      words=[{id:123,word:'bank',translation:'мой банк; касса',kind:'passive',correct:3,wrong:1,uses:4,productionHistory:[true,true,true,false]}];
+      coreProgress.bank={recognitionCorrect:2,recognitionWrong:1};
+      settings={accent:'uk',autoSpeak:false,theme:'dark'};
+      units={'1':true};studyDays={'2026-11-01':true};
+      localStorage.setItem(K.coreData,JSON.stringify(coreBank));saveAll();
+      return JSON.stringify({words,coreProgress,settings,units,studyDays,coreBank});
+    });
+    await upgraded.reload();
+    assert.equal(await upgraded.evaluate(() => JSON.stringify({words,coreProgress,settings,units,studyDays,coreBank})), original);
+    assert.equal(await upgraded.locator('html').getAttribute('data-theme'), 'dark');
+    await upgraded.locator('#themeSelect').selectOption('light');
+    assert.equal(await upgraded.locator('html').getAttribute('data-theme'), 'light');
+    await upgraded.locator('#themeSelect').selectOption('system');
+    await upgraded.emulateMedia({colorScheme:'dark'});
+    await upgraded.waitForFunction(()=>document.documentElement.dataset.theme==='dark');
+    await upgraded.emulateMedia({colorScheme:'light'});
+    await upgraded.waitForFunction(()=>document.documentElement.dataset.theme==='light');
+    await upgraded.locator('#themeSelect').selectOption('dark');
+    await upgraded.emulateMedia({colorScheme:'light'});
+    assert.equal(await upgraded.locator('html').getAttribute('data-theme'), 'dark');
+    assert.deepEqual(await upgraded.evaluate(() => {
+      const item=words[0], text=translationText(item);
+      return ['касса','набережная','берег','банк','мой банк'].map(answer=>answerMatches(answer,text));
+    }),[true,true,true,true,true]);
+    assert.deepEqual(await upgraded.evaluate(() => [
+      answerMatches(' ЛЕГКИЙ! ',translationText({word:'light'})),
+      answerMatches('нет',translationText({word:'bank'})),
+      answerMatches('',translationText({word:'bank'})),
+      answerMatches('рвать','(по)рвать'),answerMatches('порвать','(по)рвать'),
+      answerMatches('двигатель','мотор (двигатель)'),answerMatches('мотор','мотор (двигатель)'),
+      answerMatches('finance','bank')
+    ]),[true,false,false,true,true,false,true,false]);
+    // Exercise the actual trainer handler in each vocabulary level.
+    for(const kind of ['general','passive','active']){
+      await upgraded.evaluate(kind=>{
+        trainerVocabKind=kind;currentVocab=kind==='general'?coreBank.find(x=>x.word==='bank'):words[0];
+        vocabDirection.value='toTranslation';vocabAnswered=false;vocabAnswer.value='набережная';checkVocab();
+      },kind);
+      assert.match(await upgraded.locator('#vocabFeedback').textContent(),/✓ Correct/);
+    }
+    assert.equal(await upgraded.evaluate(()=>words[0].uses),4);
+    await upgraded.evaluate(()=>{
+      trainerVocabKind='passive';currentVocab=words[0];vocabDirection.value='toWord';
+      vocabAnswered=false;vocabAnswer.value='bank';checkVocab();
+    });
+    assert.equal(await upgraded.evaluate(()=>words[0].uses),5);
+    assert.equal(await upgraded.evaluate(()=>words[0].translation),'мой банк; касса');
+    await legacy.close();
+    console.log('PASS: legacy translations/progress survive reload; themes and trainer synonyms work');
+
+    await login(a);
+    await a.locator('#themeSelect').selectOption('dark');
+    await phase(a, 'synced');
+    await add(a, 'sync-computer'); await phase(a, 'synced');
     await login(b); await expectWord(b, 'sync-computer');
+    assert.equal(await b.locator('html').getAttribute('data-theme'),'dark');
+    assert.equal(await b.locator('#themeSelect').inputValue(),'dark');
     await add(b, 'sync-phone'); await phase(b, 'synced'); await sync(a); await expectWord(a, 'sync-phone');
     console.log('PASS: desktop and mobile exchange real UI changes through the simulated API');
 
