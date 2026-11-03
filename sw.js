@@ -1,4 +1,4 @@
-const CACHE='barkaloo-v2.10-brand-navigation-1';
+const CACHE='barkaloo-v2.11-gif-brand-1';
 self.addEventListener('install',e=>e.waitUntil((async()=>{
   const cache=await caches.open(CACHE);
   await cache.addAll(['./','./index.html','./manifest.webmanifest','./icon.svg']);

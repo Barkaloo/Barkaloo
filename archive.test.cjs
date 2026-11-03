@@ -39,6 +39,7 @@ test('build works outside the checkout and contains the original scripts and PWA
     assert.ok(html.includes(match[0]), 'original application script was changed');
   }
   assert.ok(html.includes('data:image/png;base64,'+fs.readFileSync(path.join(__dirname,'source/logo-character.png')).toString('base64')));
+  assert.ok(html.includes('src="https://i.pinimg.com/originals/25/5d/16/255d16eb3d149c7e237791b2336156d3.gif"'));
   assert.ok(!html.includes('__BARKALOO_CHARACTER_LOGO__'));
   assert.match(html, /rel="manifest"/);
   assert.match(html, /serviceWorker\.register/);

@@ -229,8 +229,10 @@ Real exercise answers still count normally. Existing historical totals are retai
 previously mixed data is not guessed or subtracted without source information.
 
 The Home vocabulary card is labeled **Bank**; dictionary bank search is **Search**.
-`source/logo-character.png` is a transparent character cutout from the supplied
-reference, inlined by the build for offline/static hosting. The whole sidebar brand
+The sidebar logo loads the supplied animated GIF from its Pinterest CDN URL.
+`source/logo-character.png` is the embedded transparent fallback used if the remote
+GIF is unavailable or offline. The image source is kept as a GIF to preserve
+animation; the original reference is not converted to a static picture. The whole sidebar brand
 (image and Barkaloo text) is a home link, also supporting normal modified link clicks.
 
 Sections use same-document hash routes (`#/home`, `#/dictionary`, `#/grammar`,
@@ -243,3 +245,8 @@ history at its first entry; going back beyond the app's history works normally.
 unchanged trainer counts, live exercise counting, word-stat persistence, both brand
 click targets, native Chromium back/forward mouse events, same-document navigation,
 route reload and mobile layout. The archive test verifies the logo is embedded.
+
+The logo GIF destination is `i.pinimg.com`. This environment currently blocks its
+HTTP CONNECT request (403), so real CDN delivery cannot be validated here. A
+browser test intercepts the exact URL with a two-frame GIF to verify animated-image
+loading and tests the embedded PNG fallback separately on a network error.
