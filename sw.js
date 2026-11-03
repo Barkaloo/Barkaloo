@@ -1,4 +1,4 @@
-const CACHE='barkaloo-v2.8-progression-1';
+const CACHE='barkaloo-v2.9-trainer-controls-1';
 self.addEventListener('install',e=>e.waitUntil((async()=>{
   const cache=await caches.open(CACHE);
   await cache.addAll(['./','./index.html','./manifest.webmanifest','./icon.svg']);

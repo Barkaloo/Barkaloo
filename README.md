@@ -132,7 +132,8 @@ completes all 100 daily questions, verifies rankings and counters, reload/resume
 All new manual, bulk and imported words enter the general bank. Re-adding a word
 updates its translation without moving its level or clearing its history. Custom
 bank entries survive reload and Supabase sync; the bank is not truncated to 1500.
-The card browser is read-only for levels: arrows no longer bypass answer rules.
+Automatic level changes follow the answer rules below. Trainer level controls
+allow explicit manual overrides while preserving translations and counters.
 
 `source/progression.js` is the common production policy for every answer source:
 
@@ -182,3 +183,37 @@ The existing backup and Supabase payload carry all histories and import IDs.
 Additional validation: `node --test progression.test.cjs` and
 `node test/progression-browser.cjs` exercise exact boundaries, mixed sources,
 no premature promotion, three-error demotion, import deduplication and reload.
+
+### Trainer controls
+
+The Dictionary has a separate **Незнакомые** tab: only bank entries whose level
+is general, excluding passive/active vocabulary. The original General Bank tab
+still shows every level and supports its filters and adding words.
+
+Enter checks the current answer, then advances to the next question on the next
+press. The answered input remains focused and read-only instead of disabled.
+Learning cards also advance with Enter. Dropdowns, audio buttons, timer buttons
+and manual-level buttons retain their normal keyboard actions.
+
+The current word can be moved manually between general, passive and active in
+both structured lessons (including study cards) and free vocabulary practice.
+No answer is invented or removed: translations, counters, raw production history
+and recognition totals remain intact. A manual change starts a new automatic
+production evaluation window. Moving to general stores a recognition baseline,
+so five *additional* correct EN → RU answers are needed to auto-promote again.
+The word remains in the current frozen lesson queue; subsequent actual attempts
+are still counted once. Histories, baselines and levels use the existing sync data.
+
+The trainer timer counts active time, with Pause/Continue and Reset. Starting a
+new lesson resets it; leaving Trainer, hiding the tab or completing a lesson
+pauses it. Accumulated time is saved in `settings.trainerTimer`; time spent away
+or with the browser closed is not added on reload. The display updates locally
+without creating per-second Supabase writes.
+
+Feedback after vocabulary/lesson checks has an audio button for the English
+headword (also when the checked answer is Russian). Verb feedback pronounces the
+three English forms. Audio uses the existing browser speech and accent settings.
+
+Validation: `node test/trainer-controls-browser.cjs` checks filtering, data-preserving
+manual moves, real Enter key presses in study/free/structured modes, speech targets,
+exactly-once counters, timer pause/navigation/reset/reload and mobile layout.
