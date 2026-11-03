@@ -177,7 +177,8 @@ duplicate protection. A supplied `kind` cannot grant a level. Legacy aggregate
 `recognitionCorrect`/`recognitionWrong` can supply recognition totals. Unordered
 production totals update counters but never invent last-five/last-ten history:
 previous history is retained, with a new ordered evaluation window started after
-the gap. `trainer.vocabCorrect/Wrong` is not counted twice alongside word results.
+the gap. `trainer` totals from chat imports are ignored by trainer counters; imported
+word recognition/production statistics still update the dictionary and levels.
 The existing backup and Supabase payload carry all histories and import IDs.
 
 Additional validation: `node --test progression.test.cjs` and
@@ -217,3 +218,28 @@ three English forms. Audio uses the existing browser speech and accent settings.
 Validation: `node test/trainer-controls-browser.cjs` checks filtering, data-preserving
 manual moves, real Enter key presses in study/free/structured modes, speech targets,
 exactly-once counters, timer pause/navigation/reset/reload and mobile layout.
+
+### Chat statistics, branding and browser navigation
+
+Chat lesson import is dictionary-only: ordered attempts, legacy aggregates and
+recognition totals still affect the word's counters, history and automatic level
+transitions. They do not increase `stats.vocabCorrect`, `stats.vocabWrong`,
+`stats.verbCorrect` or `stats.verbWrong`, and do not add answers to a trainer lesson.
+Real exercise answers still count normally. Existing historical totals are retained;
+previously mixed data is not guessed or subtracted without source information.
+
+The Home vocabulary card is labeled **Bank**; dictionary bank search is **Search**.
+`source/logo-character.png` is a transparent character cutout from the supplied
+reference, inlined by the build for offline/static hosting. The whole sidebar brand
+(image and Barkaloo text) is a home link, also supporting normal modified link clicks.
+
+Sections use same-document hash routes (`#/home`, `#/dictionary`, `#/grammar`,
+`#/trainer`) with `pushState`/`popstate`. Browser Back/Forward, including extra mouse
+buttons, traverse visited sections without reloading or losing the running app.
+Reload/direct routes restore the requested section. The app does not trap browser
+history at its first entry; going back beyond the app's history works normally.
+
+`node test/navigation-import-browser.cjs` checks ordered/aggregate/global imports,
+unchanged trainer counts, live exercise counting, word-stat persistence, both brand
+click targets, native Chromium back/forward mouse events, same-document navigation,
+route reload and mobile layout. The archive test verifies the logo is embedded.

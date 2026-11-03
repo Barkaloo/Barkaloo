@@ -153,7 +153,7 @@ async function main() {
     await b.evaluate(() => navigator.serviceWorker.ready);
     await b.waitForFunction(() => !!navigator.serviceWorker.controller);
     await mobile.setOffline(true); await add(b, 'sync-offline');
-    await b.reload(); await b.locator('#home.active').waitFor();
+    await b.reload(); await b.locator('#dictionary.active').waitFor();
     await mobile.setOffline(false); await phase(b, 'synced'); await sync(a); await expectWord(a, 'sync-offline');
     console.log('PASS: offline edits survive reload and synchronize after reconnecting');
 

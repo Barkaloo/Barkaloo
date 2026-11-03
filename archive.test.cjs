@@ -38,6 +38,8 @@ test('build works outside the checkout and contains the original scripts and PWA
   for (const match of source.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)) {
     assert.ok(html.includes(match[0]), 'original application script was changed');
   }
+  assert.ok(html.includes('data:image/png;base64,'+fs.readFileSync(path.join(__dirname,'source/logo-character.png')).toString('base64')));
+  assert.ok(!html.includes('__BARKALOO_CHARACTER_LOGO__'));
   assert.match(html, /rel="manifest"/);
   assert.match(html, /serviceWorker\.register/);
   assert.ok(html.includes(fs.readFileSync(path.join(__dirname, 'source/cloud-sync.js'), 'utf8')));

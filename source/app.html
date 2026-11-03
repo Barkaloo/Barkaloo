@@ -18,7 +18,7 @@ button,input,select,textarea{font:inherit} button{cursor:pointer}
 input,textarea,select{background:rgba(255,255,255,.82);color:var(--text);border:1px solid var(--line);border-radius:14px;padding:11px 13px;outline:none} input:focus,textarea:focus,select:focus{border-color:rgba(90,143,120,.55);box-shadow:0 0 0 4px rgba(133,180,202,.14)}
 .app{display:flex;min-height:100vh}
 .sidebar{width:280px;background:rgba(249,252,250,.78);border-right:1px solid rgba(63,105,86,.10);padding:18px 16px;position:fixed;inset:0 auto 0 0;z-index:20;transition:.24s;backdrop-filter:blur(18px)} .sidebar.hidden{transform:translateX(-100%)}
-.logo-wrap{display:flex;gap:12px;align-items:center;padding:10px 10px 18px;border-bottom:1px solid rgba(63,105,86,.10);margin-bottom:16px} .logo-mark{width:42px;height:42px} .logo-title{font-size:20px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#24352d} .logo-sub{font-size:12px;color:var(--muted)}
+.logo-wrap{display:flex;gap:12px;align-items:center;padding:10px 10px 18px;border-bottom:1px solid rgba(63,105,86,.10);margin-bottom:16px} .logo-mark{width:64px;height:64px;object-fit:contain;flex-shrink:0} .logo-title{font-size:20px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#24352d} .logo-sub{font-size:12px;color:var(--muted)}
 .nav{display:flex;flex-direction:column;gap:6px} .nav-btn{border:0;background:transparent;color:#51655b;text-align:left;padding:12px 14px;border-radius:14px;font-weight:600} .nav-btn:hover{background:rgba(133,180,202,.12)} .nav-btn.active{background:linear-gradient(135deg,rgba(90,143,120,.14),rgba(133,180,202,.18));color:#234035;box-shadow:inset 0 0 0 1px rgba(90,143,120,.18)}
 .main{flex:1;margin-left:280px;padding:22px;transition:.24s;width:calc(100% - 280px)} .main.expanded{margin-left:0;width:100%}
 .topbar{display:flex;align-items:center;gap:12px;margin-bottom:18px} .burger{width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.78);display:inline-flex;align-items:center;justify-content:center;box-shadow:var(--shadow)} .burger:hover{background:#fff}
@@ -209,16 +209,17 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .trainer-level-hint{width:100%;text-align:center;margin-top:4px}
 .answer-feedback{display:flex;justify-content:center;align-items:center;gap:8px}.answer-feedback .speak-btn{margin-top:14px;flex-shrink:0}
 @media(max-width:600px){.trainer-timer{gap:8px}.trainer-timer>.muted{width:100%}.trainer-levels>.small{width:100%;text-align:center}}
+.logo-wrap{text-decoration:none;color:inherit;border-radius:12px}.logo-wrap:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 </style>
 </head>
 <body>
 <div class="overlay" id="overlay"></div>
 <div class="app">
 <aside class="sidebar" id="sidebar">
-  <div class="logo-wrap">
-    <svg class="logo-mark" viewBox="0 0 64 64" fill="none"><rect x="1.5" y="1.5" width="61" height="61" rx="16" stroke="#2A3242" fill="#0F141D"/><path d="M20 18H44M20 32H39M20 46H44M18 18V46" stroke="#EAF0FA" stroke-width="4" stroke-linecap="round"/><path d="M20 32H39" stroke="#AFC4FF" stroke-width="4" stroke-linecap="round"/></svg>
+  <a class="logo-wrap" id="brandHome" href="#/home" aria-label="Barkaloo — на главную">
+    <img class="logo-mark" src="__BARKALOO_CHARACTER_LOGO__" width="64" height="64" alt="">
     <div><div class="logo-title">Barkaloo</div></div>
-  </div>
+  </a>
   <nav class="nav"><button class="nav-btn active" data-page="home">Home</button><button class="nav-btn" data-page="dictionary">Dictionary</button><button class="nav-btn" data-page="grammar">Grammar</button><button class="nav-btn" data-page="trainer">Trainer</button></nav>
 </aside>
 <main class="main" id="main">
@@ -241,7 +242,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
           </div>
         </div>
       </div>
-<div class="stats-grid"><div class="card"><h3>Core 1500</h3><div class="num" id="homeCoreKnown">—</div><div class="row-muted" id="homeCoreMeta">Loading vocabulary bank…</div></div>
+<div class="stats-grid"><div class="card"><h3>Bank</h3><div class="num" id="homeCoreKnown">—</div><div class="row-muted" id="homeCoreMeta">Loading vocabulary bank…</div></div>
         <div class="card"><h3>Active words</h3><div class="num" id="homeActive">0</div><div class="row-muted">Active vocabulary</div></div>
         <div class="card"><h3>Passive words</h3><div class="num" id="homePassive">0</div><div class="row-muted">Passive vocabulary</div></div>
         <div class="card"><h3>Murphy progress</h3><div class="num" id="homeUnits">0 / 115</div><div class="row-muted" id="homeUnitsPct">0% complete</div></div>
@@ -305,7 +306,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
           <div class="core-stat"><div class="n" id="coreActiveStat">—</div><div class="l">Active</div></div>
         </div>
         <div class="core-filters">
-          <input id="coreSearch" placeholder="Search Core 1500...">
+          <input id="coreSearch" placeholder="Search">
           <select id="coreStatusFilter"><option value="all">All levels</option><option value="general">General</option><option value="passive">Passive</option><option value="active">Active</option></select>
           <select id="corePosFilter"><option value="all">All parts of speech</option></select>
           <select id="coreTopicFilter"><option value="all">All topics</option></select>
@@ -574,10 +575,10 @@ function generalProduction(item,ok,aggregate){
   p.lessonCorrect=draft.correct;p.lessonWrong=draft.wrong;p.lessonUses=draft.uses;p.lessonHistory=draft.productionHistory;
   if(draft.productionWindowCount!=null)p.productionWindowCount=draft.productionWindowCount;
 }
-function recordWordAttempt(item,direction,ok){
+function recordWordAttempt(item,direction,ok,countTrainer=true){
   if(direction==='en-ru')recordRecognition(item,ok);
   else {const w=words.find(x=>norm(x.word)===norm(item.word));if(w)recordProduction(w,ok);else generalProduction(item,ok);}
-  if(ok)stats.vocabCorrect=(stats.vocabCorrect||0)+1;else stats.vocabWrong=(stats.vocabWrong||0)+1;
+  if(countTrainer){if(ok)stats.vocabCorrect=(stats.vocabCorrect||0)+1;else stats.vocabWrong=(stats.vocabWrong||0)+1;}
 }
 function promoteGeneralToPassive(item){
   let w=words.find(x=>norm(x.word)===norm(item.word));
@@ -829,7 +830,7 @@ function updateHome(){
   const streak=getStudyStreak();homeStreak.textContent=streak;homeStreakMeta.textContent=streak===1?'day in a row':'days in a row';
   renderCoreStats();
 }
-function setPage(p){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById(p).classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===p));pageTitle.textContent=pageMeta[p][0];if(p==='dictionary')renderDictionary();if(p==='trainer')resumeTrainerClock();else pauseTrainerClock();if(innerWidth<=820)setMenu(false)}
+function setPage(p,recordHistory=true){if(!pageMeta[p])return;if(recordHistory&&document.querySelector('.section.active')?.id!==p)history.pushState({...history.state,barkaloo:true,page:p},'','#/'+p);document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById(p).classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===p));pageTitle.textContent=pageMeta[p][0];if(p==='dictionary')renderDictionary();if(p==='trainer')resumeTrainerClock();else pauseTrainerClock();if(innerWidth<=820)setMenu(false)}
 function setMenu(open){menuOpen=open;if(innerWidth<=820){sidebar.classList.toggle('show',open);overlay.classList.toggle('show',open)}else{sidebar.classList.toggle('hidden',!open);main.classList.toggle('expanded',!open)}}
 function maybePromoteWord(w){return evaluateProduction(w)==='active'}
 function applyPromotions(){words.forEach(migrateWord);return 0}
@@ -966,7 +967,7 @@ async function importLessonData(){
     for(const entry of entries){
       if(!getCoreItem(entry.word))added++;
       const item=addBankWord(entry.word,entry.translation);
-      if(entry.attempts){for(const attempt of entry.attempts){recordWordAttempt(item,attempt.direction,attempt.correct);answers++;}}
+      if(entry.attempts){for(const attempt of entry.attempts){recordWordAttempt(item,attempt.direction,attempt.correct,false);answers++;}}
       else{
         if(entry.direction==='en-ru'){
           const p=coreProgressFor(item.word);p.recognitionCorrect=(p.recognitionCorrect||0)+entry.correct;p.recognitionWrong=(p.recognitionWrong||0)+entry.wrong;
@@ -977,16 +978,13 @@ async function importLessonData(){
           unordered=true;
         }
         if(entry.recognitionCorrect+entry.recognitionWrong){const p=coreProgressFor(item.word);p.recognitionCorrect=(p.recognitionCorrect||0)+entry.recognitionCorrect;p.recognitionWrong=(p.recognitionWrong||0)+entry.recognitionWrong;if(coreWordState(item)==='general'&&p.recognitionCorrect-(p.recognitionBaseline||0)>=5)promoteGeneralToPassive(item);}
-        stats.vocabCorrect=(stats.vocabCorrect||0)+entry.correct+entry.recognitionCorrect;stats.vocabWrong=(stats.vocabWrong||0)+entry.wrong+entry.recognitionWrong;
         answers+=entry.correct+entry.wrong+entry.recognitionCorrect+entry.recognitionWrong;
       }
     }
-    if(!answers&&data.trainer){stats.vocabCorrect+=(Number(data.trainer.vocabCorrect)||0);stats.vocabWrong+=(Number(data.trainer.vocabWrong)||0);}
-    if(data.trainer){stats.verbCorrect+=(Number(data.trainer.verbCorrect)||0);stats.verbWrong+=(Number(data.trainer.verbWrong)||0);}
     settings.importedLessonKeys=[...(settings.importedLessonKeys||[]),key];
     if(data.date&&/^\d{4}-\d{2}-\d{2}$/.test(data.date))studyDays[data.date]=true;
     saveAll();populateCoreFilters();renderDictionary();updateHome();renderCalendar();renderLesson();
-    importStatus.textContent=`Учтено ${answers} ответов; ${added} новых слов в общем банке.`+(unordered?' Суммы без порядка сохранены; для переходов нужны последние ответы по порядку.':'');importStatus.classList.add('good');
+    importStatus.textContent=`В словаре учтено ${answers} ответов; ${added} новых слов. Счётчики тренажёра не изменены.`+(unordered?' Суммы без порядка сохранены; для переходов нужны последние ответы по порядку.':'');importStatus.classList.add('good');
   }catch(error){importStatus.textContent='Импорт не завершён: '+error.message;importStatus.classList.add('bad');}
   finally{lessonImportRunning=false;}
 }
@@ -1242,6 +1240,20 @@ document.addEventListener('keydown',event=>{
   }
 });
 
+function routePage(){const match=location.hash.match(/^#\/(home|dictionary|grammar|trainer)$/);return match?match[1]:'home'}
+function restorePageFromHistory(){const page=routePage();if(document.querySelector('.section.active')?.id!==page)setPage(page,false)}
+function initializePageHistory(){
+  const page=routePage();
+  if(!location.hash||/^#\/(home|dictionary|grammar|trainer)$/.test(location.hash))history.replaceState({...history.state,barkaloo:true,page},'','#/'+page);
+  setPage(page,false);
+}
+window.addEventListener('popstate',restorePageFromHistory);
+window.addEventListener('hashchange',restorePageFromHistory);
+document.getElementById('brandHome').onclick=event=>{
+  if(event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
+  event.preventDefault();setPage('home');
+};
+
 // events
 const systemTheme=matchMedia('(prefers-color-scheme: dark)');
 systemTheme.addEventListener('change',applyTheme);
@@ -1264,7 +1276,7 @@ calibrationPrev.onclick=()=>{if(calibrationIndex>0)calibrationIndex--;renderCali
 calibrationSkip.onclick=()=>{if(calibrationIndex<coreBank.length-1)calibrationIndex++;renderCalibration()};
 
 document.addEventListener('keydown',calibrationKeyHandler);pastInput.onkeydown=e=>{if(e.key==='Enter'&&!e.repeat&&!e.isComposing){e.preventDefault();if(verbAnswered)newVerb();else checkVerb()}};partInput.onkeydown=e=>{if(e.key==='Enter'&&!e.repeat&&!e.isComposing){e.preventDefault();if(verbAnswered)newVerb();else checkVerb()}};vocabAnswer.onkeydown=e=>{if(e.key==='Enter'&&!e.repeat&&!e.isComposing){e.preventDefault();if(vocabAnswered)newVocab();else checkVocab()}};prevMonth.onclick=()=>{calDate=new Date(calDate.getFullYear(),calDate.getMonth()-1,1);renderCalendar()};nextMonth.onclick=()=>{calDate=new Date(calDate.getFullYear(),calDate.getMonth()+1,1);renderCalendar()};todayMonth.onclick=()=>{const n=new Date();calDate=new Date(n.getFullYear(),n.getMonth(),1);renderCalendar()};importToggle.onclick=()=>importBox.classList.toggle('show');importLesson.onclick=importLessonData;
-applyEmbeddedBackupOnce();words.forEach(migrateWord);applyPromotions();saveAll();syncVoiceControls();applyTheme();renderDictionary();renderUnits();renderVerbs();renderCalendar();updateHome();updateVerbStats();updateVocabStats();newVerb();newVocab();setMenu(innerWidth>820);loadCoreBank();renderLesson();
+applyEmbeddedBackupOnce();words.forEach(migrateWord);applyPromotions();saveAll();syncVoiceControls();applyTheme();renderDictionary();renderUnits();renderVerbs();renderCalendar();updateHome();updateVerbStats();updateVocabStats();newVerb();newVocab();setMenu(innerWidth>820);loadCoreBank();renderLesson();initializePageHistory();
 </script>
 <!-- BARKALOO_CLOUD_UI -->
 </body></html>
