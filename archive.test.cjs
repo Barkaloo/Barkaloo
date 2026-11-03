@@ -40,6 +40,7 @@ test('build works outside the checkout and contains the original scripts and PWA
   }
   assert.ok(html.includes('data:image/png;base64,'+fs.readFileSync(path.join(__dirname,'source/logo-character.png')).toString('base64')));
   assert.ok(html.includes('src="https://i.pinimg.com/originals/25/5d/16/255d16eb3d149c7e237791b2336156d3.gif"'));
+  assert.ok(html.includes('data-fallback="https://i.pinimg.com/1200x/9e/4e/22/9e4e22ab34d9302c7264e33d852d187d.jpg"'));
   assert.ok(!html.includes('__BARKALOO_CHARACTER_LOGO__'));
   assert.match(html, /rel="manifest"/);
   assert.match(html, /serviceWorker\.register/);

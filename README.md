@@ -230,8 +230,9 @@ previously mixed data is not guessed or subtracted without source information.
 
 The Home vocabulary card is labeled **Bank**; dictionary bank search is **Search**.
 The sidebar logo loads the supplied animated GIF from its Pinterest CDN URL.
-`source/logo-character.png` is the embedded transparent fallback used if the remote
-GIF is unavailable or offline. The image source is kept as a GIF to preserve
+If the GIF is unavailable, the logo tries the supplied static Pinterest JPG.
+`source/logo-character.png` is the embedded transparent last-resort fallback used
+if both remote images are unavailable or the app is offline. The image source is kept as a GIF to preserve
 animation; the original reference is not converted to a static picture. The whole sidebar brand
 (image and Barkaloo text) is a home link, also supporting normal modified link clicks.
 

@@ -5,7 +5,7 @@ async function main(){
  const browser=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox']});const errors=[];
  try{const p=await browser.newPage({viewport:{width:1440,height:1000}});p.on('pageerror',e=>errors.push(e.message));await p.goto(origin);
  assert.equal(await p.locator('#home .card h3').first().textContent(),'Bank');assert.equal(await p.locator('#coreSearch').getAttribute('placeholder'),'Search');
- assert.equal(await p.locator('#brandHome img').evaluate(img=>img.complete&&img.naturalWidth>0&&img.dataset.fallback.startsWith('data:image/png;base64,')),true);
+ assert.equal(await p.locator('#brandHome img').evaluate(img=>img.complete&&img.naturalWidth>0&&img.dataset.offline.startsWith('data:image/png;base64,')),true);
  await p.evaluate(()=>{window.navigationMarker=42;});
  await p.evaluate(()=>navigator.serviceWorker.ready);await p.waitForFunction(()=>!!navigator.serviceWorker.controller);
  const loads=documents;
