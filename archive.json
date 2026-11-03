@@ -13,7 +13,7 @@
     "app-10.b64",
     "app-tail.b64"
   ],
-  "htmlBytes": 2923644,
-  "htmlSha256": "6552959b7c318e4bca8edc21182782efd7b986b9032d90ddbc28d7c8707e3b08",
-  "gzipSha256": "9e1439f3cd6b1ef8d011f60bc3a1a3e7ecbdc3a3c89f129d436e3513c89d22fe"
+  "htmlBytes": 2923485,
+  "htmlSha256": "ecfaf8e997734b7af161f696518b2f9c203ed3ba39ab7f5388ae216d595b8d95",
+  "gzipSha256": "23d44c539607ed48ad51e421a2059eaa9779de90d9fc68afea05f4c841475c72"
 }
