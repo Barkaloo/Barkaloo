@@ -251,3 +251,27 @@ The logo GIF destination is `i.pinimg.com`. This environment currently blocks it
 HTTP CONNECT request (403), so real CDN delivery cannot be validated here. A
 browser test intercepts the exact URL with a two-frame GIF to verify animated-image
 loading and tests the embedded PNG fallback separately on a network error.
+
+### Phone home-screen icons and notch/status area
+
+The latest supplied Moomintroll/strawberry pixel artwork is prepared in
+`source/app-icon-master.png`. `node scripts/generate-icons.cjs` exports committed
+opaque PNGs: 192/512px app icons, a separate 512px maskable icon with safe padding,
+180px Apple touch icon, 32px favicon, plus the legacy SVG. Regeneration needs the
+existing Playwright/Chromium; normal builds only copy the generated assets.
+The manifest references PNGs for Android. iOS has an explicit versioned
+`apple-touch-icon` link and a root Apple touch icon fallback. All files are copied
+to `dist` and precached for offline installation/reloads.
+
+The viewport uses `viewport-fit=cover`. Root/page background, `theme-color`,
+`color-scheme` and Apple's status-bar style follow the selected light/dark theme,
+including the stored/system theme before first paint. Main content and sidebar
+include `safe-area-inset-*` padding around the notch and home indicator. The
+manifest uses a dark launch background; the HTML sets the actual selected theme.
+
+Installed shortcuts can retain old icons/status-bar metadata. Re-add the website
+to the home screen to pick up the new icon (iPhone Safari: Share → Add to Home
+Screen). Desktop emulation validates metadata, simulated safe insets and asset
+loading; the physical iOS/Android system bar still needs checking on the device.
+
+Checks: `node --test phone-icons.test.cjs` and `node test/phone-theme-browser.cjs`.

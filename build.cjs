@@ -29,8 +29,12 @@ const page = html.toString('utf8')
 // Neither entry point needs the archive manifest or chunks at runtime.
 fs.writeFileSync(path.join(__dirname, 'index.html'), page);
 fs.writeFileSync(path.join(output, 'index.html'), page);
-for (const file of ['manifest.webmanifest', 'icon.svg', 'sw.js']) {
+for (const file of ['manifest.webmanifest', 'icon.svg', 'sw.js', 'apple-touch-icon.png']) {
   fs.copyFileSync(path.join(__dirname, file), path.join(output, file));
+}
+fs.mkdirSync(path.join(output,'icons'),{recursive:true});
+for(const file of ['icon-192.png','icon-512.png','icon-maskable-512.png','apple-touch-icon.png','favicon-32.png']){
+  fs.copyFileSync(path.join(__dirname,'icons',file),path.join(output,'icons',file));
 }
 // Remove archive copies left behind by the previous build format.
 for (const file of ['archive.json', ...fs.readdirSync(output).filter(file => /^app-.*\.b64$/.test(file))]) {

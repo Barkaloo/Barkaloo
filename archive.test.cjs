@@ -51,7 +51,7 @@ test('build works outside the checkout and contains the original scripts and PWA
   assert.ok(!html.includes('archive.json'), 'browser must not need an archive manifest');
   assert.ok(!fs.existsSync(path.join(dist, 'archive.json')));
   assert.ok(!fs.readdirSync(dist).some(file => file.endsWith('.b64')));
-  for (const file of ['sw.js', 'manifest.webmanifest', 'icon.svg']) {
+  for (const file of ['sw.js', 'manifest.webmanifest', 'icon.svg', 'apple-touch-icon.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png', 'icons/favicon-32.png']) {
     assert.deepEqual(fs.readFileSync(path.join(dist, file)), fs.readFileSync(path.join(__dirname, file)));
   }
 });
