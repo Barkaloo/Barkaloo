@@ -101,10 +101,10 @@ synchronizing the selected theme and accepting synonyms in each vocabulary level
   wrong)`. Untested words have no accuracy and are excluded. Ties prefer more
   mistakes, then fewer uses, then alphabetical order.
 - New words: ten currently general/unknown core words, with 2–3 highlighted
-  bilingual example sentences, then a Russian → English test on the same words.
+  bilingual example sentences, then an English → Russian test on the same words.
   Selection prefers fewer previous lesson attempts, then core frequency rank.
-  Viewing cards does not count as an answer. A correct test answer moves a new
-  word to passive, carrying over all prior production attempts, including errors.
+  Viewing cards does not count as an answer. Five correct English → Russian answers, accumulated across all sources, move
+  a word to passive, carrying over all prior production attempts, including errors.
 
 Each queue is frozen at the start. Answers count once, including explicit
 “Не знаю” answers. Passive words keep the existing production/promotion rules.
@@ -126,3 +126,59 @@ Validation: `node --test archive.test.cjs cloud-sync.test.cjs lessons.test.cjs`,
 `node test/cloud-browser.cjs`, and `node test/lesson-browser.cjs`. The latter
 completes all 100 daily questions, verifies rankings and counters, reload/resume,
 10 learning cards followed by testing, and simulated two-device synchronization.
+
+### Vocabulary levels and chat lesson imports
+
+All new manual, bulk and imported words enter the general bank. Re-adding a word
+updates its translation without moving its level or clearing its history. Custom
+bank entries survive reload and Supabase sync; the bank is not truncated to 1500.
+The card browser is read-only for levels: arrows no longer bypass answer rules.
+
+`source/progression.js` is the common production policy for every answer source:
+
+- General → passive: five cumulative correct **English → Russian** recognitions,
+  not necessarily consecutive. Recognition statistics stay in `coreProgress`.
+- Passive → active: at least five ordered **Russian → English** attempts, with
+  at least four correct in the most recent five.
+- Active → passive: fewer than seven correct in a full latest-ten window, or
+  three consecutive incorrect Russian → English attempts. Exactly 70% stays active.
+- Opposite-direction attempts never enter the production window. Viewing cards
+  never counts as answering. Levels and known history are preserved when loading
+  existing data; the common policy evaluates subsequent real attempts.
+
+The new-word lesson now tests English → Russian, contributing to recognition
+without promoting after a single answer. Older saved in-progress new-word lessons
+keep their original direction so they can finish without reinterpreting answers.
+Production attempts made while still general are recorded but cannot bypass the
+recognition gate. Existing translations and cumulative counters are retained.
+
+To import statistics from a chat lesson, use the Home import panel. Include a
+unique lesson `id` and each word's attempts **in chronological order**:
+
+```json
+{
+  "id": "english-2026-11-03-1",
+  "date": "2026-11-03",
+  "words": [{
+    "word": "although",
+    "translation": "хотя",
+    "attempts": [
+      {"direction": "en-ru", "correct": true},
+      {"direction": "ru-en", "correct": false}
+    ]
+  }]
+}
+```
+
+Re-importing an `id` is ignored. Without an `id`, an exact payload SHA-256 provides
+duplicate protection. A supplied `kind` cannot grant a level. Legacy aggregate
+`correct`/`wrong` totals default to Russian → English; `direction: "en-ru"` or
+`recognitionCorrect`/`recognitionWrong` can supply recognition totals. Unordered
+production totals update counters but never invent last-five/last-ten history:
+previous history is retained, with a new ordered evaluation window started after
+the gap. `trainer.vocabCorrect/Wrong` is not counted twice alongside word results.
+The existing backup and Supabase payload carry all histories and import IDs.
+
+Additional validation: `node --test progression.test.cjs` and
+`node test/progression-browser.cjs` exercise exact boundaries, mixed sources,
+no premature promotion, three-error demotion, import deduplication and reload.

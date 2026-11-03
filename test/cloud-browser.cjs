@@ -70,6 +70,7 @@ async function main() {
       await page.locator('#wordInput').fill(word);
       await page.locator('#translationInput').fill('проверка');
       await page.locator('#addWordBtn').click();
+      await page.evaluate(word=>{const item=getCoreItem(word);for(let i=0;i<5;i++)recordWordAttempt(item,'en-ru',true);for(let i=0;i<5;i++)recordWordAttempt(item,'ru-en',true);saveAll();renderDictionary();updateHome();},word);
     }
     async function expectWord(page, word) {
       await navigate(page, 'Dictionary');

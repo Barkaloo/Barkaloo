@@ -45,18 +45,19 @@ async function main(){
  }
  assert.equal(await p.evaluate(()=>currentLesson().phase),'test');
  const first=await p.evaluate(()=>currentLesson().queue[0].word);
- await p.locator('#lessonUnknown').click();assert.equal(await p.evaluate(word=>coreProgress[word].lessonUses,first),1);assert.equal(await p.evaluate(()=>words.length),0);
+ await p.locator('#lessonUnknown').click();assert.equal(await p.evaluate(word=>coreProgress[word].recognitionWrong,first),1);assert.equal(await p.evaluate(()=>words.length),0);
  await p.reload();await p.evaluate(()=>setPage('trainer'));assert.equal(await p.evaluate(()=>currentLesson().results.length),1);await p.locator('#lessonNext').click();
  for(let i=1;i<10;i++){
-  const word=await p.evaluate(()=>currentLesson().queue[currentLesson().index].word);
+  const word=await p.evaluate(()=>answerVariants(currentLesson().queue[currentLesson().index].translation)[0]);
   await p.locator('#lessonAnswer').fill(word);await p.locator('#lessonCheck').click();await p.locator('#lessonNext').click();
  }
  assert.equal(await p.locator('#lessonScore').textContent(),'9 / 10 правильно · 90%');
- assert.equal(await p.evaluate(()=>words.filter(w=>w.kind==='passive'&&w.uses===1&&w.correct===1).length),9);
+ assert.equal(await p.evaluate(()=>words.length),0);
+ assert.equal(await p.evaluate(()=>Object.values(coreProgress).filter(p=>p.recognitionCorrect===1).length),9);
  assert.equal(await p.evaluate(()=>stats.vocabCorrect),9);assert.equal(await p.evaluate(()=>stats.vocabWrong),1);
  await p.locator('[data-lesson="new"]').click();assert.equal(await p.evaluate(()=>currentLesson().queue.some(item=>words.some(w=>w.word===item.word))),false);
  await p.setViewportSize({width:390,height:844});await p.screenshot({path:'/tmp/barkaloo-lesson-study.png',animations:'disabled'});assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth),390);
- console.log('PASS: ten unknown study cards, highlighted bilingual examples, no view-based counts, test, promotion with counts, reload and next lesson');
+ console.log('PASS: ten unknown study cards, highlighted bilingual examples, no view-based counts, test, recognition counts without premature promotion, reload and next lesson');
  assert.deepEqual(errors,[]);await context.close();
  }finally{await browser.close();await new Promise(r=>server.close(r));}
 }

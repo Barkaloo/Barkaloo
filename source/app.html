@@ -225,7 +225,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
           <div class="import-line">
             <button class="import-toggle" id="importToggle">Ввести данные с занятия</button>
             <div class="import-box" id="importBox">
-              <textarea id="lessonData" placeholder='Вставь JSON из занятия. Например: {"date":"2026-11-01","words":[{"word":"although","translation":"хотя","kind":"active","correct":3,"wrong":1}]}'></textarea>
+              <p class="hint">Статистика из чата: id урока, words и attempts по порядку. Направления: en-ru (английский → русский), ru-en (русский → английский). Повторный импорт одного id не учитывается.</p><textarea id="lessonData" placeholder='Вставь JSON из занятия. Например: {"id":"lesson-2026-11-03-1","date":"2026-11-03","words":[{"word":"although","translation":"хотя","attempts":[{"direction":"en-ru","correct":true},{"direction":"ru-en","correct":false}]}]}'></textarea>
               <div class="import-actions"><button class="btn primary" id="importLesson">Import</button><span class="status" id="importStatus"></span></div>
               <div class="hint">Импорт добавляет новые слова или обновляет существующие, суммируя correct/wrong. Если есть date — этот день автоматически отмечается в календаре.</div>
             </div>
@@ -307,8 +307,8 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
           <span class="muted" id="coreLoadStatus">Loading Core 1500…</span>
         </div>
         <div class="calibration-launch">
-          <span class="muted">Initial sorting</span>
-          <button class="btn primary" id="openCalibration">Quick sorter</button>
+          <span class="muted">Просмотр слов</span>
+          <button class="btn primary" id="openCalibration">Карточки слов</button>
         </div>
         <div class="calibration-shell" id="calibrationShell">
           <div class="calibration-card">
@@ -322,12 +322,12 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
             </div>
             <div class="calibration-translation"><span id="calibrationTranslation">—</span> <button class="speak-btn" id="calibrationEditTranslation" title="Edit translation">✎</button></div>
             <div class="calibration-meta" id="calibrationMeta"></div>
-            <div class="calibration-actions">
+            <div class="calibration-actions" hidden>
               <button class="cal-btn general" data-cal-level="general">1 · General</button>
               <button class="cal-btn passive" data-cal-level="passive">2 · Passive</button>
               <button class="cal-btn active" data-cal-level="active">3 · Active</button>
             </div>
-            <div class="calibration-help">1 / ← = General · 2 / ↓ = Passive · 3 / → = Active · Space = pronounce</div>
+            <div class="calibration-help">← / → — предыдущее / следующее слово · Space — произнести</div>
             <div class="calibration-nav">
               <button class="btn" id="calibrationPrev">← Previous</button>
               <button class="btn" id="calibrationSkip">Skip</button>
@@ -335,11 +335,11 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
             </div>
           </div>
         </div>
-        <div class="core-note">Use the blue ↓ and green ↑ controls to sort words manually. Trainer rules still work automatically afterwards.</div>
+        <div class="core-note">Уровень меняется по ответам: 5 верных EN → RU для пассивного; 4 из последних 5 RU → EN для активного. Возврат в пассивный: ниже 70% за 10 ответов или 3 ошибки подряд.</div>
       </div>
 
       <div id="manualDictControls">
-        <div class="toolbar"><input id="wordInput" placeholder="English word"><input id="translationInput" placeholder="Переводы через ; (необязательно)"><input id="dictSearch" placeholder="Search..."><button class="btn primary" id="addWordBtn">Add word</button></div>
+        <div class="toolbar"><input id="wordInput" placeholder="Новое слово в общий банк"><input id="translationInput" placeholder="Переводы через ; (необязательно)"><input id="dictSearch" placeholder="Search..."><button class="btn primary" id="addWordBtn">Add word</button></div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:-2px 0 14px">
           <button class="btn" id="bulkToggle">Bulk import words</button>
           <span class="muted" id="dictCount"></span>
@@ -372,7 +372,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
       <div class="lesson-options">
         <button class="lesson-option" data-lesson="daily"><strong>Ежедневный урок</strong><span>До 100 пассивных слов с наименьшим числом применений. Русский → английский.</span></button>
         <button class="lesson-option" data-lesson="errors"><strong>Разбор ошибок</strong><span>До 100 пассивных слов с худшей долей правильных ответов. Слова без попыток не участвуют.</span></button>
-        <button class="lesson-option" data-lesson="new"><strong>10 новых слов</strong><span>Незнакомые слова из общего словаря: карточки с примерами, затем тест. Русский → английский.</span></button>
+        <button class="lesson-option" data-lesson="new"><strong>10 новых слов</strong><span>Незнакомые слова из общего словаря: карточки с примерами, затем тест. Английский → русский.</span></button>
       </div>
       <p class="hint">Слова не повторяются в пределах урока. Каждая проверка ответа учитывается в словаре; просмотр карточек — нет. Незаконченный урок сохраняется.</p>
       <p id="lessonMenuStatus" role="status" aria-live="polite"></p>
@@ -384,11 +384,11 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
         <div class="trainer-audio"><h3 class="prompt" id="lessonStudyWord"></h3><button class="speak-btn" id="lessonStudySpeak" aria-label="Произнести слово">🔊</button></div>
         <p id="lessonStudyTranslation"></p><ol id="lessonExamples" class="lesson-examples"></ol><p class="hint">Примеры: SMARTool (Bast, Janda и др.), <a href="https://doi.org/10.18710/QNAPNE" target="_blank" rel="noopener">набор данных</a>, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>; примеры отобраны и дополнены Barkaloo.</p>
         <button class="btn primary" id="lessonStudyNext">Следующее слово</button>
-        <p class="hint">После карточек — тест. Верный ответ переводит новое слово в пассивный словарь.</p>
+        <p class="hint">После карточек — тест. В пассивный словарь слово перейдёт после 5 верных переводов с английского на русский.</p>
       </div>
       <div id="lessonTest" class="lesson-test" hidden>
-        <p class="small">Напишите английское слово по русскому переводу</p><h3 id="lessonPrompt" class="lesson-prompt"></h3>
-        <label for="lessonAnswer" class="small">Ответ на английском</label><input id="lessonAnswer" lang="en" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="English word">
+        <p class="small" id="lessonTestInstruction">Напишите английское слово по русскому переводу</p><h3 id="lessonPrompt" class="lesson-prompt"></h3>
+        <label for="lessonAnswer" class="small" id="lessonAnswerLabel">Ответ на английском</label><input id="lessonAnswer" lang="en" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Новое слово в общий банк">
         <div class="practice-actions"><button class="btn primary" id="lessonCheck">Проверить</button><button class="btn" id="lessonUnknown">Не знаю</button><button class="btn primary" id="lessonNext" hidden>Дальше</button></div>
         <div id="lessonFeedback" class="feedback" role="status"></div>
       </div>
@@ -399,7 +399,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
     <div class="panel">
       <div class="panel-head"><h2>Trainer</h2></div>
       <div class="trainer-switch" id="trainerSwitch" style="justify-content:center;margin-bottom:18px">
-        <button data-trainer="general">Core 1500 <span id="trainerGeneralCount"></span></button>
+        <button data-trainer="general">Общий банк <span id="trainerGeneralCount"></span></button>
         <button class="active" data-trainer="passive">Passive vocabulary <span id="trainerPassiveCount"></span></button>
         <button data-trainer="active">Active vocabulary <span id="trainerActiveCount"></span></button>
         <button data-trainer="verbs">Irregular Verbs</button>
@@ -431,6 +431,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 </div>
 <!-- BARKALOO_CLOUD_RUNTIME -->
 <!-- BARKALOO_LESSONS -->
+<!-- BARKALOO_PROGRESSION -->
 <script>
 const verbs=[["arise", "arose", "arisen", "возникать"], ["awake", "awoke", "awoken", "просыпаться"], ["be", "was/were", "been", "быть"], ["bear", "bore", "borne/born", "нести; терпеть"], ["beat", "beat", "beaten", "бить"], ["become", "became", "become", "становиться"], ["begin", "began", "begun", "начинать"], ["bend", "bent", "bent", "сгибать"], ["bet", "bet", "bet", "держать пари"], ["bind", "bound", "bound", "связывать"], ["bite", "bit", "bitten", "кусать"], ["bleed", "bled", "bled", "кровоточить"], ["blow", "blew", "blown", "дуть"], ["break", "broke", "broken", "ломать"], ["breed", "bred", "bred", "разводить"], ["bring", "brought", "brought", "приносить"], ["broadcast", "broadcast", "broadcast", "транслировать"], ["build", "built", "built", "строить"], ["burn", "burnt/burned", "burnt/burned", "гореть; жечь"], ["burst", "burst", "burst", "лопаться"], ["buy", "bought", "bought", "покупать"], ["cast", "cast", "cast", "бросать; назначать роль"], ["catch", "caught", "caught", "ловить"], ["choose", "chose", "chosen", "выбирать"], ["cling", "clung", "clung", "цепляться"], ["come", "came", "come", "приходить"], ["cost", "cost", "cost", "стоить"], ["creep", "crept", "crept", "ползти"], ["cut", "cut", "cut", "резать"], ["deal", "dealt", "dealt", "иметь дело"], ["dig", "dug", "dug", "копать"], ["do", "did", "done", "делать"], ["draw", "drew", "drawn", "рисовать; тянуть"], ["dream", "dreamt/dreamed", "dreamt/dreamed", "мечтать"], ["drink", "drank", "drunk", "пить"], ["drive", "drove", "driven", "водить"], ["eat", "ate", "eaten", "есть"], ["fall", "fell", "fallen", "падать"], ["feed", "fed", "fed", "кормить"], ["feel", "felt", "felt", "чувствовать"], ["fight", "fought", "fought", "драться"], ["find", "found", "found", "находить"], ["flee", "fled", "fled", "убегать"], ["fly", "flew", "flown", "летать"], ["forbid", "forbade", "forbidden", "запрещать"], ["forecast", "forecast", "forecast", "прогнозировать"], ["forget", "forgot", "forgotten", "забывать"], ["forgive", "forgave", "forgiven", "прощать"], ["freeze", "froze", "frozen", "замерзать"], ["get", "got", "got/gotten", "получать"], ["give", "gave", "given", "давать"], ["go", "went", "gone", "идти"], ["grind", "ground", "ground", "молоть"], ["grow", "grew", "grown", "расти"], ["hang", "hung", "hung", "висеть"], ["have", "had", "had", "иметь"], ["hear", "heard", "heard", "слышать"], ["hide", "hid", "hidden", "прятать"], ["hit", "hit", "hit", "ударять"], ["hold", "held", "held", "держать"], ["hurt", "hurt", "hurt", "причинять боль"], ["keep", "kept", "kept", "держать"], ["kneel", "knelt/kneeled", "knelt/kneeled", "становиться на колени"], ["know", "knew", "known", "знать"], ["lay", "laid", "laid", "класть"], ["lead", "led", "led", "вести"], ["lean", "leant/leaned", "leant/leaned", "наклоняться"], ["leap", "leapt/leaped", "leapt/leaped", "прыгать"], ["learn", "learnt/learned", "learnt/learned", "учить"], ["leave", "left", "left", "оставлять"], ["lend", "lent", "lent", "одалживать"], ["let", "let", "let", "позволять"], ["lie", "lay", "lain", "лежать"], ["light", "lit/lighted", "lit/lighted", "зажигать"], ["lose", "lost", "lost", "терять"], ["make", "made", "made", "делать"], ["mean", "meant", "meant", "значить"], ["meet", "met", "met", "встречать"], ["mistake", "mistook", "mistaken", "ошибочно принимать"], ["pay", "paid", "paid", "платить"], ["prove", "proved", "proven/proved", "доказывать"], ["put", "put", "put", "класть"], ["quit", "quit", "quit", "бросать"], ["read", "read", "read", "читать"], ["ride", "rode", "ridden", "ездить верхом"], ["ring", "rang", "rung", "звонить"], ["rise", "rose", "risen", "подниматься"], ["run", "ran", "run", "бежать"], ["say", "said", "said", "говорить"], ["see", "saw", "seen", "видеть"], ["seek", "sought", "sought", "искать"], ["sell", "sold", "sold", "продавать"], ["send", "sent", "sent", "отправлять"], ["set", "set", "set", "устанавливать"], ["shake", "shook", "shaken", "трясти"], ["shine", "shone", "shone", "сиять"], ["shoot", "shot", "shot", "стрелять"], ["show", "showed", "shown", "показывать"], ["shrink", "shrank", "shrunk", "сжиматься"], ["shut", "shut", "shut", "закрывать"], ["sing", "sang", "sung", "петь"], ["sink", "sank", "sunk", "тонуть"], ["sit", "sat", "sat", "сидеть"], ["sleep", "slept", "slept", "спать"], ["slide", "slid", "slid", "скользить"], ["smell", "smelt/smelled", "smelt/smelled", "пахнуть"], ["speak", "spoke", "spoken", "говорить"], ["spell", "spelt/spelled", "spelt/spelled", "писать по буквам"], ["spend", "spent", "spent", "тратить"], ["spill", "spilt/spilled", "spilt/spilled", "проливать"], ["spin", "spun", "spun", "вращать"], ["spit", "spat/spit", "spat/spit", "плевать"], ["split", "split", "split", "разделять"], ["spread", "spread", "spread", "распространять"], ["spring", "sprang", "sprung", "прыгать; возникать"], ["stand", "stood", "stood", "стоять"], ["steal", "stole", "stolen", "красть"], ["stick", "stuck", "stuck", "приклеивать"], ["sting", "stung", "stung", "жалить"], ["stink", "stank", "stunk", "вонять"], ["strike", "struck", "struck/stricken", "ударять"], ["swear", "swore", "sworn", "клясться"], ["sweep", "swept", "swept", "подметать"], ["swim", "swam", "swum", "плавать"], ["swing", "swung", "swung", "качаться"], ["take", "took", "taken", "брать"], ["teach", "taught", "taught", "учить"], ["tear", "tore", "torn", "рвать"], ["tell", "told", "told", "рассказывать"], ["think", "thought", "thought", "думать"], ["throw", "threw", "thrown", "бросать"], ["understand", "understood", "understood", "понимать"], ["wake", "woke", "woken", "просыпаться"], ["wear", "wore", "worn", "носить"], ["weep", "wept", "wept", "плакать"], ["win", "won", "won", "побеждать"], ["wind", "wound", "wound", "наматывать"], ["write", "wrote", "written", "писать"], ["abide", "abode/abided", "abode/abided", "соблюдать"], ["alight", "alit/alighted", "alit/alighted", "сходить; приземляться"], ["behold", "beheld", "beheld", "созерцать"], ["beset", "beset", "beset", "осаждать"], ["bid", "bid/bade", "bid/bidden", "предлагать цену; велеть"], ["clothe", "clad/clothed", "clad/clothed", "одевать"], ["dive", "dived/dove", "dived", "нырять"], ["dwell", "dwelt/dwelled", "dwelt/dwelled", "обитать"], ["fit", "fit/fitted", "fit/fitted", "подходить"], ["foresee", "foresaw", "foreseen", "предвидеть"], ["foretell", "foretold", "foretold", "предсказывать"], ["forsake", "forsook", "forsaken", "покидать"], ["input", "input/inputted", "input/inputted", "вводить данные"], ["interweave", "interwove", "interwoven", "переплетать"], ["mislead", "misled", "misled", "вводить в заблуждение"], ["misread", "misread", "misread", "неправильно читать"], ["offset", "offset", "offset", "компенсировать"], ["outbid", "outbid", "outbid", "перебивать цену"], ["outdo", "outdid", "outdone", "превосходить"], ["outgrow", "outgrew", "outgrown", "перерастать"], ["outrun", "outran", "outrun", "обгонять"], ["overcome", "overcame", "overcome", "преодолевать"], ["overdo", "overdid", "overdone", "переусердствовать"], ["overdraw", "overdrew", "overdrawn", "превышать баланс"], ["overeat", "overate", "overeaten", "переедать"], ["overhear", "overheard", "overheard", "подслушивать"], ["overpay", "overpaid", "overpaid", "переплачивать"], ["override", "overrode", "overridden", "отменять; переопределять"], ["overrun", "overran", "overrun", "захватывать; переполнять"], ["oversee", "oversaw", "overseen", "контролировать"], ["oversleep", "overslept", "overslept", "проспать"], ["overtake", "overtook", "overtaken", "обгонять"], ["overthrow", "overthrew", "overthrown", "свергать"], ["partake", "partook", "partaken", "принимать участие"], ["plead", "pleaded/pled", "pleaded/pled", "умолять; заявлять в суде"], ["preset", "preset", "preset", "предустанавливать"], ["rebuild", "rebuilt", "rebuilt", "перестраивать"], ["redo", "redid", "redone", "переделывать"], ["remake", "remade", "remade", "переделывать"], ["repay", "repaid", "repaid", "возвращать долг"], ["rerun", "reran", "rerun", "запускать снова"], ["resell", "resold", "resold", "перепродавать"], ["reset", "reset", "reset", "сбрасывать"], ["retake", "retook", "retaken", "пересдавать; брать снова"], ["rewrite", "rewrote", "rewritten", "переписывать"], ["rid", "rid", "rid", "избавлять"], ["saw", "sawed", "sawn/sawed", "пилить"], ["sew", "sewed", "sewn/sewed", "шить"], ["shave", "shaved", "shaven/shaved", "бриться"], ["shear", "sheared", "shorn/sheared", "стричь"], ["shed", "shed", "shed", "проливать; сбрасывать"], ["slay", "slew", "slain", "убивать"], ["sling", "slung", "slung", "швырять"], ["slit", "slit", "slit", "разрезать"], ["sow", "sowed", "sown/sowed", "сеять"], ["speed", "sped/speeded", "sped/speeded", "ускорять"], ["stride", "strode", "stridden", "шагать"], ["strive", "strove/strived", "striven/strived", "стремиться"], ["tread", "trod", "trodden/trod", "ступать"], ["undergo", "underwent", "undergone", "подвергаться"], ["undertake", "undertook", "undertaken", "предпринимать"], ["undo", "undid", "undone", "отменять; развязывать"], ["upset", "upset", "upset", "расстраивать"], ["withhold", "withheld", "withheld", "удерживать"], ["withstand", "withstood", "withstood", "противостоять"], ["wring", "wrung", "wrung", "выжимать"]];
 const murphyTitles=["am / is / are", "am / is / are — questions", "Present continuous", "Present continuous questions", "Present simple", "Present simple negatives", "Present simple questions", "Present continuous vs present simple", "have / have got", "was / were", "Past simple", "Past simple negatives & questions", "Past continuous", "Past continuous vs past simple", "Present perfect 1", "Present perfect 2", "Present perfect 3", "Present perfect 4", "for / since / ago", "Present perfect vs past simple", "Passive 1", "Passive 2", "be / have / do", "Regular & irregular verbs", "Future arrangements", "going to", "will / shall 1", "will / shall 2", "might", "can / could", "must / mustn’t / needn’t", "should", "have to", "would like", "Imperatives & let’s", "used to", "there is / there are", "there was / has been / will be", "it", "Auxiliary verbs", "Question echoes", "too / either / so / neither", "Negatives", "Questions 1", "Questions 2", "Questions 3", "What / Which / How", "How long does it take?", "Indirect questions", "Reported speech", "Verb + -ing", "to-infinitive & -ing", "Verb + object + to", "Purpose with to", "go expressions", "get", "do / make", "have", "Object pronouns", "Possessive adjectives", "Possessive pronouns", "Pronoun forms", "Reflexive pronouns", "Possessive ’s", "a / an", "Singular & plural", "Countable / uncountable 1", "Countable / uncountable 2", "a / an vs the", "the", "go to work / home / cinema", "General nouns without the", "Place names with the", "this / that / these / those", "one / ones", "some / any", "no / none / any", "nobody / nothing", "somebody / anything / nowhere", "every / all", "all / most / some / any", "both / either / neither", "a lot / much / many", "a little / a few", "Adjectives", "Adverbs", "Comparatives 1", "Comparatives 2", "not as ... as", "Superlatives", "enough", "too", "Word order 1", "Word order 2", "still / yet / already", "Object order", "and / but / or / so / because", "when clauses", "First conditional", "Second conditional", "Relative clauses 1", "Relative clauses 2", "Time prepositions", "from / to / until / since / for", "before / after / during / while", "Place prepositions 1", "Place prepositions 2", "Place prepositions 3", "Position prepositions", "Movement prepositions", "on / at / by / with / about", "Adjective + preposition", "Verb + preposition", "Phrasal verbs 1", "Phrasal verbs 2"];
@@ -454,15 +455,19 @@ function ensureDefaultPassiveWords(){
   }
   if(changed)saveAll();
 }
+function addBankWord(word,translation=''){
+  const name=String(word||'').trim();if(!name)return null;
+  let item=getCoreItem(name);
+  const known=words.find(x=>norm(x.word)===norm(name));
+  if(!item){const pos=classifyPos(name);item={word:name,translation:translation||known?.translation||'',rank:coreBank.length+1,pos,topic:classifyTopic(name,pos)};coreBank.push(item);}
+  else if(translation)item.translation=translation;
+  if(known&&translation)known.translation=translation;
+  localStorage.setItem(K.coreData,JSON.stringify(coreBank));return item;
+}
 function bulkImportWords(){
-  const raw=bulkWords.value.split(/\r?\n/).map(x=>x.replace(/^[*#\-\s]+|[\\*\s]+$/g,'').trim()).filter(Boolean);
-  let added=0,moved=0;
-  for(const word of raw){
-    let existing=words.find(w=>norm(w.word)===norm(word));
-    if(existing){if(existing.kind!==dictKind){existing.kind=dictKind;moved++;}}
-    else{words.push({id:Date.now()+Math.random(),word,translation:'',kind:dictKind,correct:0,wrong:0,uses:0});added++;}
-  }
-  saveAll();renderDictionary();updateHome();bulkStatus.textContent=`${added} added${moved?` · ${moved} moved`:''}`;bulkWords.value='';
+  const input=bulkWords.value.split(/\r?\n/).map(x=>x.replace(/^[*#\-\s]+|[\*\s]+$/g,'').trim()).filter(Boolean);let added=0;
+  for(const line of input){const [word,...translation]=line.split(/\s*[—–\t]\s*/);if(!getCoreItem(word))added++;addBankWord(word,translation.join('; '));}
+  saveAll();populateCoreFilters();renderDictionary();updateHome();bulkStatus.textContent=`${added} слов добавлено в общий банк`;bulkWords.value='';
 }
 
 
@@ -521,49 +526,8 @@ function coreWordState(item){
   return w?w.kind:'general';
 }
 function levelRank(level){return level==='general'?0:level==='passive'?1:2}
-function setWordLevel(word,target){
-  const item=getCoreItem(word);
-  let w=words.find(x=>norm(x.word)===norm(word));
-
-  if(target==='general'){
-    words=words.filter(x=>norm(x.word)!==norm(word));
-  }else{
-    if(!w){
-      w={
-        id:Date.now()+Math.random(),
-        word:item?item.word:word,
-        translation:item?(item.translation||''):'',
-        kind:target,
-        correct:0,wrong:0,uses:0,productionHistory:[],
-        coreRank:item?item.rank:null
-      };
-      words.push(w);
-    }else{
-      w.kind=target;
-      if(item&&!w.translation)w.translation=item.translation||'';
-      migrateWord(w);
-    }
-  }
-
-  saveAll();
-  renderDictionary();
-  updateHome();
-  updateVocabStats();
-  newVocab();
-}
-function levelControlsHTML(state){
-  return `<div class="level-controls">
-    <button class="level-btn demote" data-move="down" title="Понизить" ${state==='general'?'disabled':''}>↓</button>
-    <span class="pill status-${state}">${state}</span>
-    <button class="level-btn promote" data-move="up" title="Повысить" ${state==='active'?'disabled':''}>↑</button>
-  </div>`;
-}
-function bindLevelControls(row,word,state){
-  const down=row.querySelector('[data-move="down"]');
-  const up=row.querySelector('[data-move="up"]');
-  if(down&&!down.disabled)down.onclick=()=>setWordLevel(word,state==='active'?'passive':'general');
-  if(up&&!up.disabled)up.onclick=()=>setWordLevel(word,state==='general'?'passive':'active');
-}
+function levelControlsHTML(state){return `<span class="pill status-${state}">${state}</span>`}
+function bindLevelControls(){}
 function getStudyStreak(){
   const today=new Date();
   today.setHours(0,0,0,0);
@@ -590,35 +554,27 @@ function migrateWord(w){
   if(w.uses==null)w.uses=(w.correct||0)+(w.wrong||0);
   return w;
 }
-function evaluateProduction(w){
-  migrateWord(w);
-  const before=w.kind;
-  if(w.kind==='passive'){
-    if(w.productionHistory.length>=6){
-      const last6=w.productionHistory.slice(-6);
-      if(last6.filter(Boolean).length>=5)w.kind='active';
-    }else if((w.uses||0)>=6&&(w.correct||0)>=5){
-      w.kind='active';
-    }
-  }else if(w.kind==='active'&&w.productionHistory.length>=10){
-    const last10=w.productionHistory.slice(-10);
-    if(last10.filter(Boolean).length/10<0.70)w.kind='passive';
-  }
-  return before!==w.kind?w.kind:null;
+function evaluateProduction(w){migrateWord(w);return BarkalooProgression.evaluate(w)}
+function recordProduction(w,ok){migrateWord(w);return BarkalooProgression.production(w,ok)}
+function generalProduction(item,ok,aggregate){
+  const p=coreProgressFor(item.word);
+  const draft={kind:'general',correct:p.lessonCorrect||0,wrong:p.lessonWrong||0,uses:p.lessonUses||0,productionHistory:p.lessonHistory||[]};
+  if(p.productionWindowCount!=null)draft.productionWindowCount=p.productionWindowCount;
+  if(aggregate)BarkalooProgression.aggregate(draft,aggregate.correct,aggregate.wrong);else BarkalooProgression.production(draft,ok);
+  p.lessonCorrect=draft.correct;p.lessonWrong=draft.wrong;p.lessonUses=draft.uses;p.lessonHistory=draft.productionHistory;
+  if(draft.productionWindowCount!=null)p.productionWindowCount=draft.productionWindowCount;
 }
-function recordProduction(w,ok){
-  migrateWord(w);
-  w.uses=(w.uses||0)+1;
-  if(ok)w.correct=(w.correct||0)+1;else w.wrong=(w.wrong||0)+1;
-  w.productionHistory.push(!!ok);
-  if(w.productionHistory.length>30)w.productionHistory=w.productionHistory.slice(-30);
-  return evaluateProduction(w);
+function recordWordAttempt(item,direction,ok){
+  if(direction==='en-ru')recordRecognition(item,ok);
+  else {const w=words.find(x=>norm(x.word)===norm(item.word));if(w&&w.kind!=='general')recordProduction(w,ok);else generalProduction(item,ok);}
+  if(ok)stats.vocabCorrect=(stats.vocabCorrect||0)+1;else stats.vocabWrong=(stats.vocabWrong||0)+1;
 }
 function promoteGeneralToPassive(item){
   let w=words.find(x=>norm(x.word)===norm(item.word));
   if(!w){
     const p=coreProgressFor(item.word);
     w={id:Date.now()+Math.random(),word:item.word,translation:item.translation||'',kind:'passive',correct:p.lessonCorrect||0,wrong:p.lessonWrong||0,uses:p.lessonUses||0,productionHistory:[...(p.lessonHistory||[])],coreRank:item.rank};
+    if(p.productionWindowCount!=null)w.productionWindowCount=p.productionWindowCount;
     words.push(w);
   }else if(w.kind!=='active')w.kind='passive';
   return w;
@@ -745,7 +701,7 @@ async function loadCoreBank(){
     let cached=JSON.parse(localStorage.getItem(K.coreData)||'[]');
     if((!Array.isArray(cached)||cached.length<1000)&&Array.isArray(coreBank)&&coreBank.length>=1000){cached=coreBank;localStorage.setItem(K.coreData,JSON.stringify(coreBank));}
     if(Array.isArray(cached)&&cached.length>=1000){
-      coreBank=cached.slice(0,1500);
+      coreBank=cached;
       coreLoadStatus.textContent=`${coreBank.length} words loaded`;
       populateCoreFilters();renderCoreStats();if(dictKind==='general')renderDictionary();if(calibrationOpen)renderCalibration();return;
     }
@@ -832,13 +788,7 @@ function renderCalibration(){
   calibrationMeta.textContent=`#${item.rank} · ${item.pos} · ${item.topic} · current: ${state}`;
   const sorted=coreBank.filter(x=>coreWordState(x)!=='general').length;
   calibrationProgress.textContent=`${sorted} sorted · word #${item.rank} / ${coreBank.length}`;
-  calibrationRange.textContent='Quick Core sorting';
-}
-function setCalibrationLevel(level){
-  const item=calibrationCurrent();if(!item)return;
-  setWordLevel(item.word,level);
-  if(calibrationIndex<coreBank.length-1)calibrationIndex++;
-  renderCalibration();
+  calibrationRange.textContent='Общий банк';
 }
 function openCalibrationMode(){
   calibrationOpen=true;calibrationShell.classList.add('show');
@@ -850,9 +800,8 @@ function calibrationKeyHandler(e){
   if(!calibrationOpen)return;
   const tag=(document.activeElement&&document.activeElement.tagName)||'';
   if(['INPUT','TEXTAREA','SELECT'].includes(tag))return;
-  if(e.key==='1'||e.key==='ArrowLeft'){e.preventDefault();setCalibrationLevel('general')}
-  else if(e.key==='2'||e.key==='ArrowDown'){e.preventDefault();setCalibrationLevel('passive')}
-  else if(e.key==='3'||e.key==='ArrowRight'){e.preventDefault();setCalibrationLevel('active')}
+  if(e.key==='ArrowLeft'){e.preventDefault();if(calibrationIndex>0)calibrationIndex--;renderCalibration()}
+  else if(e.key==='ArrowRight'){e.preventDefault();if(calibrationIndex<coreBank.length-1)calibrationIndex++;renderCalibration()}
   else if(e.code==='Space'){e.preventDefault();const item=calibrationCurrent();if(item)speakWord(item.word)}
 }
 
@@ -873,23 +822,23 @@ function updateHome(){
 function setPage(p){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById(p).classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===p));pageTitle.textContent=pageMeta[p][0];if(p==='dictionary')renderDictionary();if(innerWidth<=820)setMenu(false)}
 function setMenu(open){menuOpen=open;if(innerWidth<=820){sidebar.classList.toggle('show',open);overlay.classList.toggle('show',open)}else{sidebar.classList.toggle('hidden',!open);main.classList.toggle('expanded',!open)}}
 function maybePromoteWord(w){return evaluateProduction(w)==='active'}
-function applyPromotions(){let moved=0;for(const w of words){migrateWord(w);if(evaluateProduction(w))moved++}return moved}
+function applyPromotions(){words.forEach(migrateWord);return 0}
 function renderDictionary(){
   if(dictKind==='general'){
-    manualDictControls.style.display='none';coreControls.style.display='';
+    manualDictControls.style.display='';coreControls.style.display='';
     dictHead.innerHTML='<div>Word</div><div>Translation</div><div>Part / Topic</div><div>Level</div><div>Recognition</div>';
     const q=norm(coreSearch.value),sf=coreStatusFilter.value,pf=corePosFilter.value,tf=coreTopicFilter.value;
     let list=coreBank.filter(item=>{
       const s=coreWordState(item);
       return (!q||norm(item.word).includes(q)||norm(translationText(item)).includes(q))&&(sf==='all'||s===sf)&&(pf==='all'||item.pos===pf)&&(tf==='all'||item.topic===tf);
     });
-    dictList.innerHTML='';
+    dictList.innerHTML='';dictCount.textContent=`${list.length} слов`;
     if(!coreBank.length){dictList.innerHTML='<div class="empty">Loading Core 1500…</div>';renderCoreStats();return}
     if(!list.length){dictList.innerHTML='<div class="empty">No words match these filters.</div>';renderCoreStats();return}
     list.forEach(item=>{
-      const state=coreWordState(item),p=coreProgressFor(item.word);
+      const state=coreWordState(item),p=coreProgressFor(item.word),production=words.find(w=>norm(w.word)===norm(item.word));
       const r=document.createElement('div');r.className='table-row';
-      r.innerHTML=`<div class="word-cell"><div class="word-line"><span>#${item.rank} ${esc(item.word)}</span><button class="speak-btn" title="Pronounce">🔊</button></div></div><div><span>${esc(translationText(item)||'—')}</span> <button class="speak-btn edit-translation" title="Edit translation">✎</button></div><div><span class="small">${esc(item.pos)}</span><br><span class="muted">${esc(item.topic)}</span></div><div>${levelControlsHTML(state)}</div><div>${p.recognitionCorrect||0} recognition correct · ${p.recognitionWrong||0} wrong<br><span class="small">${p.lessonUses||0} production attempts · ${acc(p.lessonCorrect||0,p.lessonWrong||0)}</span></div>`;
+      r.innerHTML=`<div class="word-cell"><div class="word-line"><span>#${item.rank} ${esc(item.word)}</span><button class="speak-btn" title="Pronounce">🔊</button></div></div><div><span>${esc(translationText(item)||'—')}</span> <button class="speak-btn edit-translation" title="Edit translation">✎</button></div><div><span class="small">${esc(item.pos)}</span><br><span class="muted">${esc(item.topic)}</span></div><div>${levelControlsHTML(state)}</div><div>${p.recognitionCorrect||0} recognition correct · ${p.recognitionWrong||0} wrong<br><span class="small">${production?production.uses||0:p.lessonUses||0} RU → EN · ${acc(production?production.correct||0:p.lessonCorrect||0,production?production.wrong||0:p.lessonWrong||0)}</span></div>`;
       const speak=r.querySelector('.speak-btn:not(.edit-translation)');if(speak)speak.onclick=()=>speakWord(item.word);
       const edit=r.querySelector('.edit-translation');if(edit)edit.onclick=()=>editCoreTranslation(item);
       bindLevelControls(r,item.word,state);dictList.appendChild(r)
@@ -904,14 +853,15 @@ function renderDictionary(){
   list.forEach(w=>{
     migrateWord(w);const recent=w.productionHistory.slice(-10),recentAcc=recent.length?Math.round(recent.filter(Boolean).length/recent.length*100)+'%':'—';
     const r=document.createElement('div');r.className='table-row';
-    r.innerHTML=`<div class="word-cell"><div class="word-line"><span>${esc(w.word)}</span><button class="speak-btn" title="Pronounce">🔊</button></div></div><div>${esc(translationText(w)||'—')} <button class="speak-btn edit-translation" title="Edit translation">✎</button></div><div>${levelControlsHTML(w.kind)}</div><div>${w.uses||0} attempts · ${acc(w.correct||0,w.wrong||0)}<br><span class="small">last ${recent.length||0}: ${recentAcc}</span></div><div><button class="icon-btn">✕</button></div>`;
+    r.innerHTML=`<div class="word-cell"><div class="word-line"><span>${esc(w.word)}</span><button class="speak-btn" title="Pronounce">🔊</button></div></div><div>${esc(translationText(w)||'—')} <button class="speak-btn edit-translation" title="Edit translation">✎</button></div><div>${levelControlsHTML(w.kind)}</div><div>${w.uses||0} RU → EN · ${acc(w.correct||0,w.wrong||0)}<br><span class="small">last ${recent.length||0}: ${recentAcc}</span></div><div><button class="icon-btn">✕</button></div>`;
     r.querySelector('.speak-btn').onclick=()=>speakWord(w.word);
     bindLevelControls(r,w.word,w.kind);
     r.querySelector('.edit-translation').onclick=()=>editCoreTranslation(w);
     r.querySelector('.icon-btn').onclick=()=>{words=words.filter(x=>x.id!==w.id);saveAll();renderDictionary();updateHome();newVocab()};dictList.appendChild(r)
   })
 }
-function addWord(){if(dictKind==='general')return;const w=wordInput.value.trim(),tr=translationInput.value.trim();if(!w)return;const existing=words.find(x=>norm(x.word)===norm(w));if(existing){existing.kind=dictKind;if(tr)existing.translation=tr}else{words.unshift({id:Date.now(),word:w,translation:tr,kind:dictKind,correct:0,wrong:0,uses:0})}wordInput.value='';translationInput.value='';saveAll();renderDictionary();updateHome()}
+function addWord(){const word=wordInput.value.trim();if(!word)return;addBankWord(word,translationInput.value.trim());wordInput.value='';translationInput.value='';saveAll();populateCoreFilters();renderDictionary();updateHome()}
+
 function renderUnits(){const done=Object.values(units).filter(Boolean).length;murphySummary.textContent=`${done} completed · ${115-done} left`;unitsBar.style.width=Math.round(done/115*100)+'%';unitsGrid.innerHTML='';murphyUnits.forEach(u=>{const item=document.createElement('label');item.className='unit-item'+(units[u.id]?' done':'');item.innerHTML=`<input type="checkbox" ${units[u.id]?'checked':''}><div><div class="title">Unit ${u.id} — ${esc(u.title)}</div><div class="meta">${units[u.id]?'Completed':'Not completed'}</div></div>`;item.querySelector('input').onchange=e=>{units[u.id]=e.target.checked;saveAll();renderUnits();updateHome()};unitsGrid.appendChild(item)})}
 function renderVerbs(){const q=norm(verbSearch.value);verbsList.innerHTML='';verbs.filter(v=>v.some(x=>norm(x).includes(q))).forEach(v=>{const r=document.createElement('div');r.className='table-row';r.innerHTML=`<div>${esc(v[0])}</div><div>${esc(v[1])}</div><div>${esc(v[2])}</div><div>${esc(v[3])}</div>`;verbsList.appendChild(r)})}
 function showGrammarModule(m){document.querySelector('.grammar-hub').style.display='none';murphyDetail.classList.toggle('show',m==='murphy');verbsDetail.classList.toggle('show',m==='verbs');(m==='murphy'?murphyDetail:verbsDetail).scrollIntoView({behavior:'smooth',block:'start'})}function backToGrammar(){murphyDetail.classList.remove('show');verbsDetail.classList.remove('show');document.querySelector('.grammar-hub').style.display='grid'}
@@ -941,13 +891,13 @@ function vocabList(){
 function newVocab(){
   const p=vocabList();vocabAnswer.value='';vocabFeedback.textContent='';vocabFeedback.className='feedback';vocabAnswered=false;
   if(trainerVocabKind==='general'){
-    vocabModeLabel.textContent='Core 1500 · General → Passive';
+    vocabModeLabel.textContent='Общий банк · английский → русский';
     vocabDirection.value='toTranslation';vocabDirection.disabled=true;
     trainerRuleText.textContent='5 correct English → Russian recognitions move a Core word to Passive.';
   }else{
     vocabModeLabel.textContent=trainerVocabKind==='passive'?'Passive vocabulary':'Active vocabulary';
     vocabDirection.disabled=false;
-    trainerRuleText.textContent=trainerVocabKind==='passive'?'Passive → Active: last 6 Russian → English attempts need at least 5 correct.':'Active → Passive: if the last 10 Russian → English attempts fall below 70%.';
+    trainerRuleText.textContent=trainerVocabKind==='passive'?'Пассивный → активный: 4 верных из последних 5 ответов русский → английский.':'Активный → пассивный: ниже 70% за последние 10 ответов или 3 ошибки подряд (русский → английский).';
   }
   if(!p.length){currentVocab=null;vocabPrompt.textContent=trainerVocabKind==='general'?'Core bank is loading or all Core words are already known.':(trainerVocabKind==='passive'?'No passive words available.':'No active words yet.');updateVocabStats();return}
   currentVocab=p[Math.floor(Math.random()*p.length)];
@@ -962,16 +912,12 @@ function checkVocab(){
   const expected=isWritingEnglish?currentVocab.word:translationText(currentVocab);
   const ok=answerMatches(vocabAnswer.value,expected);
   vocabAnswered=true;
-  if(ok){stats.vocabCorrect++;vocabFeedback.textContent='✓ Correct · '+expected;vocabFeedback.className='feedback good'}
-  else{stats.vocabWrong++;vocabFeedback.textContent=`✕ Correct answer: ${expected}`;vocabFeedback.className='feedback bad'}
-  if(isGeneral){
-    const moved=recordRecognition(currentVocab,ok);
-    if(moved)vocabFeedback.textContent+=' · moved to Passive';
-  }else if(isWritingEnglish){
-    const changed=recordProduction(currentVocab,ok);
-    if(changed==='active')vocabFeedback.textContent+=' · moved to Active';
-    if(changed==='passive')vocabFeedback.textContent+=' · moved back to Passive';
-  }
+  const before=coreWordState(currentVocab);
+  recordWordAttempt(currentVocab,isWritingEnglish?'ru-en':'en-ru',ok);
+  vocabFeedback.textContent=(ok?'✓ Correct · ':'✕ Correct answer: ')+expected;
+  vocabFeedback.className='feedback '+(ok?'good':'bad');
+  const after=coreWordState(currentVocab);
+  if(before!==after)vocabFeedback.textContent+=' · '+after;
   saveAll();renderDictionary();updateHome();updateVocabStats()
 }
 function updateVocabStats(){
@@ -980,7 +926,58 @@ function updateVocabStats(){
   vocabStatsText.textContent=`${label}: ${p.length} words · Session accuracy: ${acc(stats.vocabCorrect,stats.vocabWrong)}`
 }
 function dateKey(y,m,d){return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`} function renderCalendar(){const y=calDate.getFullYear(),m=calDate.getMonth();calendarTitle.textContent=calDate.toLocaleDateString('en-US',{month:'long',year:'numeric'});calendarGrid.innerHTML='';const first=new Date(y,m,1);const start=(first.getDay()+6)%7;const days=new Date(y,m+1,0).getDate();const prevDays=new Date(y,m,0).getDate();for(let i=0;i<42;i++){let day,monthOffset=0,muted=false;if(i<start){day=prevDays-start+i+1;monthOffset=-1;muted=true}else if(i>=start+days){day=i-start-days+1;monthOffset=1;muted=true}else day=i-start+1;const dt=new Date(y,m+monthOffset,day);const key=dateKey(dt.getFullYear(),dt.getMonth(),dt.getDate());const el=document.createElement('div');el.className='day'+(muted?' muted-day':'')+(studyDays[key]?' studied':'');el.textContent=day;el.title='Double-click to mark/unmark study day';el.ondblclick=()=>{studyDays[key]=!studyDays[key];if(!studyDays[key])delete studyDays[key];saveAll();renderCalendar();updateHome()};calendarGrid.appendChild(el)}}
-function importLessonData(){importStatus.textContent='';importStatus.className='status';let data;try{data=JSON.parse(lessonData.value)}catch(e){importStatus.textContent='Invalid JSON';importStatus.classList.add('bad');return}if(!data||!Array.isArray(data.words)){importStatus.textContent='Need an object with a words array';importStatus.classList.add('bad');return}let added=0,updated=0;for(const item of data.words){if(!item||!item.word)continue;const key=norm(item.word);let w=words.find(x=>norm(x.word)===key);if(!w){w={id:Date.now()+Math.random(),word:item.word,translation:item.translation||'',kind:item.kind==='active'?'active':'passive',correct:0,wrong:0,uses:0};words.unshift(w);added++}else updated++;if(item.translation)w.translation=item.translation;if(item.kind==='active'||item.kind==='passive')w.kind=item.kind;const addCorrect=Number(item.correct||0),addWrong=Number(item.wrong||0);migrateWord(w);for(let i=0;i<addCorrect;i++){w.correct=(w.correct||0)+1;w.uses=(w.uses||0)+1;w.productionHistory.push(true)}for(let i=0;i<addWrong;i++){w.wrong=(w.wrong||0)+1;w.uses=(w.uses||0)+1;w.productionHistory.push(false)}if(w.productionHistory.length>30)w.productionHistory=w.productionHistory.slice(-30);evaluateProduction(w);maybePromoteWord(w)}if(data.trainer){stats.vocabCorrect+=Number(data.trainer.vocabCorrect||0);stats.vocabWrong+=Number(data.trainer.vocabWrong||0);stats.verbCorrect+=Number(data.trainer.verbCorrect||0);stats.verbWrong+=Number(data.trainer.verbWrong||0)}if(data.date&&/^\d{4}-\d{2}-\d{2}$/.test(data.date))studyDays[data.date]=true;saveAll();renderDictionary();updateHome();renderCalendar();importStatus.textContent=`Imported: ${added} new, ${updated} updated`;importStatus.classList.add('good')}
+let lessonImportRunning=false;
+async function importLessonData(){
+  if(lessonImportRunning)return;
+  importStatus.textContent='';importStatus.className='status';
+  let data,entries;
+  const integer=value=>{if(value==null)return 0;if(!Number.isInteger(value)||value<0||value>10000)throw new Error('Счётчики должны быть целыми числами от 0 до 10000');return value};
+  try{
+    data=JSON.parse(lessonData.value);
+    if(!data||!Array.isArray(data.words)||data.words.length>10000)throw new Error('Нужен объект с массивом words');
+    if(data.trainer)for(const name of ['vocabCorrect','vocabWrong','verbCorrect','verbWrong'])integer(data.trainer[name]);
+    entries=data.words.map(item=>{
+      if(!item||typeof item.word!=='string'||!item.word.trim())throw new Error('Укажите word для каждого слова');
+      if(item.direction!=null&&!['en-ru','ru-en'].includes(item.direction))throw new Error('Направление: en-ru или ru-en');
+      if(item.attempts!=null&&(!Array.isArray(item.attempts)||item.attempts.length>10000||item.attempts.some(a=>!a||!['en-ru','ru-en'].includes(a.direction)||typeof a.correct!=='boolean')))throw new Error('Каждая попытка: {direction: "en-ru" или "ru-en", correct: true или false}');
+      return {word:item.word.trim(),translation:typeof item.translation==='string'?item.translation:'',attempts:item.attempts,
+        direction:item.direction||'ru-en',correct:integer(item.correct),wrong:integer(item.wrong),recognitionCorrect:integer(item.recognitionCorrect),recognitionWrong:integer(item.recognitionWrong)};
+    });
+  }catch(error){importStatus.textContent=error.message||'Некорректный JSON';importStatus.classList.add('bad');return;}
+  lessonImportRunning=true;
+  try{
+    const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(data)));
+    const key=data.id?'id:'+String(data.id):'sha256:'+Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join('');
+    if((settings.importedLessonKeys||[]).includes(key)){importStatus.textContent='Этот урок уже учтён. Повторный импорт не меняет статистику.';return;}
+    let added=0,answers=0,unordered=false;
+    for(const entry of entries){
+      if(!getCoreItem(entry.word))added++;
+      const item=addBankWord(entry.word,entry.translation);
+      if(entry.attempts){for(const attempt of entry.attempts){recordWordAttempt(item,attempt.direction,attempt.correct);answers++;}}
+      else{
+        if(entry.direction==='en-ru'){
+          const p=coreProgressFor(item.word);p.recognitionCorrect=(p.recognitionCorrect||0)+entry.correct;p.recognitionWrong=(p.recognitionWrong||0)+entry.wrong;
+          if(coreWordState(item)==='general'&&p.recognitionCorrect>=5)promoteGeneralToPassive(item);
+        }else if(entry.correct+entry.wrong){
+          const w=words.find(x=>norm(x.word)===norm(item.word));
+          if(w&&w.kind!=='general')BarkalooProgression.aggregate(w,entry.correct,entry.wrong);else generalProduction(item,false,entry);
+          unordered=true;
+        }
+        if(entry.recognitionCorrect+entry.recognitionWrong){const p=coreProgressFor(item.word);p.recognitionCorrect=(p.recognitionCorrect||0)+entry.recognitionCorrect;p.recognitionWrong=(p.recognitionWrong||0)+entry.recognitionWrong;if(coreWordState(item)==='general'&&p.recognitionCorrect>=5)promoteGeneralToPassive(item);}
+        stats.vocabCorrect=(stats.vocabCorrect||0)+entry.correct+entry.recognitionCorrect;stats.vocabWrong=(stats.vocabWrong||0)+entry.wrong+entry.recognitionWrong;
+        answers+=entry.correct+entry.wrong+entry.recognitionCorrect+entry.recognitionWrong;
+      }
+    }
+    if(!answers&&data.trainer){stats.vocabCorrect+=(Number(data.trainer.vocabCorrect)||0);stats.vocabWrong+=(Number(data.trainer.vocabWrong)||0);}
+    if(data.trainer){stats.verbCorrect+=(Number(data.trainer.verbCorrect)||0);stats.verbWrong+=(Number(data.trainer.verbWrong)||0);}
+    settings.importedLessonKeys=[...(settings.importedLessonKeys||[]),key];
+    if(data.date&&/^\d{4}-\d{2}-\d{2}$/.test(data.date))studyDays[data.date]=true;
+    saveAll();populateCoreFilters();renderDictionary();updateHome();renderCalendar();renderLesson();
+    importStatus.textContent=`Учтено ${answers} ответов; ${added} новых слов в общем банке.`+(unordered?' Суммы без порядка сохранены; для переходов нужны последние ответы по порядку.':'');importStatus.classList.add('good');
+  }catch(error){importStatus.textContent='Импорт не завершён: '+error.message;importStatus.classList.add('bad');}
+  finally{lessonImportRunning=false;}
+}
+
 
 function buildBackup(){
   return {
@@ -1068,7 +1065,7 @@ function importBackupFileHandler(file){
 const lessonTitles={daily:'Ежедневный урок',errors:'Разбор ошибок',new:'10 новых слов'};
 function lessonToday(){const d=new Date();return dateKey(d.getFullYear(),d.getMonth(),d.getDate())}
 function currentLesson(){return BarkalooLessons.valid(settings.trainerLesson)?settings.trainerLesson:null}
-function lessonExamples(word){return LESSON_EXAMPLES[norm(word)]||[]}
+function lessonExamples(word){return getCoreItem(word)?.examples||LESSON_EXAMPLES[norm(word)]||[]}
 function lessonCandidates(type){
   return BarkalooLessons.select(type,words.filter(item=>translationText(item)),coreBank,coreProgress,word=>lessonExamples(word).length>=2)
     .filter(item=>translationText(item));
@@ -1082,6 +1079,7 @@ function startLesson(type){
   const items=lessonCandidates(type);
   if(!items.length){document.getElementById('lessonMenuStatus').textContent=type==='errors'?'Пока нет пассивных слов со статистикой ответов. Начните с ежедневного урока.':type==='new'?'Нет незнакомых слов с доступными примерами.':'В пассивном словаре пока нет слов с переводами.';return;}
   settings.trainerLesson=BarkalooLessons.create(type,items.map(item=>({...item,translation:translationText(item)})),lessonToday());
+  settings.trainerLesson.direction=type==='new'?'en-ru':'ru-en';
   document.getElementById('lessonMenuStatus').textContent='';saveAll();renderLesson();document.getElementById('lessonPanel').scrollIntoView({block:'start'});if(type!=='new')document.getElementById('lessonAnswer').focus({preventScroll:true});
 }
 function highlightedExample(text,word){
@@ -1115,14 +1113,19 @@ function renderLesson(){
     document.getElementById('lessonExamples').innerHTML=lessonExamples(item.word).slice(0,3).map(([en,ru])=>`<li><p>${highlightedExample(en,item.word)}</p><p class="muted">${esc(ru)}</p></li>`).join('');
     document.getElementById('lessonStudyNext').textContent=s.studyIndex===s.queue.length-1?'Начать тест':'Следующее слово';
   }else{
-    document.getElementById('lessonPrompt').textContent=item.translation;
+    const recognition=s.direction==='en-ru';
+    document.getElementById('lessonTestInstruction').textContent=recognition?'Напишите русский перевод английского слова':'Напишите английское слово по русскому переводу';
+    document.getElementById('lessonAnswerLabel').textContent=recognition?'Ответ на русском':'Ответ на английском';
+    document.getElementById('lessonPrompt').textContent=recognition?item.word:item.translation;
+    document.getElementById('lessonAnswer').lang=recognition?'ru':'en';
+    document.getElementById('lessonAnswer').placeholder=recognition?'Перевод':'English word';
     const result=s.results[s.index],answer=document.getElementById('lessonAnswer');
     answer.value=result?result.answer:'';answer.disabled=!!result;
     document.getElementById('lessonCheck').disabled=!!result;
     document.getElementById('lessonUnknown').disabled=!!result;
     document.getElementById('lessonNext').hidden=!result;
     document.getElementById('lessonNext').textContent=s.index===s.queue.length-1?'Результаты':'Дальше';
-    const feedback=document.getElementById('lessonFeedback');feedback.textContent=result?(result.ok?'✓ Верно: ':'✕ Правильный ответ: ')+item.word:'';
+    const feedback=document.getElementById('lessonFeedback');feedback.textContent=result?(result.ok?'✓ Верно: ':'✕ Правильный ответ: ')+(recognition?item.translation:item.word):'';
     feedback.className='feedback'+(result?(result.ok?' good':' bad'):'');
   }
 }
@@ -1135,16 +1138,10 @@ function answerLesson(unknown=false){
   const s=currentLesson();if(!s||s.phase!=='test'||s.results[s.index])return;
   const item=s.queue[s.index],input=document.getElementById('lessonAnswer').value.trim();
   if(!unknown&&!input){document.getElementById('lessonFeedback').textContent='Введите ответ или нажмите «Не знаю».';return;}
-  const ok=!unknown&&answerMatches(input,item.word);
-  let w=words.find(x=>norm(x.word)===norm(item.word));
-  if(w){recordProduction(w,ok);}else{
-    const p=coreProgressFor(item.word);p.lessonUses=(p.lessonUses||0)+1;
-    if(ok)p.lessonCorrect=(p.lessonCorrect||0)+1;else p.lessonWrong=(p.lessonWrong||0)+1;
-    p.lessonHistory=[...(p.lessonHistory||[]),ok].slice(-30);
-    if(ok){w=promoteGeneralToPassive(getCoreItem(item.word)||item);}
-  }
-  if(ok)stats.vocabCorrect=(stats.vocabCorrect||0)+1;else stats.vocabWrong=(stats.vocabWrong||0)+1;
-  s.results.push({word:item.word,translation:item.translation,answer:unknown?'':input,ok});
+  const direction=s.direction||'ru-en';
+  const ok=!unknown&&answerMatches(input,direction==='en-ru'?item.translation:item.word);
+  recordWordAttempt(getCoreItem(item.word)||item,direction,ok);
+  s.results.push({word:item.word,translation:item.translation,answer:unknown?'':input,direction,ok});
   studyDays[lessonToday()]=true;
   saveAll();if(document.getElementById('dictionary').classList.contains('active'))renderDictionary();updateHome();renderCalendar();updateVocabStats();renderLesson();
 }
@@ -1184,7 +1181,7 @@ calibrationSpeak.onclick=()=>{const item=calibrationCurrent();if(item)speakWord(
 calibrationEditTranslation.onclick=()=>editCoreTranslation(calibrationCurrent());
 calibrationPrev.onclick=()=>{if(calibrationIndex>0)calibrationIndex--;renderCalibration()};
 calibrationSkip.onclick=()=>{if(calibrationIndex<coreBank.length-1)calibrationIndex++;renderCalibration()};
-document.querySelectorAll('[data-cal-level]').forEach(b=>b.onclick=()=>setCalibrationLevel(b.dataset.calLevel));
+
 document.addEventListener('keydown',calibrationKeyHandler);pastInput.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();if(verbAnswered)newVerb();else checkVerb()}};partInput.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();if(verbAnswered)newVerb();else checkVerb()}};vocabAnswer.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();if(vocabAnswered)newVocab();else checkVocab()}};prevMonth.onclick=()=>{calDate=new Date(calDate.getFullYear(),calDate.getMonth()-1,1);renderCalendar()};nextMonth.onclick=()=>{calDate=new Date(calDate.getFullYear(),calDate.getMonth()+1,1);renderCalendar()};todayMonth.onclick=()=>{const n=new Date();calDate=new Date(n.getFullYear(),n.getMonth(),1);renderCalendar()};importToggle.onclick=()=>importBox.classList.toggle('show');importLesson.onclick=importLessonData;
 applyEmbeddedBackupOnce();words.forEach(migrateWord);applyPromotions();saveAll();syncVoiceControls();applyTheme();renderDictionary();renderUnits();renderVerbs();renderCalendar();updateHome();updateVerbStats();updateVocabStats();newVerb();newVocab();setMenu(innerWidth>820);loadCoreBank();renderLesson();
 </script>
