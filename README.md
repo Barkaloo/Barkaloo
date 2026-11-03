@@ -92,3 +92,37 @@ a database migration or new Supabase permissions.
 
 The browser test also checks legacy data preservation, all three theme modes,
 synchronizing the selected theme and accepting synonyms in each vocabulary level.
+
+### Structured trainer lessons
+
+- Daily: the 100 distinct passive words with the lowest `uses`, regardless of
+  correctness; alphabetic ties. A smaller passive vocabulary gives a smaller lesson.
+- Mistakes: up to 100 passive words with the lowest lifetime `correct / (correct +
+  wrong)`. Untested words have no accuracy and are excluded. Ties prefer more
+  mistakes, then fewer uses, then alphabetical order.
+- New words: ten currently general/unknown core words, with 2–3 highlighted
+  bilingual example sentences, then a Russian → English test on the same words.
+  Selection prefers fewer previous lesson attempts, then core frequency rank.
+  Viewing cards does not count as an answer. A correct test answer moves a new
+  word to passive, carrying over all prior production attempts, including errors.
+
+Each queue is frozen at the start. Answers count once, including explicit
+“Не знаю” answers. Passive words keep the existing production/promotion rules.
+General-word production counters live in `coreProgress` until promotion; the
+General dictionary shows those counts. Completed answers also mark the study day.
+`settings.trainerLesson` stores the active queue, phase and results in the existing
+backup/Supabase payload, so reload and sync can resume without double-counting.
+There is one current lesson at a time; it can be finished early without losing
+answered-word statistics. Starting again builds a new queue from current counts.
+No Supabase schema or credential changes are required.
+
+Examples cover all 1,500 bundled core headwords and work offline. Dataset
+attribution and the CC BY 4.0 license are in `third_party/SMARTool.md` and
+`third_party/SMARTool-LICENSE.txt`; original supplements are in
+`source/lesson-example-supplement.txt`. The build inlines `source/lessons.js` and
+`source/lesson-examples.json` so root/dist static hosting remains self-contained.
+
+Validation: `node --test archive.test.cjs cloud-sync.test.cjs lessons.test.cjs`,
+`node test/cloud-browser.cjs`, and `node test/lesson-browser.cjs`. The latter
+completes all 100 daily questions, verifies rankings and counters, reload/resume,
+10 learning cards followed by testing, and simulated two-device synchronization.

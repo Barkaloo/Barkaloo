@@ -182,6 +182,24 @@ input,textarea,select{background:rgba(255,255,255,.82);color:var(--text);border:
 [data-theme="dark"] :is(input,textarea)::placeholder{color:var(--muted);opacity:1}
 .theme-control{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+[hidden]{display:none!important}
+.lesson-menu,.lesson-panel{margin-bottom:18px}
+.lesson-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.lesson-option{display:flex;flex-direction:column;gap:10px;text-align:left;padding:20px;border:1px solid var(--line);border-radius:18px;background:var(--surface-soft);color:var(--text)}
+.lesson-option strong{font-size:18px}.lesson-option span{color:var(--muted);font-size:13px;line-height:1.6}
+.lesson-option:hover{border-color:var(--accent);box-shadow:var(--shadow)}
+.lesson-test,.lesson-study{max-width:700px;margin:24px auto;text-align:center}
+.lesson-prompt{font-size:24px;overflow-wrap:anywhere}
+.lesson-test input{display:block;width:min(100%,380px);margin:8px auto 18px}
+.lesson-examples{text-align:left;padding:0;list-style:none;display:grid;gap:12px;margin:24px 0}
+.lesson-examples li{padding:16px;border:1px solid var(--line);border-radius:16px;background:var(--surface-soft)}
+.lesson-examples p{margin:0 0 8px}.lesson-examples p:last-child{margin:0}
+.lesson-examples mark{background:var(--accent-3);color:var(--text);font-weight:800;padding:1px 4px;border-radius:4px}
+.lesson-panel a{color:var(--accent)}
+.free-practice summary{cursor:pointer;color:var(--muted);padding:12px 0 18px}
+#lessonMistakes{padding-left:22px}#lessonMistakes li{margin:12px 0;overflow-wrap:anywhere}
+@media(max-width:820px){.lesson-options{grid-template-columns:1fr}.lesson-panel .panel-head{flex-wrap:wrap}.lesson-option{padding:16px}}
 </style>
 </head>
 <body>
@@ -349,6 +367,35 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
   </section>
 
   <section class="section" id="trainer">
+    <div class="lesson-menu panel">
+      <div class="panel-head"><h2>Уроки</h2><button class="btn" id="resumeLesson" hidden>Продолжить урок</button></div>
+      <div class="lesson-options">
+        <button class="lesson-option" data-lesson="daily"><strong>Ежедневный урок</strong><span>До 100 пассивных слов с наименьшим числом применений. Русский → английский.</span></button>
+        <button class="lesson-option" data-lesson="errors"><strong>Разбор ошибок</strong><span>До 100 пассивных слов с худшей долей правильных ответов. Слова без попыток не участвуют.</span></button>
+        <button class="lesson-option" data-lesson="new"><strong>10 новых слов</strong><span>Незнакомые слова из общего словаря: карточки с примерами, затем тест. Русский → английский.</span></button>
+      </div>
+      <p class="hint">Слова не повторяются в пределах урока. Каждая проверка ответа учитывается в словаре; просмотр карточек — нет. Незаконченный урок сохраняется.</p>
+      <p id="lessonMenuStatus" role="status" aria-live="polite"></p>
+    </div>
+    <div class="panel lesson-panel" id="lessonPanel" hidden>
+      <div class="panel-head"><h2 id="lessonTitle"></h2><button class="btn" id="finishLessonEarly">Завершить досрочно</button></div>
+      <p class="muted" id="lessonProgressText" aria-live="polite"></p><div class="progress-bar"><div id="lessonProgressBar"></div></div>
+      <div id="lessonStudy" class="lesson-study" hidden>
+        <div class="trainer-audio"><h3 class="prompt" id="lessonStudyWord"></h3><button class="speak-btn" id="lessonStudySpeak" aria-label="Произнести слово">🔊</button></div>
+        <p id="lessonStudyTranslation"></p><ol id="lessonExamples" class="lesson-examples"></ol><p class="hint">Примеры: SMARTool (Bast, Janda и др.), <a href="https://doi.org/10.18710/QNAPNE" target="_blank" rel="noopener">набор данных</a>, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>; примеры отобраны и дополнены Barkaloo.</p>
+        <button class="btn primary" id="lessonStudyNext">Следующее слово</button>
+        <p class="hint">После карточек — тест. Верный ответ переводит новое слово в пассивный словарь.</p>
+      </div>
+      <div id="lessonTest" class="lesson-test" hidden>
+        <p class="small">Напишите английское слово по русскому переводу</p><h3 id="lessonPrompt" class="lesson-prompt"></h3>
+        <label for="lessonAnswer" class="small">Ответ на английском</label><input id="lessonAnswer" lang="en" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="English word">
+        <div class="practice-actions"><button class="btn primary" id="lessonCheck">Проверить</button><button class="btn" id="lessonUnknown">Не знаю</button><button class="btn primary" id="lessonNext" hidden>Дальше</button></div>
+        <div id="lessonFeedback" class="feedback" role="status"></div>
+      </div>
+      <div id="lessonSummary" hidden><h3 id="lessonScore"></h3><p class="muted">Ответы сохранены в статистике слов. Можно начать следующий урок.</p><ul id="lessonMistakes"></ul></div>
+    </div>
+    <details class="free-practice"><summary>Свободная тренировка и неправильные глаголы</summary>
+
     <div class="panel">
       <div class="panel-head"><h2>Trainer</h2></div>
       <div class="trainer-switch" id="trainerSwitch" style="justify-content:center;margin-bottom:18px">
@@ -378,10 +425,12 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
         <div class="feedback" id="verbFeedback"></div><div class="small" id="verbStatsText"></div>
       </div>
     </div>
+    </details>
   </section>
 </main>
 </div>
 <!-- BARKALOO_CLOUD_RUNTIME -->
+<!-- BARKALOO_LESSONS -->
 <script>
 const verbs=[["arise", "arose", "arisen", "возникать"], ["awake", "awoke", "awoken", "просыпаться"], ["be", "was/were", "been", "быть"], ["bear", "bore", "borne/born", "нести; терпеть"], ["beat", "beat", "beaten", "бить"], ["become", "became", "become", "становиться"], ["begin", "began", "begun", "начинать"], ["bend", "bent", "bent", "сгибать"], ["bet", "bet", "bet", "держать пари"], ["bind", "bound", "bound", "связывать"], ["bite", "bit", "bitten", "кусать"], ["bleed", "bled", "bled", "кровоточить"], ["blow", "blew", "blown", "дуть"], ["break", "broke", "broken", "ломать"], ["breed", "bred", "bred", "разводить"], ["bring", "brought", "brought", "приносить"], ["broadcast", "broadcast", "broadcast", "транслировать"], ["build", "built", "built", "строить"], ["burn", "burnt/burned", "burnt/burned", "гореть; жечь"], ["burst", "burst", "burst", "лопаться"], ["buy", "bought", "bought", "покупать"], ["cast", "cast", "cast", "бросать; назначать роль"], ["catch", "caught", "caught", "ловить"], ["choose", "chose", "chosen", "выбирать"], ["cling", "clung", "clung", "цепляться"], ["come", "came", "come", "приходить"], ["cost", "cost", "cost", "стоить"], ["creep", "crept", "crept", "ползти"], ["cut", "cut", "cut", "резать"], ["deal", "dealt", "dealt", "иметь дело"], ["dig", "dug", "dug", "копать"], ["do", "did", "done", "делать"], ["draw", "drew", "drawn", "рисовать; тянуть"], ["dream", "dreamt/dreamed", "dreamt/dreamed", "мечтать"], ["drink", "drank", "drunk", "пить"], ["drive", "drove", "driven", "водить"], ["eat", "ate", "eaten", "есть"], ["fall", "fell", "fallen", "падать"], ["feed", "fed", "fed", "кормить"], ["feel", "felt", "felt", "чувствовать"], ["fight", "fought", "fought", "драться"], ["find", "found", "found", "находить"], ["flee", "fled", "fled", "убегать"], ["fly", "flew", "flown", "летать"], ["forbid", "forbade", "forbidden", "запрещать"], ["forecast", "forecast", "forecast", "прогнозировать"], ["forget", "forgot", "forgotten", "забывать"], ["forgive", "forgave", "forgiven", "прощать"], ["freeze", "froze", "frozen", "замерзать"], ["get", "got", "got/gotten", "получать"], ["give", "gave", "given", "давать"], ["go", "went", "gone", "идти"], ["grind", "ground", "ground", "молоть"], ["grow", "grew", "grown", "расти"], ["hang", "hung", "hung", "висеть"], ["have", "had", "had", "иметь"], ["hear", "heard", "heard", "слышать"], ["hide", "hid", "hidden", "прятать"], ["hit", "hit", "hit", "ударять"], ["hold", "held", "held", "держать"], ["hurt", "hurt", "hurt", "причинять боль"], ["keep", "kept", "kept", "держать"], ["kneel", "knelt/kneeled", "knelt/kneeled", "становиться на колени"], ["know", "knew", "known", "знать"], ["lay", "laid", "laid", "класть"], ["lead", "led", "led", "вести"], ["lean", "leant/leaned", "leant/leaned", "наклоняться"], ["leap", "leapt/leaped", "leapt/leaped", "прыгать"], ["learn", "learnt/learned", "learnt/learned", "учить"], ["leave", "left", "left", "оставлять"], ["lend", "lent", "lent", "одалживать"], ["let", "let", "let", "позволять"], ["lie", "lay", "lain", "лежать"], ["light", "lit/lighted", "lit/lighted", "зажигать"], ["lose", "lost", "lost", "терять"], ["make", "made", "made", "делать"], ["mean", "meant", "meant", "значить"], ["meet", "met", "met", "встречать"], ["mistake", "mistook", "mistaken", "ошибочно принимать"], ["pay", "paid", "paid", "платить"], ["prove", "proved", "proven/proved", "доказывать"], ["put", "put", "put", "класть"], ["quit", "quit", "quit", "бросать"], ["read", "read", "read", "читать"], ["ride", "rode", "ridden", "ездить верхом"], ["ring", "rang", "rung", "звонить"], ["rise", "rose", "risen", "подниматься"], ["run", "ran", "run", "бежать"], ["say", "said", "said", "говорить"], ["see", "saw", "seen", "видеть"], ["seek", "sought", "sought", "искать"], ["sell", "sold", "sold", "продавать"], ["send", "sent", "sent", "отправлять"], ["set", "set", "set", "устанавливать"], ["shake", "shook", "shaken", "трясти"], ["shine", "shone", "shone", "сиять"], ["shoot", "shot", "shot", "стрелять"], ["show", "showed", "shown", "показывать"], ["shrink", "shrank", "shrunk", "сжиматься"], ["shut", "shut", "shut", "закрывать"], ["sing", "sang", "sung", "петь"], ["sink", "sank", "sunk", "тонуть"], ["sit", "sat", "sat", "сидеть"], ["sleep", "slept", "slept", "спать"], ["slide", "slid", "slid", "скользить"], ["smell", "smelt/smelled", "smelt/smelled", "пахнуть"], ["speak", "spoke", "spoken", "говорить"], ["spell", "spelt/spelled", "spelt/spelled", "писать по буквам"], ["spend", "spent", "spent", "тратить"], ["spill", "spilt/spilled", "spilt/spilled", "проливать"], ["spin", "spun", "spun", "вращать"], ["spit", "spat/spit", "spat/spit", "плевать"], ["split", "split", "split", "разделять"], ["spread", "spread", "spread", "распространять"], ["spring", "sprang", "sprung", "прыгать; возникать"], ["stand", "stood", "stood", "стоять"], ["steal", "stole", "stolen", "красть"], ["stick", "stuck", "stuck", "приклеивать"], ["sting", "stung", "stung", "жалить"], ["stink", "stank", "stunk", "вонять"], ["strike", "struck", "struck/stricken", "ударять"], ["swear", "swore", "sworn", "клясться"], ["sweep", "swept", "swept", "подметать"], ["swim", "swam", "swum", "плавать"], ["swing", "swung", "swung", "качаться"], ["take", "took", "taken", "брать"], ["teach", "taught", "taught", "учить"], ["tear", "tore", "torn", "рвать"], ["tell", "told", "told", "рассказывать"], ["think", "thought", "thought", "думать"], ["throw", "threw", "thrown", "бросать"], ["understand", "understood", "understood", "понимать"], ["wake", "woke", "woken", "просыпаться"], ["wear", "wore", "worn", "носить"], ["weep", "wept", "wept", "плакать"], ["win", "won", "won", "побеждать"], ["wind", "wound", "wound", "наматывать"], ["write", "wrote", "written", "писать"], ["abide", "abode/abided", "abode/abided", "соблюдать"], ["alight", "alit/alighted", "alit/alighted", "сходить; приземляться"], ["behold", "beheld", "beheld", "созерцать"], ["beset", "beset", "beset", "осаждать"], ["bid", "bid/bade", "bid/bidden", "предлагать цену; велеть"], ["clothe", "clad/clothed", "clad/clothed", "одевать"], ["dive", "dived/dove", "dived", "нырять"], ["dwell", "dwelt/dwelled", "dwelt/dwelled", "обитать"], ["fit", "fit/fitted", "fit/fitted", "подходить"], ["foresee", "foresaw", "foreseen", "предвидеть"], ["foretell", "foretold", "foretold", "предсказывать"], ["forsake", "forsook", "forsaken", "покидать"], ["input", "input/inputted", "input/inputted", "вводить данные"], ["interweave", "interwove", "interwoven", "переплетать"], ["mislead", "misled", "misled", "вводить в заблуждение"], ["misread", "misread", "misread", "неправильно читать"], ["offset", "offset", "offset", "компенсировать"], ["outbid", "outbid", "outbid", "перебивать цену"], ["outdo", "outdid", "outdone", "превосходить"], ["outgrow", "outgrew", "outgrown", "перерастать"], ["outrun", "outran", "outrun", "обгонять"], ["overcome", "overcame", "overcome", "преодолевать"], ["overdo", "overdid", "overdone", "переусердствовать"], ["overdraw", "overdrew", "overdrawn", "превышать баланс"], ["overeat", "overate", "overeaten", "переедать"], ["overhear", "overheard", "overheard", "подслушивать"], ["overpay", "overpaid", "overpaid", "переплачивать"], ["override", "overrode", "overridden", "отменять; переопределять"], ["overrun", "overran", "overrun", "захватывать; переполнять"], ["oversee", "oversaw", "overseen", "контролировать"], ["oversleep", "overslept", "overslept", "проспать"], ["overtake", "overtook", "overtaken", "обгонять"], ["overthrow", "overthrew", "overthrown", "свергать"], ["partake", "partook", "partaken", "принимать участие"], ["plead", "pleaded/pled", "pleaded/pled", "умолять; заявлять в суде"], ["preset", "preset", "preset", "предустанавливать"], ["rebuild", "rebuilt", "rebuilt", "перестраивать"], ["redo", "redid", "redone", "переделывать"], ["remake", "remade", "remade", "переделывать"], ["repay", "repaid", "repaid", "возвращать долг"], ["rerun", "reran", "rerun", "запускать снова"], ["resell", "resold", "resold", "перепродавать"], ["reset", "reset", "reset", "сбрасывать"], ["retake", "retook", "retaken", "пересдавать; брать снова"], ["rewrite", "rewrote", "rewritten", "переписывать"], ["rid", "rid", "rid", "избавлять"], ["saw", "sawed", "sawn/sawed", "пилить"], ["sew", "sewed", "sewn/sewed", "шить"], ["shave", "shaved", "shaven/shaved", "бриться"], ["shear", "sheared", "shorn/sheared", "стричь"], ["shed", "shed", "shed", "проливать; сбрасывать"], ["slay", "slew", "slain", "убивать"], ["sling", "slung", "slung", "швырять"], ["slit", "slit", "slit", "разрезать"], ["sow", "sowed", "sown/sowed", "сеять"], ["speed", "sped/speeded", "sped/speeded", "ускорять"], ["stride", "strode", "stridden", "шагать"], ["strive", "strove/strived", "striven/strived", "стремиться"], ["tread", "trod", "trodden/trod", "ступать"], ["undergo", "underwent", "undergone", "подвергаться"], ["undertake", "undertook", "undertaken", "предпринимать"], ["undo", "undid", "undone", "отменять; развязывать"], ["upset", "upset", "upset", "расстраивать"], ["withhold", "withheld", "withheld", "удерживать"], ["withstand", "withstood", "withstood", "противостоять"], ["wring", "wrung", "wrung", "выжимать"]];
 const murphyTitles=["am / is / are", "am / is / are — questions", "Present continuous", "Present continuous questions", "Present simple", "Present simple negatives", "Present simple questions", "Present continuous vs present simple", "have / have got", "was / were", "Past simple", "Past simple negatives & questions", "Past continuous", "Past continuous vs past simple", "Present perfect 1", "Present perfect 2", "Present perfect 3", "Present perfect 4", "for / since / ago", "Present perfect vs past simple", "Passive 1", "Passive 2", "be / have / do", "Regular & irregular verbs", "Future arrangements", "going to", "will / shall 1", "will / shall 2", "might", "can / could", "must / mustn’t / needn’t", "should", "have to", "would like", "Imperatives & let’s", "used to", "there is / there are", "there was / has been / will be", "it", "Auxiliary verbs", "Question echoes", "too / either / so / neither", "Negatives", "Questions 1", "Questions 2", "Questions 3", "What / Which / How", "How long does it take?", "Indirect questions", "Reported speech", "Verb + -ing", "to-infinitive & -ing", "Verb + object + to", "Purpose with to", "go expressions", "get", "do / make", "have", "Object pronouns", "Possessive adjectives", "Possessive pronouns", "Pronoun forms", "Reflexive pronouns", "Possessive ’s", "a / an", "Singular & plural", "Countable / uncountable 1", "Countable / uncountable 2", "a / an vs the", "the", "go to work / home / cinema", "General nouns without the", "Place names with the", "this / that / these / those", "one / ones", "some / any", "no / none / any", "nobody / nothing", "somebody / anything / nowhere", "every / all", "all / most / some / any", "both / either / neither", "a lot / much / many", "a little / a few", "Adjectives", "Adverbs", "Comparatives 1", "Comparatives 2", "not as ... as", "Superlatives", "enough", "too", "Word order 1", "Word order 2", "still / yet / already", "Object order", "and / but / or / so / because", "when clauses", "First conditional", "Second conditional", "Relative clauses 1", "Relative clauses 2", "Time prepositions", "from / to / until / since / for", "before / after / during / while", "Place prepositions 1", "Place prepositions 2", "Place prepositions 3", "Position prepositions", "Movement prepositions", "on / at / by / with / about", "Adjective + preposition", "Verb + preposition", "Phrasal verbs 1", "Phrasal verbs 2"];
@@ -568,7 +617,8 @@ function recordProduction(w,ok){
 function promoteGeneralToPassive(item){
   let w=words.find(x=>norm(x.word)===norm(item.word));
   if(!w){
-    w={id:Date.now()+Math.random(),word:item.word,translation:item.translation||'',kind:'passive',correct:0,wrong:0,uses:0,productionHistory:[],coreRank:item.rank};
+    const p=coreProgressFor(item.word);
+    w={id:Date.now()+Math.random(),word:item.word,translation:item.translation||'',kind:'passive',correct:p.lessonCorrect||0,wrong:p.lessonWrong||0,uses:p.lessonUses||0,productionHistory:[...(p.lessonHistory||[])],coreRank:item.rank};
     words.push(w);
   }else if(w.kind!=='active')w.kind='passive';
   return w;
@@ -608,6 +658,7 @@ const CURATED_TRANSLATIONS={"anything":"что угодно; что-нибудь
 
 // Additional common senses and Russian synonyms, used offline as well.
 const EXTRA_TRANSLATIONS = {
+ die:'умирать; умереть; погибать',
  get:'получать; получить; доставать; становиться; добираться; понимать',
  take:'брать; взять; принимать; занимать; отвозить', make:'делать; создавать; изготавливать; заставлять',
  do:'делать; выполнять', go:'идти; ехать; ходить; уходить', come:'приходить; приезжать; наступать',
@@ -819,7 +870,7 @@ function updateHome(){
   const streak=getStudyStreak();homeStreak.textContent=streak;homeStreakMeta.textContent=streak===1?'day in a row':'days in a row';
   renderCoreStats();
 }
-function setPage(p){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById(p).classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===p));pageTitle.textContent=pageMeta[p][0];if(innerWidth<=820)setMenu(false)}
+function setPage(p){document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById(p).classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===p));pageTitle.textContent=pageMeta[p][0];if(p==='dictionary')renderDictionary();if(innerWidth<=820)setMenu(false)}
 function setMenu(open){menuOpen=open;if(innerWidth<=820){sidebar.classList.toggle('show',open);overlay.classList.toggle('show',open)}else{sidebar.classList.toggle('hidden',!open);main.classList.toggle('expanded',!open)}}
 function maybePromoteWord(w){return evaluateProduction(w)==='active'}
 function applyPromotions(){let moved=0;for(const w of words){migrateWord(w);if(evaluateProduction(w))moved++}return moved}
@@ -838,7 +889,7 @@ function renderDictionary(){
     list.forEach(item=>{
       const state=coreWordState(item),p=coreProgressFor(item.word);
       const r=document.createElement('div');r.className='table-row';
-      r.innerHTML=`<div class="word-cell"><div class="word-line"><span>#${item.rank} ${esc(item.word)}</span><button class="speak-btn" title="Pronounce">🔊</button></div></div><div><span>${esc(translationText(item)||'—')}</span> <button class="speak-btn edit-translation" title="Edit translation">✎</button></div><div><span class="small">${esc(item.pos)}</span><br><span class="muted">${esc(item.topic)}</span></div><div>${levelControlsHTML(state)}</div><div>${p.recognitionCorrect||0} correct · ${p.recognitionWrong||0} wrong</div>`;
+      r.innerHTML=`<div class="word-cell"><div class="word-line"><span>#${item.rank} ${esc(item.word)}</span><button class="speak-btn" title="Pronounce">🔊</button></div></div><div><span>${esc(translationText(item)||'—')}</span> <button class="speak-btn edit-translation" title="Edit translation">✎</button></div><div><span class="small">${esc(item.pos)}</span><br><span class="muted">${esc(item.topic)}</span></div><div>${levelControlsHTML(state)}</div><div>${p.recognitionCorrect||0} recognition correct · ${p.recognitionWrong||0} wrong<br><span class="small">${p.lessonUses||0} production attempts · ${acc(p.lessonCorrect||0,p.lessonWrong||0)}</span></div>`;
       const speak=r.querySelector('.speak-btn:not(.edit-translation)');if(speak)speak.onclick=()=>speakWord(item.word);
       const edit=r.querySelector('.edit-translation');if(edit)edit.onclick=()=>editCoreTranslation(item);
       bindLevelControls(r,item.word,state);dictList.appendChild(r)
@@ -985,6 +1036,7 @@ function restoreBackupObject(data){
   updateVocabStats();
   syncVoiceControls();
   applyTheme();
+  renderLesson();
   newVerb();
   newVocab();
   renderCoreStats();
@@ -1013,6 +1065,105 @@ function importBackupFileHandler(file){
   reader.readAsText(file);
 }
 
+const lessonTitles={daily:'Ежедневный урок',errors:'Разбор ошибок',new:'10 новых слов'};
+function lessonToday(){const d=new Date();return dateKey(d.getFullYear(),d.getMonth(),d.getDate())}
+function currentLesson(){return BarkalooLessons.valid(settings.trainerLesson)?settings.trainerLesson:null}
+function lessonExamples(word){return LESSON_EXAMPLES[norm(word)]||[]}
+function lessonCandidates(type){
+  return BarkalooLessons.select(type,words.filter(item=>translationText(item)),coreBank,coreProgress,word=>lessonExamples(word).length>=2)
+    .filter(item=>translationText(item));
+}
+function startLesson(type){
+  const existing=currentLesson();
+  if(existing&&existing.phase!=='complete'){
+    document.getElementById('lessonMenuStatus').textContent=existing.type===type?'Урок продолжен.':'Сначала завершите текущий урок. Можно завершить его досрочно — ответы сохранятся.';
+    renderLesson();document.getElementById('lessonPanel').scrollIntoView({block:'start'});return;
+  }
+  const items=lessonCandidates(type);
+  if(!items.length){document.getElementById('lessonMenuStatus').textContent=type==='errors'?'Пока нет пассивных слов со статистикой ответов. Начните с ежедневного урока.':type==='new'?'Нет незнакомых слов с доступными примерами.':'В пассивном словаре пока нет слов с переводами.';return;}
+  settings.trainerLesson=BarkalooLessons.create(type,items.map(item=>({...item,translation:translationText(item)})),lessonToday());
+  document.getElementById('lessonMenuStatus').textContent='';saveAll();renderLesson();document.getElementById('lessonPanel').scrollIntoView({block:'start'});if(type!=='new')document.getElementById('lessonAnswer').focus({preventScroll:true});
+}
+function highlightedExample(text,word){
+  // Match complete English tokens, then escape every piece before adding markup.
+  return String(text).split(/([A-Za-z]+(?:'[A-Za-z]+)?)/).map(part=>norm(part)===norm(word)?`<mark>${esc(part)}</mark>`:esc(part)).join('');
+}
+function renderLesson(){
+  const s=currentLesson(),panel=document.getElementById('lessonPanel');
+  panel.hidden=!s;
+  document.getElementById('resumeLesson').hidden=!s||s.phase==='complete';
+  if(!s)return;
+  const completed=s.phase==='complete',studying=s.phase==='study',item=s.queue[studying?s.studyIndex:s.index];
+  document.getElementById('lessonTitle').textContent=lessonTitles[s.type];
+  const done=s.results.length,correct=s.results.filter(x=>x.ok).length;
+  document.getElementById('lessonProgressText').textContent=completed?`Завершено · ${done} из ${s.queue.length} ответов`:
+    studying?`Изучение · ${s.studyIndex+1} / ${s.queue.length}`:`Тест · ${s.index+1} / ${s.queue.length} · Верно ${correct} из ${done}`;
+  document.getElementById('lessonProgressBar').style.width=(completed?100:100*(studying?s.studyIndex:s.index)/s.queue.length)+'%';
+  document.getElementById('lessonStudy').hidden=!studying;
+  document.getElementById('lessonTest').hidden=studying||completed;
+  document.getElementById('lessonSummary').hidden=!completed;
+  document.getElementById('finishLessonEarly').hidden=completed;
+  if(completed){
+    document.getElementById('lessonScore').textContent=`${correct} / ${done} правильно${done?' · '+Math.round(correct/done*100)+'%':''}`;
+    document.getElementById('lessonMistakes').innerHTML=s.results.filter(x=>!x.ok).map(x=>`<li><strong>${esc(x.word)}</strong> — ${esc(x.translation)}<br><span class="muted">Ваш ответ: ${esc(x.answer||'Не знаю')}</span></li>`).join('')||'<li>Ошибок нет.</li>';
+    return;
+  }
+  if(!item)return;
+  if(studying){
+    document.getElementById('lessonStudyWord').textContent=item.word;
+    document.getElementById('lessonStudyTranslation').textContent=item.translation;
+    document.getElementById('lessonExamples').innerHTML=lessonExamples(item.word).slice(0,3).map(([en,ru])=>`<li><p>${highlightedExample(en,item.word)}</p><p class="muted">${esc(ru)}</p></li>`).join('');
+    document.getElementById('lessonStudyNext').textContent=s.studyIndex===s.queue.length-1?'Начать тест':'Следующее слово';
+  }else{
+    document.getElementById('lessonPrompt').textContent=item.translation;
+    const result=s.results[s.index],answer=document.getElementById('lessonAnswer');
+    answer.value=result?result.answer:'';answer.disabled=!!result;
+    document.getElementById('lessonCheck').disabled=!!result;
+    document.getElementById('lessonUnknown').disabled=!!result;
+    document.getElementById('lessonNext').hidden=!result;
+    document.getElementById('lessonNext').textContent=s.index===s.queue.length-1?'Результаты':'Дальше';
+    const feedback=document.getElementById('lessonFeedback');feedback.textContent=result?(result.ok?'✓ Верно: ':'✕ Правильный ответ: ')+item.word:'';
+    feedback.className='feedback'+(result?(result.ok?' good':' bad'):'');
+  }
+}
+function advanceLessonStudy(){
+  const s=currentLesson();if(!s||s.phase!=='study')return;
+  if(s.studyIndex<s.queue.length-1)s.studyIndex++;else{s.phase='test';s.studyIndex=s.queue.length;}
+  saveAll();renderLesson();
+}
+function answerLesson(unknown=false){
+  const s=currentLesson();if(!s||s.phase!=='test'||s.results[s.index])return;
+  const item=s.queue[s.index],input=document.getElementById('lessonAnswer').value.trim();
+  if(!unknown&&!input){document.getElementById('lessonFeedback').textContent='Введите ответ или нажмите «Не знаю».';return;}
+  const ok=!unknown&&answerMatches(input,item.word);
+  let w=words.find(x=>norm(x.word)===norm(item.word));
+  if(w){recordProduction(w,ok);}else{
+    const p=coreProgressFor(item.word);p.lessonUses=(p.lessonUses||0)+1;
+    if(ok)p.lessonCorrect=(p.lessonCorrect||0)+1;else p.lessonWrong=(p.lessonWrong||0)+1;
+    p.lessonHistory=[...(p.lessonHistory||[]),ok].slice(-30);
+    if(ok){w=promoteGeneralToPassive(getCoreItem(item.word)||item);}
+  }
+  if(ok)stats.vocabCorrect=(stats.vocabCorrect||0)+1;else stats.vocabWrong=(stats.vocabWrong||0)+1;
+  s.results.push({word:item.word,translation:item.translation,answer:unknown?'':input,ok});
+  studyDays[lessonToday()]=true;
+  saveAll();if(document.getElementById('dictionary').classList.contains('active'))renderDictionary();updateHome();renderCalendar();updateVocabStats();renderLesson();
+}
+function advanceLessonTest(){
+  const s=currentLesson();if(!s||s.phase!=='test'||!s.results[s.index])return;
+  s.index++;if(s.index>=s.queue.length)s.phase='complete';
+  saveAll();renderLesson();if(s.phase==='test')document.getElementById('lessonAnswer').focus();
+}
+function finishLessonEarly(){const s=currentLesson();if(!s||s.phase==='complete')return;s.phase='complete';saveAll();renderLesson()}
+document.querySelectorAll('[data-lesson]').forEach(button=>button.onclick=()=>startLesson(button.dataset.lesson));
+document.getElementById('resumeLesson').onclick=()=>{renderLesson();document.getElementById('lessonPanel').scrollIntoView({block:'start'})};
+document.getElementById('lessonStudyNext').onclick=advanceLessonStudy;
+document.getElementById('lessonStudySpeak').onclick=()=>{const s=currentLesson();if(s&&s.phase==='study')speakWord(s.queue[s.studyIndex].word)};
+document.getElementById('lessonCheck').onclick=()=>answerLesson();
+document.getElementById('lessonUnknown').onclick=()=>answerLesson(true);
+document.getElementById('lessonNext').onclick=advanceLessonTest;
+document.getElementById('finishLessonEarly').onclick=finishLessonEarly;
+document.getElementById('lessonAnswer').onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();const s=currentLesson();if(s?.results[s.index])advanceLessonTest();else answerLesson()}};
+
 // events
 const systemTheme=matchMedia('(prefers-color-scheme: dark)');
 systemTheme.addEventListener('change',applyTheme);
@@ -1035,7 +1186,7 @@ calibrationPrev.onclick=()=>{if(calibrationIndex>0)calibrationIndex--;renderCali
 calibrationSkip.onclick=()=>{if(calibrationIndex<coreBank.length-1)calibrationIndex++;renderCalibration()};
 document.querySelectorAll('[data-cal-level]').forEach(b=>b.onclick=()=>setCalibrationLevel(b.dataset.calLevel));
 document.addEventListener('keydown',calibrationKeyHandler);pastInput.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();if(verbAnswered)newVerb();else checkVerb()}};partInput.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();if(verbAnswered)newVerb();else checkVerb()}};vocabAnswer.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();if(vocabAnswered)newVocab();else checkVocab()}};prevMonth.onclick=()=>{calDate=new Date(calDate.getFullYear(),calDate.getMonth()-1,1);renderCalendar()};nextMonth.onclick=()=>{calDate=new Date(calDate.getFullYear(),calDate.getMonth()+1,1);renderCalendar()};todayMonth.onclick=()=>{const n=new Date();calDate=new Date(n.getFullYear(),n.getMonth(),1);renderCalendar()};importToggle.onclick=()=>importBox.classList.toggle('show');importLesson.onclick=importLessonData;
-applyEmbeddedBackupOnce();words.forEach(migrateWord);applyPromotions();saveAll();syncVoiceControls();applyTheme();renderDictionary();renderUnits();renderVerbs();renderCalendar();updateHome();updateVerbStats();updateVocabStats();newVerb();newVocab();setMenu(innerWidth>820);loadCoreBank();
+applyEmbeddedBackupOnce();words.forEach(migrateWord);applyPromotions();saveAll();syncVoiceControls();applyTheme();renderDictionary();renderUnits();renderVerbs();renderCalendar();updateHome();updateVerbStats();updateVocabStats();newVerb();newVocab();setMenu(innerWidth>820);loadCoreBank();renderLesson();
 </script>
 <!-- BARKALOO_CLOUD_UI -->
 </body></html>

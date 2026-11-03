@@ -1,4 +1,4 @@
-const CACHE='barkaloo-v2.6-theme-translations-4';
+const CACHE='barkaloo-v2.7-lessons-1';
 self.addEventListener('install',e=>e.waitUntil((async()=>{
   const cache=await caches.open(CACHE);
   await cache.addAll(['./','./index.html','./manifest.webmanifest','./icon.svg']);

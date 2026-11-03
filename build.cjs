@@ -5,14 +5,17 @@ const { readArchive } = require('./archive.cjs');
 const { html } = readArchive();
 const cloud = fs.readFileSync(path.join(__dirname, 'source/cloud-sync.js'), 'utf8');
 const cloudUI = fs.readFileSync(path.join(__dirname, 'source/cloud-ui.js'), 'utf8');
-for (const marker of ['<!-- BARKALOO_CLOUD_RUNTIME -->', '<!-- BARKALOO_CLOUD_UI -->']) {
+for (const marker of ['<!-- BARKALOO_CLOUD_RUNTIME -->', '<!-- BARKALOO_CLOUD_UI -->', '<!-- BARKALOO_LESSONS -->']) {
   if (html.toString('utf8').split(marker).length !== 2) throw new Error('Missing or duplicated cloud integration marker');
 }
+const lessons=fs.readFileSync(path.join(__dirname,'source/lessons.js'),'utf8');
+const examples=JSON.stringify(JSON.parse(fs.readFileSync(path.join(__dirname,'source/lesson-examples.json'),'utf8')));
 const output = path.join(__dirname, 'dist');
 fs.mkdirSync(output, { recursive: true });
 const pwa = '<link rel="manifest" href="./manifest.webmanifest">\n';
 const startup = `<script>if('serviceWorker' in navigator&&location.protocol!=='file:'){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(console.error));}</script>\n`;
 const page = html.toString('utf8')
+  .replace('<!-- BARKALOO_LESSONS -->',()=>'<script>\n'+lessons+'\nconst LESSON_EXAMPLES='+examples.replace(/</g,'\\u003c')+';\n</script>')
   .replace('<!-- BARKALOO_CLOUD_RUNTIME -->', () => '<script>\n' + cloud + '\n</script>')
   .replace('<!-- BARKALOO_CLOUD_UI -->', () => '<script>\n' + cloudUI + '\n</script>')
   .replace('</head>', pwa + '</head>').replace('</body>', startup + '</body>');
