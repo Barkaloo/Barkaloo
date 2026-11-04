@@ -34,17 +34,29 @@
   function selected() {const {start,end}=period();return workouts.filter(w=>w.date>=localDate(start)&&w.date<=localDate(end));}
   function sorted(list) {return [...list].sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id));}
   function empty() {return '<div class="empty">Нет тренировок за выбранный период.</div>';}
+  function tableRows(w){return w.format==='strength-table-v1'?w.exercises:FitData.exerciseRows(w.chatData||w.data||w);}
+  function strengthEntries(){return [...workouts.filter(w=>w.type==='Силовая'),...draftWorkouts.filter(w=>!w.data.type||w.data.type==='Силовая')];}
   function cards(list) {
-    return list.length ? sorted(list).map(w=>{
-      const draft=!!w.data,source=w.sourceImportId?'ChatGPT':'Вручную';
-      const details=w.chatData||w.data;
-      return `<article class="workout-card"><div class="workout-card-head"><div><div class="small">${dateLabel(w.date)} · ${source}</div><h3>${escape(w.title)}</h3></div><div class="entry-actions"><button class="icon-btn" data-edit="${escape(w.id)}" aria-label="Редактировать ${escape(w.title)}">✎</button><button class="icon-btn" data-delete="${escape(w.id)}" aria-label="Удалить ${escape(w.title)}">×</button></div></div>${draft?'<p class="muted">Данные получены из ChatGPT. Заполните поля карточки, чтобы учесть тренировку в статистике.</p><button class="btn" data-edit="'+escape(w.id)+'">Заполнить карточку</button>':`<div class="workout-card-metrics"><span class="pill">${escape(w.type)}</span><span>${fmt(w.duration)} мин</span>${w.distance?`<span>${fmt(w.distance)} км</span>`:''}${w.feeling?`<span>${escape(w.feeling)}</span>`:''}</div>${w.treadmillDuration||w.treadmillDistance?`<p class="small">Дорожка: ${fmt(w.treadmillDuration||0)} мин · ${fmt(w.treadmillDistance||0)} км</p>`:''}${w.notes?`<p class="workout-notes">${escape(w.notes)}</p>`:''}`}${details?`<details class="card-source"><summary>Данные из ChatGPT</summary><pre>${escape(JSON.stringify(details,null,2))}</pre></details>`:''}</article>`;
-    }).join('') : '<div class="empty">В этом месяце пока нет тренировок. Добавьте карточку вручную или импортируйте данные из ChatGPT на главной.</div>';
+    if(!list.length)return '<div class="empty">В этом месяце пока нет силовых тренировок. Добавьте пустую таблицу или импортируйте запись из ChatGPT.</div>';
+    const groups=new Map();
+    sorted(list).forEach(w=>{const monday=parseDate(w.date);monday.setDate(monday.getDate()-(monday.getDay()+6)%7);const key=localDate(monday);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(w);});
+    return [...groups].map(([week,entries])=>{
+      const first=new Date(journalMonth),last=new Date(journalMonth.getFullYear(),journalMonth.getMonth()+1,0),start=parseDate(week),end=parseDate(week);end.setDate(end.getDate()+6);
+      const from=localDate(start<first?first:start),to=localDate(end>last?last:end);
+      const label=from===to?dateLabel(from):`${dateLabel(from)} — ${dateLabel(to)}`;
+      return `<section class="training-week"><div class="training-week-head"><h3>${label}</h3><span>${entries.length} трен.</span></div>${entries.map(w=>{
+        const source=w.sourceImportId?'ChatGPT':'Вручную',details=w.chatData||w.data;
+        const rows=tableRows(w);
+        return `<article class="workout-card"><div class="workout-card-head"><div><h3>${dateLabel(w.date)}<span class="workout-weekday">${parseDate(w.date).toLocaleDateString('ru-RU',{weekday:'long'})}</span></h3><span class="small">${source}</span></div><div class="entry-actions"><button class="icon-btn" data-edit="${escape(w.id)}" aria-label="Редактировать тренировку ${dateLabel(w.date)}" title="Редактировать">✎</button><button class="icon-btn" data-delete="${escape(w.id)}" aria-label="Удалить тренировку ${dateLabel(w.date)}" title="Удалить">×</button></div></div><div class="strength-table-wrap"><table class="strength-table"><caption class="visually-hidden">Силовая тренировка ${dateLabel(w.date)}</caption><thead><tr><th scope="col">Упражнение</th><th scope="col">Подходы</th><th scope="col">Повторы</th><th scope="col">RIR</th></tr></thead><tbody>${rows.map(row=>`<tr><td>${escape(row.exercise)||'—'}</td><td>${escape(row.sets)||'—'}</td><td>${escape(row.reps)||'—'}</td><td>${escape(row.rir)||'—'}</td></tr>`).join('')}</tbody></table></div>${details?`<details class="card-source"><summary>Данные из ChatGPT</summary><pre>${escape(JSON.stringify(details,null,2))}</pre></details>`:''}${w.notes?`<details class="card-source"><summary>Ранее сохранённые заметки</summary><p class="workout-notes">${escape(w.notes)}</p></details>`:''}</article>`;
+      }).join('')}</section>`;
+    }).join('');
   }
   function renderJournal() {
     const key=localDate(journalMonth).slice(0,7);
     $('#journalMonthSelect').value=key;
-    $('#entries').innerHTML=cards([...workouts,...draftWorkouts].filter(w=>w.date.startsWith(key)&&(!$('#filter').value||w.type===$('#filter').value)&&(!$('#search').value||w.title.toLocaleLowerCase().includes($('#search').value.toLocaleLowerCase()))));
+    const entries=strengthEntries().filter(w=>w.date.startsWith(key));
+    $('#journalSummary').textContent=`${journalMonth.toLocaleDateString('ru-RU',{month:'long',year:'numeric'})} · Тренировок: ${entries.length}`;
+    $('#entries').innerHTML=cards(entries);
   }
   function renderChart(list) {
     const {start}=period();
@@ -60,13 +72,13 @@
   }
   function render() {
     const list=selected(), minutes=list.reduce((s,w)=>s+w.duration,0), {start,end}=period();
-    const allMinutes=workouts.reduce((sum,w)=>sum+w.duration,0);
-    $('#count').textContent=workouts.length;$('#duration').innerHTML=`${fmt(allMinutes)} <em>мин</em>`;
+    const timed=workouts.filter(w=>Number.isFinite(w.duration)&&w.duration>0),allMinutes=timed.reduce((sum,w)=>sum+w.duration,0);
+    $('#count').textContent=workouts.length;$('#duration').innerHTML=timed.length?`${fmt(allMinutes)} <em>мин</em>`:'—';
     const treadDistance=workouts.reduce((sum,w)=>sum+(w.type==='Беговая дорожка'?w.distance:(w.treadmillDistance||0)),0);
     const treadTime=workouts.reduce((sum,w)=>sum+(w.type==='Беговая дорожка'?w.duration:(w.treadmillDuration||0)),0);
     $('#distance').innerHTML=`${fmt(treadDistance)} <em>км</em>`;
     $('#treadmillTime').innerHTML=`${fmt(treadTime)} <em>мин</em>`;
-    $('#average').textContent=workouts.length?fmt(allMinutes/workouts.length):'—';
+    $('#average').textContent=timed.length?fmt(allMinutes/timed.length):'—';
     let streak=0,cursor=new Date();const dates=new Set(Object.keys(activityDays));if(!activityDays[localDate(cursor)])cursor.setDate(cursor.getDate()-1);
     while(dates.has(localDate(cursor))){streak++;cursor.setDate(cursor.getDate()-1);}
     $('#streak').textContent=streak;
@@ -105,18 +117,32 @@
     if(push&&location.hash!==`#/${next==='overview'?'home':next}`)history.pushState({},'',`#/${next==='overview'?'home':next}`);
     if(matchMedia('(max-width:820px)').matches)closeMenu();
   }
+  function readExerciseRows(){
+    return [...$('#exerciseRows').querySelectorAll('tr')].map(row=>Object.fromEntries(['exercise','sets','reps','rir'].map(key=>[key,row.querySelector(`[data-exercise-field="${key}"]`).value.trim()])));
+  }
+  function renderExerciseRows(rows){
+    $('#exerciseRows').innerHTML=rows.map((row,index)=>`<tr><td><div class="exercise-name-input"><input data-exercise-field="exercise" aria-label="Упражнение, строка ${index+1}" maxlength="200" value="${escape(row.exercise)}" placeholder="Упражнение"><button type="button" class="icon-btn" data-remove-exercise="${index}" aria-label="Удалить упражнение, строка ${index+1}" title="Удалить строку">×</button></div></td><td><input data-exercise-field="sets" aria-label="Подходы, строка ${index+1}" inputmode="numeric" maxlength="3" value="${escape(row.sets)}" placeholder="—"></td><td><input data-exercise-field="reps" aria-label="Повторы, строка ${index+1}" maxlength="64" value="${escape(row.reps)}" placeholder="—"></td><td><input data-exercise-field="rir" aria-label="RIR, строка ${index+1}" maxlength="64" value="${escape(row.rir)}" placeholder="—"></td></tr>`).join('');
+  }
   function openForm(id, date) {
     editing=id||null;$('#form').reset();$('#formError').textContent='';$('#formTitle').textContent=id?'Редактировать тренировку':'Новая тренировка';
-    const w=workouts.find(w=>w.id===id),draft=draftWorkouts.find(w=>w.id===id);if(w){for(const key of ['title','type','date','duration','distance','treadmillDuration','treadmillDistance','feeling','notes'])$('#form').elements[key].value=w[key]??'';}else{$('#form').elements.date.value=draft?.date||date||localDate();if(draft)$('#form').elements.title.value=draft.title;}
-    $('#form').elements.date.max=localDate();$('#modal').showModal();
+    const w=strengthEntries().find(w=>w.id===id);
+    $('#form').elements.date.value=w?.date||date||localDate();
+    $('#form').elements.date.max=localDate();
+    renderExerciseRows(w?tableRows(w):[FitData.blankExercise()]);
+    $('#modal').showModal();
   }
+  $('#addExercise').onclick=()=>{const rows=readExerciseRows();if(rows.length>=100){$('#formError').textContent='В одной таблице можно сохранить до 100 упражнений';return;}renderExerciseRows([...rows,FitData.blankExercise()]);$('#exerciseRows tr:last-child input').focus();};
+  $('#exerciseRows').onclick=e=>{const remove=e.target.closest('[data-remove-exercise]');if(!remove)return;const rows=readExerciseRows();rows.splice(Number(remove.dataset.removeExercise),1);renderExerciseRows(rows.length?rows:[FitData.blankExercise()]);};
   $('#journalAdd').onclick=()=>openForm(null,localDate(journalMonth).slice(0,7)===localDate().slice(0,7)?localDate():localDate(journalMonth));$('#close').onclick=()=>$('#modal').close();
   $('#form').onsubmit=e=>{
-    e.preventDefault();const f=new FormData(e.target);const w={id:editing||crypto.randomUUID(),title:f.get('title').trim(),type:f.get('type'),date:f.get('date'),duration:Number(f.get('duration')),distance:Number(f.get('distance')||0),treadmillDuration:Number(f.get('treadmillDuration')||0),treadmillDistance:Number(f.get('treadmillDistance')||0),feeling:f.get('feeling'),notes:f.get('notes').trim()};
-    if(!w.title||!validDate(w.date)||w.date>localDate()||!Number.isFinite(w.duration)||w.duration<1||w.duration>1440||!Number.isFinite(w.distance)||w.distance<0||w.distance>1000){$('#formError').textContent='Проверьте название, дату и числовые значения. Будущие тренировки пока не учитываются.';return;}
-    try{FitData.workout(w);}catch(error){$('#formError').textContent=error.message;return;}
+    e.preventDefault();
+    const date=$('#form').elements.date.value;
+    if(!validDate(date)||date>localDate()){$('#formError').textContent='Проверьте дату тренировки';return;}
     const original=[...workouts,...draftWorkouts].find(old=>old.id===editing);
+    const w={...original,id:editing||crypto.randomUUID(),title:original?.title||'Силовая тренировка',type:'Силовая',format:'strength-table-v1',date,duration:original?.duration??null,distance:original?.distance??0,exercises:readExerciseRows()};
+    delete w.data;
     if(original?.sourceImportId){w.sourceImportId=original.sourceImportId;w.chatData=original.chatData||original.data;}
+    try{FitData.workout(w);}catch(error){$('#formError').textContent=error.message;return;}
     const next=workouts.some(old=>old.id===editing)?workouts.map(old=>old.id===editing?w:old):[...workouts,w];
     if(saveState({...snapshot(),workouts:next,draftWorkouts:draftWorkouts.filter(old=>old.id!==editing),activityDays:{...activityDays,[w.date]:true}})){$('#modal').close();journalMonth=new Date(parseDate(w.date).getFullYear(),parseDate(w.date).getMonth(),1);render();toast('Тренировка сохранена');}
   };
@@ -141,7 +167,6 @@
   });
   document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
   document.querySelectorAll('[data-days]').forEach(b=>b.onclick=()=>{days=Number(b.dataset.days);document.querySelectorAll('[data-days]').forEach(x=>x.classList.toggle('active',x.dataset.days===b.dataset.days));render();});
-  $('#filter').onchange=render;$('#search').oninput=render;
   $('#prev').onclick=()=>{month.setMonth(month.getMonth()-1);renderCalendars();};$('#next').onclick=()=>{month.setMonth(month.getMonth()+1);renderCalendars();};
   $('#todayMonth').onclick=()=>{month=new Date(new Date().getFullYear(),new Date().getMonth(),1);renderCalendars();};
   $('#journalPrev').onclick=()=>{journalMonth.setMonth(journalMonth.getMonth()-1);renderCalendars();renderJournal();};

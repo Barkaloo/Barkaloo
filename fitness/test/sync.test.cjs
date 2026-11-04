@@ -60,3 +60,7 @@ test('manual marks and imported draft cards synchronize separately from workout 
  a.local.value.activityDays={'2026-11-02':true};a.local.value.draftWorkouts=[{id:'draft',title:'Из ChatGPT',date:'2026-11-02',data:{exercises:['Жим']},sourceImportId:'hash'}];await a.client.sync();await b.client.sync();assert.deepEqual(b.local.value.activityDays,a.local.value.activityDays);assert.deepEqual(b.local.value.draftWorkouts,a.local.value.draftWorkouts);assert.equal(b.local.value.workouts.length,0);
  b.local.value.activityDays={};await b.client.sync();await a.client.sync();assert.deepEqual(a.local.value.activityDays,{});assert.equal(a.local.value.draftWorkouts.length,1);
 });
+test('strength exercise tables with unknown time and RIR zero round-trip across devices',async t=>{
+ const server=backend(),a=device(t,server),b=device(t,server);await login(a);await login(b);
+ a.local.value.workouts=[{...workout('strength'),format:'strength-table-v1',duration:null,exercises:[{exercise:'Жим',sets:'3',reps:'8–10',rir:'0'}]}];await a.client.sync();await b.client.sync();assert.deepEqual(b.local.value.workouts,a.local.value.workouts);assert.equal(b.local.value.workouts[0].duration,null);
+});
