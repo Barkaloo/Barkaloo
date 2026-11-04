@@ -48,7 +48,9 @@ fs.cpSync(path.join(__dirname, 'fitness', 'assets'), path.join(fitnessOutput, 'a
 // Vercel can retain the supplied artwork and export platform-specific icons.
 // Plain local builds still use the original URLs without network prerequisites.
 if (process.env.VERCEL === '1') {
-  require('node:child_process').execFileSync(process.execPath, [path.join(__dirname, 'scripts/build-fitness-assets.cjs'), fitnessOutput], { stdio: 'inherit' });
+  require('node:child_process').execFileSync(process.execPath, [path.join(__dirname, 'scripts/build-fitness-assets.cjs'), fitnessOutput], {
+    stdio: 'inherit', env: { ...process.env, NODE_USE_ENV_PROXY: '1' }
+  });
 }
 // Remove archive copies left behind by the previous build format.
 for (const file of ['archive.json', ...fs.readdirSync(output).filter(file => /^app-.*\.b64$/.test(file))]) {
