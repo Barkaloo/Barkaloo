@@ -7,7 +7,7 @@
   const fields = ['words', 'stats', 'units', 'studyDays', 'coreProgress', 'coreBank', 'settings'];
   const copy = value => JSON.parse(JSON.stringify(value));
   function state(value) {
-    if (!value || !Array.isArray(value.words)) throw new Error('Некорректные данные в облаке');
+    if (!value || !Array.isArray(value.words)) throw new Error('Invalid cloud data');
     const result = {};
     for (const key of fields) result[key] = copy(value[key] || (key === 'words' || key === 'coreBank' ? [] : {}));
     // Match the app's word migration so reloads don't look like user edits.
@@ -36,7 +36,7 @@
       this.base = this.session ? this.stored(this.baseKey()) : null;
       this.conflict = null;
       this.phase = 'local';
-      this.message = 'Войдите в один аккаунт на телефоне и компьютере';
+      this.message = 'Sign in to the same account on your phone and computer';
       this.running = null;
       this.refreshing = null;
       this.queued = false;
@@ -54,7 +54,7 @@
     }
     assertCurrent(generation) {
       if (generation !== this.generation || !this.session) {
-        const error = new Error('Аккаунт изменился'); error.cancelled = true; throw error;
+        const error = new Error('Account changed'); error.cancelled = true; throw error;
       }
     }
     async json(path, options = {}) {
@@ -69,7 +69,7 @@
         let data;
         try { data = text ? JSON.parse(text) : null; } catch { data = null; }
         if (!response.ok) {
-          const error = new Error(data?.msg || data?.message || data?.error_description || `Ошибка облака: HTTP ${response.status}`);
+          const error = new Error(data?.msg || data?.message || data?.error_description || `Cloud error: HTTP ${response.status}`);
           error.status = response.status;
           error.code = data?.code;
           throw error;
@@ -78,7 +78,7 @@
       } finally { clearTimeout(timeout); }
     }
     async ensureSession(force = false) {
-      if (!this.session) throw new Error('Войдите в аккаунт');
+      if (!this.session) throw new Error('Sign in to your account');
       const expiration = this.session.expires_at ? this.session.expires_at * 1000 : (this.session.received_at || 0) + (this.session.expires_in || 3600) * 1000;
       if (!force && Date.now() < expiration - 60000) return;
       if (this.refreshing) return this.refreshing;
@@ -86,12 +86,12 @@
       const previous = this.session;
       this.refreshing = (async () => {
         try {
-          if (!previous.refresh_token) throw Object.assign(new Error('Войдите в аккаунт снова'), { status: 401 });
+          if (!previous.refresh_token) throw Object.assign(new Error('Sign in again'), { status: 401 });
           const data = await this.json('/auth/v1/token?grant_type=refresh_token', {
             method: 'POST', body: JSON.stringify({ refresh_token: previous.refresh_token })
           });
           this.assertCurrent(generation);
-          if (!data?.access_token) throw new Error('Не удалось обновить вход');
+          if (!data?.access_token) throw new Error('Could not refresh your session');
           this.session = { ...data, user: data.user || previous.user, received_at: Date.now() };
           this.storage.setItem(SESSION, JSON.stringify(this.session));
         } catch (error) {
@@ -99,7 +99,7 @@
             this.generation++;
             this.session = null;
             this.storage.removeItem(SESSION);
-            error.message = 'Сессия истекла. Войдите снова — локальный прогресс сохранён';
+            error.message = 'Session expired. Sign in again — your local progress is safe';
           }
           throw error;
         }
@@ -133,10 +133,10 @@
       const data = await this.json('/auth/v1/signup', { method: 'POST', body: JSON.stringify({ email, password }) });
       if (generation !== this.generation) return;
       if (data?.access_token) await this.connect(data);
-      else this.notify('confirm', 'Подтвердите почту по ссылке из письма, затем войдите');
+      else this.notify('confirm', 'Confirm your email using the link in the message, then sign in');
     }
     async connect(data) {
-      if (!data?.access_token || !data.user?.id) throw new Error('Не удалось войти в аккаунт');
+      if (!data?.access_token || !data.user?.id) throw new Error('Could not sign in');
       this.generation++;
       this.session = { ...data, received_at: Date.now() };
       this.storage.setItem(SESSION, JSON.stringify(this.session));
@@ -153,20 +153,20 @@
       this.conflict = null;
       this.queued = false;
       this.storage.removeItem(SESSION);
-      this.notify('local', 'Вы вышли. Данные остаются на этом устройстве');
+      this.notify('local', 'Signed out. Your data remains on this device');
       if (token) {
         try { await this.json('/auth/v1/logout?scope=local', { method: 'POST', headers: { Authorization: 'Bearer ' + token } }); } catch { /* Local sign-out remains effective offline. */ }
       }
     }
     changed() {
       if (this.applying || !this.session || this.conflict) return;
-      this.notify('pending', this.online() ? 'Изменения сохранены на устройстве. Синхронизация…' : 'Нет сети. Прогресс сохранён на устройстве');
+      this.notify('pending', this.online() ? 'Changes saved locally. Syncing…' : 'Offline. Progress is saved on this device');
       clearTimeout(this.timer);
       this.timer = setTimeout(() => this.sync(), 700);
     }
     async fetchRow() {
       const rows = await this.request('/rest/v1/app_state?user_id=eq.' + encodeURIComponent(this.session.user.id) + '&select=state,updated_at');
-      if (!Array.isArray(rows)) throw new Error('Некорректный ответ облака');
+      if (!Array.isArray(rows)) throw new Error('Invalid cloud response');
       if (rows[0]) state(rows[0].state);
       return rows[0] || null;
     }
@@ -190,13 +190,13 @@
       this.assertCurrent(generation);
       this.remember(row);
       this.conflict = null;
-      this.notify('synced', 'Прогресс загружен из облака');
+      this.notify('synced', 'Progress loaded from the cloud');
     }
     showConflict(row, reason = 'changed') {
       this.conflict = { row, reason };
       this.notify('conflict', reason === 'account'
-        ? 'На устройстве данные другого аккаунта. Перенести их в новый аккаунт?'
-        : 'На двух устройствах есть изменения. Выберите, какую версию сохранить');
+        ? 'This device has data from another account. Transfer it to the new account?'
+        : 'Both devices have changes. Choose which version to keep');
     }
     async push(snapshot, row) {
       const user = this.session.user.id;
@@ -218,8 +218,8 @@
       // Changes made while the request was in flight must be sent in another pass.
       if (!equal(this.read(), snapshot)) {
         this.queued = true;
-        this.notify('pending', 'Отправляются новые изменения…');
-      } else this.notify('synced', 'Синхронизировано в ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        this.notify('pending', 'Uploading new changes…');
+      } else this.notify('synced', 'Synced at ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     }
     async reconcile(choice) {
       const row = await this.fetchRow();
@@ -243,7 +243,7 @@
       const remoteChanged = !equal(row.state, this.base.state);
       if (equal(local, row.state)) {
         this.remember(row);
-        this.notify('synced', 'Прогресс на устройствах совпадает');
+        this.notify('synced', 'Progress is up to date on both devices');
       } else if (localChanged && remoteChanged) this.showConflict(row);
       else if (localChanged) await this.push(local, row);
       else await this.pull(row);
@@ -252,14 +252,14 @@
       if (!this.session) { this.notify('local', this.message); return Promise.resolve(); }
       if (this.conflict && !choice) return Promise.resolve();
       if (this.running) { this.queued = true; return this.running; }
-      if (!this.online()) { this.notify('offline', 'Нет сети. Прогресс сохранён на устройстве'); return Promise.resolve(); }
-      this.notify('syncing', 'Синхронизация…');
+      if (!this.online()) { this.notify('offline', 'Offline. Progress is saved on this device'); return Promise.resolve(); }
+      this.notify('syncing', 'Syncing…');
       const generation = this.generation;
       this.running = this.reconcile(choice).catch(error => {
         if (error.cancelled || generation !== this.generation && this.session) return;
         this.notify('error', error.code === 'PGRST205' || error.status === 404
-          ? 'Хранилище синхронизации ещё не настроено. Локальный прогресс сохранён'
-          : 'Не удалось синхронизировать: ' + error.message);
+          ? 'Sync storage is not configured yet. Your local progress is safe'
+          : 'Could not sync: ' + error.message);
       }).finally(() => {
         this.running = null;
         if (this.queued && this.session && !this.conflict) {

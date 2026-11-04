@@ -105,7 +105,7 @@ test('confirmation email and missing database are reported without a false synce
   await a.client.signUp('person@example.test', 'test-password');
   assert.equal(a.client.phase, 'confirm'); assert.equal(a.client.session, null);
   server.missing = true; await login(a);
-  assert.equal(a.client.phase, 'error'); assert.match(a.client.message, /не настроено/);
+  assert.equal(a.client.phase, 'error'); assert.match(a.client.message, /not configured/);
 });
 
 test('word migration after reload does not create a false conflict', async t => {

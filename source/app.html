@@ -104,7 +104,7 @@ input,textarea,select{background:rgba(255,255,255,.82);color:var(--text);border:
 .speak-btn{border:0;background:transparent;padding:2px 5px;color:#527162;font-size:16px;vertical-align:middle}
 .speak-btn:hover{transform:scale(1.08);color:#23493a}
 .word-line{display:flex;align-items:center;gap:5px}
-.status-general{background:#eef1f4;color:#60707a}.status-passive{background:#eaf2ff;color:#4d6480}.status-active{background:#e2f5e8;color:#34704a}
+.status-general{background:#eef1f4;color:#60707a}.status-passive{background:#eaf2ff;color:#4d6480}.status-active{background:#e5ecff;color:#173fba}
 .trainer-audio{display:flex;justify-content:center;align-items:center;gap:8px}
 .voice-settings{display:flex;justify-content:center;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
 .voice-settings select{width:auto;min-width:135px}
@@ -139,7 +139,7 @@ input,textarea,select{background:rgba(255,255,255,.82);color:var(--text);border:
 .cal-btn{border:1px solid rgba(63,105,86,.12);border-radius:16px;padding:14px 10px;font-weight:800}
 .cal-btn.general{background:rgba(126,141,156,.12);color:#586873}
 .cal-btn.passive{background:rgba(110,170,225,.18);color:#3f77a4}
-.cal-btn.active{background:rgba(78,169,109,.18);color:#34734b}
+.cal-btn.active{background:#e5ecff;color:#173fba}
 .calibration-help{font-size:12px;color:var(--muted);margin-top:12px}
 .calibration-nav{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:12px}
 .calibration-nav .btn{padding:8px 11px}
@@ -191,7 +191,7 @@ input,textarea,select{background:rgba(255,255,255,.82);color:var(--text);border:
 [data-theme="dark"] .weekdays div{background:transparent}
 [data-theme="dark"] .pill{background:#2b303b;color:#c2c8d5}
 [data-theme="dark"] .status-passive{background:#26344b;color:#aac9fa}
-[data-theme="dark"] .status-active{background:#203d30;color:#a1dfbb}
+[data-theme="dark"] .status-active{background:#0f1d42;color:#4d80ff}
 [data-theme="dark"] :is(.cal-btn.general,.cal-btn.passive,.cal-btn.active,.level-btn.demote,.level-btn.promote){color:var(--text)}
 [data-theme="dark"] .progress-bar{background:#101216;border-color:var(--line)}
 [data-theme="dark"] .progress-bar>div{background:var(--accent)}
@@ -203,7 +203,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 
 [hidden]{display:none!important}
 .lesson-menu,.lesson-panel{margin-bottom:18px}
-.lesson-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.lesson-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .lesson-option{display:flex;flex-direction:column;gap:10px;text-align:left;padding:20px;border:1px solid var(--line);border-radius:18px;background:var(--surface-soft);color:var(--text)}
 .lesson-option strong{font-size:18px}.lesson-option span{color:var(--muted);font-size:13px;line-height:1.6}
 .lesson-option:hover{border-color:var(--accent);box-shadow:var(--shadow)}
@@ -242,20 +242,36 @@ html{min-height:100%}
 #dictKinds{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;width:100%}
 #dictKinds button{width:100%;min-width:0;min-height:44px;padding:10px 12px;border-radius:14px;white-space:nowrap;line-height:1.35}
 @media(max-width:600px){#dictKinds{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.chat-context-panel{width:min(920px,100%);margin:18px auto 0}
+#chatContextText{width:100%;min-height:280px;resize:vertical;font:13px/1.6 ui-monospace,monospace}
+.progress-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0 30px}
+.progress-metric{display:grid;gap:10px;text-align:left;padding:18px;border:1px solid var(--line);border-radius:16px;background:var(--surface-soft);color:var(--text)}
+.progress-metric span{color:var(--muted);font-size:13px}.progress-metric strong{font-size:28px;font-variant-numeric:tabular-nums}
+.progress-metric.active{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.progress-metric[data-progress-metric="active"] strong,#homeActive,#coreActiveStat{color:#2059d4}
+[data-theme="dark"] :is(.progress-metric[data-progress-metric="active"] strong,#homeActive,#coreActiveStat){color:#3d70ec}
+.progress-chart{width:100%;min-height:230px}.progress-chart svg{display:block;width:100%;height:auto;min-height:230px;overflow:visible}
+.progress-chart text{fill:var(--muted);font:12px system-ui,sans-serif}.chart-grid{stroke:var(--line);stroke-dasharray:3 5}
+.chart-line{fill:none;stroke:#3167df;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.progress-chart circle{fill:#3167df;stroke:var(--surface-strong);stroke-width:2;cursor:pointer}.progress-chart circle:focus{outline:none;stroke:var(--accent);stroke-width:4}
+.progress-chart-head{gap:14px;flex-wrap:wrap}.progress-chart-head h3{margin:0}
+.progress-table{margin-top:18px;color:var(--muted)}.progress-table summary{cursor:pointer}.progress-table table{border-collapse:collapse;width:100%;margin-top:12px}.progress-table th,.progress-table td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--line)}
+@media(max-width:700px){.progress-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.progress-panel>.panel-head,.chat-context-panel>.panel-head{align-items:flex-start;flex-direction:column}.progress-chart-head .segment{width:100%}.progress-chart-head .segment button{flex:1}.progress-chart text{font-size:15px}}
 </style>
 </head>
 <body>
 <div class="overlay" id="overlay"></div>
 <div class="app">
 <aside class="sidebar" id="sidebar">
-  <a class="logo-wrap" id="brandHome" href="#/home" aria-label="Barkaloo — на главную">
+  <a class="logo-wrap" id="brandHome" href="#/home" aria-label="Barkaloo — Home">
     <img class="logo-mark" src="https://i.pinimg.com/originals/25/5d/16/255d16eb3d149c7e237791b2336156d3.gif" data-fallback="https://i.pinimg.com/1200x/9e/4e/22/9e4e22ab34d9302c7264e33d852d187d.jpg" data-offline="__BARKALOO_CHARACTER_LOGO__" referrerpolicy="no-referrer" onerror="if(this.dataset.fallback){const next=this.dataset.fallback;delete this.dataset.fallback;this.src=next}else{this.onerror=null;this.src=this.dataset.offline}" width="64" height="64" alt="">
     <div><div class="logo-title">Barkaloo</div></div>
   </a>
-  <nav class="nav"><button class="nav-btn active" data-page="home">Home</button><button class="nav-btn" data-page="dictionary">Dictionary</button><button class="nav-btn" data-page="grammar">Grammar</button><button class="nav-btn" data-page="trainer">Trainer</button></nav>
+  <nav class="nav"><button class="nav-btn active" data-page="home">Home</button><button class="nav-btn" data-page="dictionary">Dictionary</button><button class="nav-btn" data-page="grammar">Grammar</button><button class="nav-btn" data-page="trainer">Trainer</button><button class="nav-btn" data-page="progress">Progress</button></nav>
 </aside>
 <main class="main" id="main">
-  <div class="topbar"><button class="burger" id="burger"><div class="burger-lines"><span></span></div></button><div><div class="page-title" id="pageTitle">English</div><div class="page-sub" id="pageSub" style="display:none"></div></div><label class="theme-control">Тема <select id="themeSelect" aria-label="Тема оформления"><option value="system">Системная</option><option value="light">Светлая</option><option value="dark">Тёмная</option></select></label></div>
+  <div class="topbar"><button class="burger" id="burger"><div class="burger-lines"><span></span></div></button><div><div class="page-title" id="pageTitle">English</div><div class="page-sub" id="pageSub" style="display:none"></div></div><label class="theme-control">Theme <select id="themeSelect" aria-label="Appearance"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label></div>
 
   <section class="section active" id="home">
     <div class="home-stage">
@@ -265,11 +281,11 @@ html{min-height:100%}
           <div class="weekdays"><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div></div>
           <div class="calendar-grid" id="calendarGrid"></div><div class="hint" style="margin-top:8px;text-align:center">Double-click a day to mark or unmark a study session.</div>
           <div class="import-line">
-            <button class="import-toggle" id="importToggle">Ввести данные с занятия</button>
+            <button class="import-toggle" id="importToggle">Import chat lesson</button>
             <div class="import-box" id="importBox">
-              <p class="hint">Статистика из чата: id урока, words и attempts по порядку. Направления: en-ru (английский → русский), ru-en (русский → английский). Повторный импорт одного id не учитывается.</p><textarea id="lessonData" placeholder='Вставь JSON из занятия. Например: {"id":"lesson-2026-11-03-1","date":"2026-11-03","words":[{"word":"although","translation":"хотя","attempts":[{"direction":"en-ru","correct":true},{"direction":"ru-en","correct":false}]}]}'></textarea>
+              <p class="hint">Chat statistics: include a lesson id and words with chronological attempts. Directions: en-ru (English → Russian), ru-en (Russian → English). The same id is counted once.</p><textarea id="lessonData" placeholder='Paste lesson JSON. Example: {"id":"lesson-2026-11-03-1","date":"2026-11-03","words":[{"word":"although","translation":"хотя","attempts":[{"direction":"en-ru","correct":true},{"direction":"ru-en","correct":false}]}]}'></textarea>
               <div class="import-actions"><button class="btn primary" id="importLesson">Import</button><span class="status" id="importStatus"></span></div>
-              <div class="hint">Импорт добавляет новые слова или обновляет существующие, суммируя correct/wrong. Если есть date — этот день автоматически отмечается в календаре.</div>
+              <div class="hint">Import updates word statistics and levels, but not trainer counters. A supplied date marks the study calendar.</div>
             </div>
           </div>
         </div>
@@ -282,27 +298,27 @@ html{min-height:100%}
         <div class="card"><h3>Study streak</h3><div class="num" id="homeStreak">0</div><div class="row-muted" id="homeStreakMeta">days in a row</div></div>
       </div>
 <div class="panel" id="cloudPanel" style="width:min(920px,100%);margin:0 auto 18px;background:var(--surface)">
-  <div class="panel-head"><h2 style="font-size:17px">Синхронизация</h2></div>
-  <p class="muted">Один аккаунт на телефоне и компьютере — общий словарь, календарь и прогресс.</p>
+  <div class="panel-head"><h2 style="font-size:17px">Synchronization</h2></div>
+  <p class="muted">Use the same account on your phone and computer to sync your vocabulary, calendar and progress.</p>
   <form id="cloudAuthForm" style="display:flex;gap:10px;flex-wrap:wrap;align-items:end">
     <label style="display:grid;gap:5px;flex:1;min-width:180px">Email<input id="cloudEmail" type="email" autocomplete="email" required></label>
-    <label style="display:grid;gap:5px;flex:1;min-width:180px">Пароль<input id="cloudPassword" type="password" autocomplete="current-password" minlength="6" required></label>
-    <button class="btn primary" id="cloudSignIn" type="submit">Войти</button>
-    <button class="btn" id="cloudSignUp" type="button">Создать аккаунт</button>
+    <label style="display:grid;gap:5px;flex:1;min-width:180px">Password<input id="cloudPassword" type="password" autocomplete="current-password" minlength="6" required></label>
+    <button class="btn primary" id="cloudSignIn" type="submit">Sign in</button>
+    <button class="btn" id="cloudSignUp" type="button">Create account</button>
   </form>
   <div id="cloudLoggedIn" hidden>
     <span id="cloudUser"></span>
-    <button class="btn primary" id="cloudSyncNow" type="button">Синхронизировать</button>
-    <button class="btn" id="cloudSignOut" type="button">Выйти</button>
+    <button class="btn primary" id="cloudSyncNow" type="button">Sync now</button>
+    <button class="btn" id="cloudSignOut" type="button">Sign out</button>
   </div>
-  <p id="cloudStatus" role="status" aria-live="polite">Данные сохраняются на этом устройстве</p>
+  <p id="cloudStatus" role="status" aria-live="polite">Data is saved on this device</p>
   <div id="cloudConflict" hidden>
-    <p>Одна версия заменит другую. Локальные данные перед загрузкой сохранятся в резервную копию.</p>
-    <button class="btn" id="cloudUseLocal" type="button">Сохранить версию этого устройства</button>
-    <button class="btn" id="cloudUseCloud" type="button">Загрузить версию из облака</button>
+    <p>One version will replace the other. Your local data is backed up before cloud data is loaded.</p>
+    <button class="btn" id="cloudUseLocal" type="button">Keep this device’s version</button>
+    <button class="btn" id="cloudUseCloud" type="button">Load cloud version</button>
   </div>
-  <button class="btn" id="cloudBackup" type="button" hidden>Скачать копию до синхронизации</button>
-  <button class="btn" id="cloudOriginalBackup" type="button" hidden>Скачать исходные данные устройства</button>
+  <button class="btn" id="cloudBackup" type="button" hidden>Download pre-sync backup</button>
+  <button class="btn" id="cloudOriginalBackup" type="button" hidden>Download original device data</button>
 </div>
 <div class="panel" style="width:min(920px,100%);margin:0 auto;background:var(--surface)">
         <div class="panel-head" style="margin-bottom:10px">
@@ -316,6 +332,14 @@ html{min-height:100%}
           <span class="muted" id="backupStatus"></span>
         </div>
       </div>
+
+<div class="panel chat-context-panel">
+  <div class="panel-head"><h2>ChatGPT lesson</h2><span class="muted">Practise your most difficult passive words</span></div>
+  <button class="btn primary" id="prepareChatContext">Prepare ChatGPT context</button>
+  <p class="hint">Up to 100 passive words, ranked by total mistakes. Preparing context does not count as practice.</p>
+  <p id="chatContextStatus" role="status"></p>
+  <div id="chatContextOutput" hidden><textarea id="chatContextText" aria-label="ChatGPT lesson context" readonly></textarea><div class="practice-actions"><button class="btn" id="copyChatContext">Copy context</button><button class="btn" id="downloadChatContext">Download .txt</button></div></div>
+</div>
     </div>
   </section>
 
@@ -349,8 +373,8 @@ html{min-height:100%}
           <span class="muted" id="coreLoadStatus">Loading Core 1500…</span>
         </div>
         <div class="calibration-launch">
-          <span class="muted">Просмотр слов</span>
-          <button class="btn primary" id="openCalibration">Карточки слов</button>
+          <span class="muted">Browse words</span>
+          <button class="btn primary" id="openCalibration">Word cards</button>
         </div>
         <div class="calibration-shell" id="calibrationShell">
           <div class="calibration-card">
@@ -369,7 +393,7 @@ html{min-height:100%}
               <button class="cal-btn passive" data-cal-level="passive">2 · Passive</button>
               <button class="cal-btn active" data-cal-level="active">3 · Active</button>
             </div>
-            <div class="calibration-help">← / → — предыдущее / следующее слово · Space — произнести</div>
+            <div class="calibration-help">← / → — previous / next word · Space — pronounce</div>
             <div class="calibration-nav">
               <button class="btn" id="calibrationPrev">← Previous</button>
               <button class="btn" id="calibrationSkip">Skip</button>
@@ -377,11 +401,11 @@ html{min-height:100%}
             </div>
           </div>
         </div>
-        <div class="core-note">Уровень меняется по ответам: 5 верных EN → RU для пассивного; 4 из последних 5 RU → EN для активного. Возврат в пассивный: ниже 70% за 10 ответов или 3 ошибки подряд.</div>
+        <div class="core-note">Levels follow your answers: 5 correct EN → RU for passive; 4 of the last 5 RU → EN for active. Back to passive: below 70% over 10 answers or 3 mistakes in a row.</div>
       </div>
 
       <div id="manualDictControls">
-        <div class="toolbar"><input id="wordInput" placeholder="Новое слово в общий банк"><input id="translationInput" placeholder="Переводы через ; (необязательно)"><input id="dictSearch" placeholder="Search..."><button class="btn primary" id="addWordBtn">Add word</button></div>
+        <div class="toolbar"><input id="wordInput" placeholder="New word for the bank"><input id="translationInput" placeholder="Translations separated by ; (optional)"><input id="dictSearch" placeholder="Search..."><button class="btn primary" id="addWordBtn">Add word</button></div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:-2px 0 14px">
           <button class="btn" id="bulkToggle">Bulk import words</button>
           <span class="muted" id="dictCount"></span>
@@ -399,6 +423,23 @@ html{min-height:100%}
     </div>
   </section>
 
+
+  <section class="section" id="progress">
+    <div class="panel progress-panel">
+      <div class="panel-head"><h2>Barkaloo / Progress</h2><span class="muted">Your recorded statistics</span></div>
+      <div class="progress-metrics" aria-label="Progress charts">
+        <button class="progress-metric active" data-progress-metric="active" aria-pressed="true"><span>Active words</span><strong id="progressValue-active">0</strong></button>
+        <button class="progress-metric" data-progress-metric="passive" aria-pressed="false"><span>Passive words</span><strong id="progressValue-passive">0</strong></button>
+        <button class="progress-metric" data-progress-metric="unknown" aria-pressed="false"><span>Unknown words</span><strong id="progressValue-unknown">0</strong></button>
+        <button class="progress-metric" data-progress-metric="trainerAttempts" aria-pressed="false"><span>Trainer attempts</span><strong id="progressValue-trainerAttempts">0</strong></button>
+      </div>
+      <div class="panel-head progress-chart-head"><h3 id="progressChartTitle">Active vocabulary</h3><div class="segment" aria-label="Chart range"><button data-progress-days="7">7 days</button><button class="active" data-progress-days="30">30 days</button><button data-progress-days="0">All</button></div></div>
+      <p class="small" id="progressPoint" aria-live="polite"></p><div id="progressChart" class="progress-chart"></div>
+      <p class="hint" id="progressHistoryNote"></p>
+      <details class="progress-table"><summary>View recorded data</summary><table><thead><tr><th>Date</th><th>Value</th></tr></thead><tbody id="progressDataRows"></tbody></table></details>
+    </div>
+  </section>
+
   <section class="section" id="grammar">
     <div class="grammar-hub">
       <button class="module-card" data-module="murphy"><h3>Murphy</h3><div class="meta">115 grammar units with progress tracking</div><div class="big" id="grammarMurphyStat">0 / 115</div></button>
@@ -409,40 +450,41 @@ html{min-height:100%}
   </section>
 
   <section class="section" id="trainer">
-    <div class="trainer-timer" aria-label="Таймер тренажёра"><span class="muted">Время в тренажёре</span><output id="trainerElapsed" aria-live="off">00:00</output><button class="btn" id="trainerTimerToggle">Продолжить</button><button class="btn" id="trainerTimerReset">Сбросить</button></div>
+    <div class="trainer-timer" aria-label="Trainer timer"><span class="muted">Trainer time</span><output id="trainerElapsed" aria-live="off">00:00</output><button class="btn" id="trainerTimerToggle">Continue</button><button class="btn" id="trainerTimerReset">Reset</button></div>
     <div class="lesson-menu panel">
-      <div class="panel-head"><h2>Уроки</h2><button class="btn" id="resumeLesson" hidden>Продолжить урок</button></div>
+      <div class="panel-head"><h2>Lessons</h2><button class="btn" id="resumeLesson" hidden>Resume lesson</button></div>
       <div class="lesson-options">
-        <button class="lesson-option" data-lesson="daily"><strong>Ежедневный урок</strong><span>До 100 пассивных слов с наименьшим числом применений. Русский → английский.</span></button>
-        <button class="lesson-option" data-lesson="errors"><strong>Разбор ошибок</strong><span>До 100 пассивных слов с худшей долей правильных ответов. Слова без попыток не участвуют.</span></button>
-        <button class="lesson-option" data-lesson="new"><strong>10 новых слов</strong><span>Незнакомые слова из общего словаря: карточки с примерами, затем тест. Английский → русский.</span></button>
+        <button class="lesson-option" data-lesson="daily"><strong>Daily lesson</strong><span>Up to 100 least-used passive words. Russian → English.</span></button>
+        <button class="lesson-option" data-lesson="errors"><strong>Mistake review</strong><span>Up to 100 passive words with the lowest accuracy. Untested words are excluded.</span></button>
+        <button class="lesson-option" data-lesson="review"><strong>Review</strong><span>Up to 100 passive words you used longest ago. Words with no recorded date come first. Russian → English.</span></button>
+        <button class="lesson-option" data-lesson="new"><strong>10 new words</strong><span>Unknown bank words: study example cards, then take an English → Russian test.</span></button>
       </div>
-      <p class="hint">Слова не повторяются в пределах урока. Каждая проверка ответа учитывается в словаре; просмотр карточек — нет. Незаконченный урок сохраняется.</p>
+      <p class="hint">No repeated words within a lesson. Checked answers count in word statistics; viewing cards does not. Unfinished lessons are saved.</p>
       <p id="lessonMenuStatus" role="status" aria-live="polite"></p>
     </div>
     <div class="panel lesson-panel" id="lessonPanel" hidden>
-      <div class="panel-head"><h2 id="lessonTitle"></h2><button class="btn" id="finishLessonEarly">Завершить досрочно</button></div>
+      <div class="panel-head"><h2 id="lessonTitle"></h2><button class="btn" id="finishLessonEarly">Finish early</button></div>
       <p class="muted" id="lessonProgressText" aria-live="polite"></p><div class="progress-bar"><div id="lessonProgressBar"></div></div>
-      <div id="lessonStudy" class="lesson-study" hidden>
-        <div class="trainer-audio"><h3 class="prompt" id="lessonStudyWord"></h3><button class="speak-btn" id="lessonStudySpeak" aria-label="Произнести слово">🔊</button></div>
-        <p id="lessonStudyTranslation"></p><ol id="lessonExamples" class="lesson-examples"></ol><p class="hint">Примеры: SMARTool (Bast, Janda и др.), <a href="https://doi.org/10.18710/QNAPNE" target="_blank" rel="noopener">набор данных</a>, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>; примеры отобраны и дополнены Barkaloo.</p>
-        <button class="btn primary" id="lessonStudyNext">Следующее слово</button>
-        <p class="hint">После карточек — тест. В пассивный словарь слово перейдёт после 5 верных переводов с английского на русский.</p>
+      <p class="small word-last-used" id="lessonLastUsed"></p><div id="lessonStudy" class="lesson-study" hidden>
+        <div class="trainer-audio"><h3 class="prompt" id="lessonStudyWord"></h3><button class="speak-btn" id="lessonStudySpeak" aria-label="Pronounce word">🔊</button></div>
+        <p id="lessonStudyTranslation"></p><ol id="lessonExamples" class="lesson-examples"></ol><p class="hint">Examples: SMARTool (Bast, Janda et al.), <a href="https://doi.org/10.18710/QNAPNE" target="_blank" rel="noopener">dataset</a>, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>; selected and supplemented by Barkaloo.</p>
+        <button class="btn primary" id="lessonStudyNext">Next word</button>
+        <p class="hint">A test follows the cards. Five correct English → Russian answers move a word to passive.</p>
       </div>
       <div id="lessonTest" class="lesson-test" hidden>
-        <p class="small" id="lessonTestInstruction">Напишите английское слово по русскому переводу</p><h3 id="lessonPrompt" class="lesson-prompt"></h3>
-        <label for="lessonAnswer" class="small" id="lessonAnswerLabel">Ответ на английском</label><input id="lessonAnswer" lang="en" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Новое слово в общий банк">
-        <div class="practice-actions"><button class="btn primary" id="lessonCheck">Проверить</button><button class="btn" id="lessonUnknown">Не знаю</button><button class="btn primary" id="lessonNext" hidden>Дальше</button></div>
-        <div class="answer-feedback"><div id="lessonFeedback" class="feedback" role="status"></div><button class="speak-btn" id="lessonAnswerSpeak" aria-label="Произнести правильное английское слово" hidden>🔊</button></div><p class="hint">Enter — проверить ответ; ещё раз Enter — следующее слово.</p>
+        <p class="small" id="lessonTestInstruction">Type the English word for this Russian translation</p><h3 id="lessonPrompt" class="lesson-prompt"></h3>
+        <label for="lessonAnswer" class="small" id="lessonAnswerLabel">Answer in English</label><input id="lessonAnswer" lang="en" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="New word for the bank">
+        <div class="practice-actions"><button class="btn primary" id="lessonCheck">Check</button><button class="btn" id="lessonUnknown">I don’t know</button><button class="btn primary" id="lessonNext" hidden>Next</button></div>
+        <div class="answer-feedback"><div id="lessonFeedback" class="feedback" role="status"></div><button class="speak-btn" id="lessonAnswerSpeak" aria-label="Pronounce the correct English word" hidden>🔊</button></div><p class="hint">Enter checks your answer; press Enter again for the next word.</p>
       </div>
-      <div class="trainer-levels" id="lessonLevels" hidden></div><div id="lessonSummary" hidden><h3 id="lessonScore"></h3><p class="muted">Ответы сохранены в статистике слов. Можно начать следующий урок.</p><ul id="lessonMistakes"></ul></div>
+      <div class="trainer-levels" id="lessonLevels" hidden></div><div id="lessonSummary" hidden><h3 id="lessonScore"></h3><p class="muted">Your answers are saved in word statistics. You can start another lesson.</p><ul id="lessonMistakes"></ul></div>
     </div>
-    <details class="free-practice"><summary>Свободная тренировка и неправильные глаголы</summary>
+    <details class="free-practice"><summary>Free practice and irregular verbs</summary>
 
     <div class="panel">
       <div class="panel-head"><h2>Trainer</h2></div>
       <div class="trainer-switch" id="trainerSwitch" style="justify-content:center;margin-bottom:18px">
-        <button data-trainer="general">Общий банк <span id="trainerGeneralCount"></span></button>
+        <button data-trainer="general">Bank <span id="trainerGeneralCount"></span></button>
         <button class="active" data-trainer="passive">Passive vocabulary <span id="trainerPassiveCount"></span></button>
         <button data-trainer="active">Active vocabulary <span id="trainerActiveCount"></span></button>
         <button data-trainer="verbs">Irregular Verbs</button>
@@ -457,15 +499,15 @@ html{min-height:100%}
         <div class="trainer-audio"><div class="prompt" id="vocabPrompt"></div><button class="speak-btn" id="speakVocabBtn" title="Pronounce">🔊</button></div>
         <div style="max-width:380px;margin:0 auto 12px"><input id="vocabAnswer" placeholder="Your answer"></div>
         <div class="practice-actions"><button class="btn primary" id="checkVocabBtn">Check</button><button class="btn" id="nextVocabBtn">Next</button></div>
-        <div class="answer-feedback"><div class="feedback" id="vocabFeedback"></div><button class="speak-btn" id="vocabAnswerSpeak" aria-label="Произнести правильное английское слово" hidden>🔊</button></div><p class="hint">Enter — проверить ответ; ещё раз Enter — следующее слово.</p><div class="trainer-levels" id="vocabLevels"></div>
-        <div class="small" id="vocabStatsText"></div>
+        <div class="answer-feedback"><div class="feedback" id="vocabFeedback"></div><button class="speak-btn" id="vocabAnswerSpeak" aria-label="Pronounce the correct English word" hidden>🔊</button></div><p class="hint">Enter checks your answer; press Enter again for the next word.</p><div class="trainer-levels" id="vocabLevels"></div>
+        <div class="small word-last-used" id="vocabLastUsed"></div><div class="small" id="vocabStatsText"></div>
         <div class="small" id="trainerRuleText" style="margin-top:8px">Only Russian → English answers affect Passive → Active progress.</div>
       </div>
       <div id="verbTrainer" class="practice-card" style="display:none">
         <div class="small">Irregular verbs</div><div class="trainer-audio"><div class="prompt" id="verbPrompt"></div><button class="speak-btn" id="speakVerbBtn" title="Pronounce">🔊</button></div>
         <div class="practice-grid"><input id="pastInput" placeholder="Past Simple"><input id="partInput" placeholder="Past Participle"></div>
         <div class="practice-actions"><button class="btn primary" id="checkVerbBtn">Check</button><button class="btn" id="nextVerbBtn">Next</button></div>
-        <div class="answer-feedback"><div class="feedback" id="verbFeedback"></div><button class="speak-btn" id="verbAnswerSpeak" aria-label="Произнести правильные формы глагола" hidden>🔊</button></div><div class="small" id="verbStatsText"></div>
+        <div class="answer-feedback"><div class="feedback" id="verbFeedback"></div><button class="speak-btn" id="verbAnswerSpeak" aria-label="Pronounce the correct verb forms" hidden>🔊</button></div><div class="small" id="verbStatsText"></div>
       </div>
     </div>
     </details>
@@ -474,6 +516,7 @@ html{min-height:100%}
 </div>
 <!-- BARKALOO_CLOUD_RUNTIME -->
 <!-- BARKALOO_LESSONS -->
+<!-- BARKALOO_PROGRESS -->
 <!-- BARKALOO_PROGRESSION -->
 <script>
 const verbs=[["arise", "arose", "arisen", "возникать"], ["awake", "awoke", "awoken", "просыпаться"], ["be", "was/were", "been", "быть"], ["bear", "bore", "borne/born", "нести; терпеть"], ["beat", "beat", "beaten", "бить"], ["become", "became", "become", "становиться"], ["begin", "began", "begun", "начинать"], ["bend", "bent", "bent", "сгибать"], ["bet", "bet", "bet", "держать пари"], ["bind", "bound", "bound", "связывать"], ["bite", "bit", "bitten", "кусать"], ["bleed", "bled", "bled", "кровоточить"], ["blow", "blew", "blown", "дуть"], ["break", "broke", "broken", "ломать"], ["breed", "bred", "bred", "разводить"], ["bring", "brought", "brought", "приносить"], ["broadcast", "broadcast", "broadcast", "транслировать"], ["build", "built", "built", "строить"], ["burn", "burnt/burned", "burnt/burned", "гореть; жечь"], ["burst", "burst", "burst", "лопаться"], ["buy", "bought", "bought", "покупать"], ["cast", "cast", "cast", "бросать; назначать роль"], ["catch", "caught", "caught", "ловить"], ["choose", "chose", "chosen", "выбирать"], ["cling", "clung", "clung", "цепляться"], ["come", "came", "come", "приходить"], ["cost", "cost", "cost", "стоить"], ["creep", "crept", "crept", "ползти"], ["cut", "cut", "cut", "резать"], ["deal", "dealt", "dealt", "иметь дело"], ["dig", "dug", "dug", "копать"], ["do", "did", "done", "делать"], ["draw", "drew", "drawn", "рисовать; тянуть"], ["dream", "dreamt/dreamed", "dreamt/dreamed", "мечтать"], ["drink", "drank", "drunk", "пить"], ["drive", "drove", "driven", "водить"], ["eat", "ate", "eaten", "есть"], ["fall", "fell", "fallen", "падать"], ["feed", "fed", "fed", "кормить"], ["feel", "felt", "felt", "чувствовать"], ["fight", "fought", "fought", "драться"], ["find", "found", "found", "находить"], ["flee", "fled", "fled", "убегать"], ["fly", "flew", "flown", "летать"], ["forbid", "forbade", "forbidden", "запрещать"], ["forecast", "forecast", "forecast", "прогнозировать"], ["forget", "forgot", "forgotten", "забывать"], ["forgive", "forgave", "forgiven", "прощать"], ["freeze", "froze", "frozen", "замерзать"], ["get", "got", "got/gotten", "получать"], ["give", "gave", "given", "давать"], ["go", "went", "gone", "идти"], ["grind", "ground", "ground", "молоть"], ["grow", "grew", "grown", "расти"], ["hang", "hung", "hung", "висеть"], ["have", "had", "had", "иметь"], ["hear", "heard", "heard", "слышать"], ["hide", "hid", "hidden", "прятать"], ["hit", "hit", "hit", "ударять"], ["hold", "held", "held", "держать"], ["hurt", "hurt", "hurt", "причинять боль"], ["keep", "kept", "kept", "держать"], ["kneel", "knelt/kneeled", "knelt/kneeled", "становиться на колени"], ["know", "knew", "known", "знать"], ["lay", "laid", "laid", "класть"], ["lead", "led", "led", "вести"], ["lean", "leant/leaned", "leant/leaned", "наклоняться"], ["leap", "leapt/leaped", "leapt/leaped", "прыгать"], ["learn", "learnt/learned", "learnt/learned", "учить"], ["leave", "left", "left", "оставлять"], ["lend", "lent", "lent", "одалживать"], ["let", "let", "let", "позволять"], ["lie", "lay", "lain", "лежать"], ["light", "lit/lighted", "lit/lighted", "зажигать"], ["lose", "lost", "lost", "терять"], ["make", "made", "made", "делать"], ["mean", "meant", "meant", "значить"], ["meet", "met", "met", "встречать"], ["mistake", "mistook", "mistaken", "ошибочно принимать"], ["pay", "paid", "paid", "платить"], ["prove", "proved", "proven/proved", "доказывать"], ["put", "put", "put", "класть"], ["quit", "quit", "quit", "бросать"], ["read", "read", "read", "читать"], ["ride", "rode", "ridden", "ездить верхом"], ["ring", "rang", "rung", "звонить"], ["rise", "rose", "risen", "подниматься"], ["run", "ran", "run", "бежать"], ["say", "said", "said", "говорить"], ["see", "saw", "seen", "видеть"], ["seek", "sought", "sought", "искать"], ["sell", "sold", "sold", "продавать"], ["send", "sent", "sent", "отправлять"], ["set", "set", "set", "устанавливать"], ["shake", "shook", "shaken", "трясти"], ["shine", "shone", "shone", "сиять"], ["shoot", "shot", "shot", "стрелять"], ["show", "showed", "shown", "показывать"], ["shrink", "shrank", "shrunk", "сжиматься"], ["shut", "shut", "shut", "закрывать"], ["sing", "sang", "sung", "петь"], ["sink", "sank", "sunk", "тонуть"], ["sit", "sat", "sat", "сидеть"], ["sleep", "slept", "slept", "спать"], ["slide", "slid", "slid", "скользить"], ["smell", "smelt/smelled", "smelt/smelled", "пахнуть"], ["speak", "spoke", "spoken", "говорить"], ["spell", "spelt/spelled", "spelt/spelled", "писать по буквам"], ["spend", "spent", "spent", "тратить"], ["spill", "spilt/spilled", "spilt/spilled", "проливать"], ["spin", "spun", "spun", "вращать"], ["spit", "spat/spit", "spat/spit", "плевать"], ["split", "split", "split", "разделять"], ["spread", "spread", "spread", "распространять"], ["spring", "sprang", "sprung", "прыгать; возникать"], ["stand", "stood", "stood", "стоять"], ["steal", "stole", "stolen", "красть"], ["stick", "stuck", "stuck", "приклеивать"], ["sting", "stung", "stung", "жалить"], ["stink", "stank", "stunk", "вонять"], ["strike", "struck", "struck/stricken", "ударять"], ["swear", "swore", "sworn", "клясться"], ["sweep", "swept", "swept", "подметать"], ["swim", "swam", "swum", "плавать"], ["swing", "swung", "swung", "качаться"], ["take", "took", "taken", "брать"], ["teach", "taught", "taught", "учить"], ["tear", "tore", "torn", "рвать"], ["tell", "told", "told", "рассказывать"], ["think", "thought", "thought", "думать"], ["throw", "threw", "thrown", "бросать"], ["understand", "understood", "understood", "понимать"], ["wake", "woke", "woken", "просыпаться"], ["wear", "wore", "worn", "носить"], ["weep", "wept", "wept", "плакать"], ["win", "won", "won", "побеждать"], ["wind", "wound", "wound", "наматывать"], ["write", "wrote", "written", "писать"], ["abide", "abode/abided", "abode/abided", "соблюдать"], ["alight", "alit/alighted", "alit/alighted", "сходить; приземляться"], ["behold", "beheld", "beheld", "созерцать"], ["beset", "beset", "beset", "осаждать"], ["bid", "bid/bade", "bid/bidden", "предлагать цену; велеть"], ["clothe", "clad/clothed", "clad/clothed", "одевать"], ["dive", "dived/dove", "dived", "нырять"], ["dwell", "dwelt/dwelled", "dwelt/dwelled", "обитать"], ["fit", "fit/fitted", "fit/fitted", "подходить"], ["foresee", "foresaw", "foreseen", "предвидеть"], ["foretell", "foretold", "foretold", "предсказывать"], ["forsake", "forsook", "forsaken", "покидать"], ["input", "input/inputted", "input/inputted", "вводить данные"], ["interweave", "interwove", "interwoven", "переплетать"], ["mislead", "misled", "misled", "вводить в заблуждение"], ["misread", "misread", "misread", "неправильно читать"], ["offset", "offset", "offset", "компенсировать"], ["outbid", "outbid", "outbid", "перебивать цену"], ["outdo", "outdid", "outdone", "превосходить"], ["outgrow", "outgrew", "outgrown", "перерастать"], ["outrun", "outran", "outrun", "обгонять"], ["overcome", "overcame", "overcome", "преодолевать"], ["overdo", "overdid", "overdone", "переусердствовать"], ["overdraw", "overdrew", "overdrawn", "превышать баланс"], ["overeat", "overate", "overeaten", "переедать"], ["overhear", "overheard", "overheard", "подслушивать"], ["overpay", "overpaid", "overpaid", "переплачивать"], ["override", "overrode", "overridden", "отменять; переопределять"], ["overrun", "overran", "overrun", "захватывать; переполнять"], ["oversee", "oversaw", "overseen", "контролировать"], ["oversleep", "overslept", "overslept", "проспать"], ["overtake", "overtook", "overtaken", "обгонять"], ["overthrow", "overthrew", "overthrown", "свергать"], ["partake", "partook", "partaken", "принимать участие"], ["plead", "pleaded/pled", "pleaded/pled", "умолять; заявлять в суде"], ["preset", "preset", "preset", "предустанавливать"], ["rebuild", "rebuilt", "rebuilt", "перестраивать"], ["redo", "redid", "redone", "переделывать"], ["remake", "remade", "remade", "переделывать"], ["repay", "repaid", "repaid", "возвращать долг"], ["rerun", "reran", "rerun", "запускать снова"], ["resell", "resold", "resold", "перепродавать"], ["reset", "reset", "reset", "сбрасывать"], ["retake", "retook", "retaken", "пересдавать; брать снова"], ["rewrite", "rewrote", "rewritten", "переписывать"], ["rid", "rid", "rid", "избавлять"], ["saw", "sawed", "sawn/sawed", "пилить"], ["sew", "sewed", "sewn/sewed", "шить"], ["shave", "shaved", "shaven/shaved", "бриться"], ["shear", "sheared", "shorn/sheared", "стричь"], ["shed", "shed", "shed", "проливать; сбрасывать"], ["slay", "slew", "slain", "убивать"], ["sling", "slung", "slung", "швырять"], ["slit", "slit", "slit", "разрезать"], ["sow", "sowed", "sown/sowed", "сеять"], ["speed", "sped/speeded", "sped/speeded", "ускорять"], ["stride", "strode", "stridden", "шагать"], ["strive", "strove/strived", "striven/strived", "стремиться"], ["tread", "trod", "trodden/trod", "ступать"], ["undergo", "underwent", "undergone", "подвергаться"], ["undertake", "undertook", "undertaken", "предпринимать"], ["undo", "undid", "undone", "отменять; развязывать"], ["upset", "upset", "upset", "расстраивать"], ["withhold", "withheld", "withheld", "удерживать"], ["withstand", "withstood", "withstood", "противостоять"], ["wring", "wrung", "wrung", "выжимать"]];
@@ -488,6 +531,7 @@ let words=loadWords(),stats=loadStats(),units=loadObj(K.units),studyDays=loadObj
 let calDate=new Date(); calDate=new Date(calDate.getFullYear(),calDate.getMonth(),1);
 const DEFAULT_PASSIVE_WORDS=["a", "about", "above", "after", "again", "against", "age", "ago", "air", "all", "also", "always", "am", "an", "and", "animal", "another", "answer", "any", "apple", "April", "are", "arm", "around", "arrive", "as", "ask", "at", "August", "autumn", "away", "baby", "back", "bad", "bag", "banana", "bathroom", "be", "beautiful", "because", "bed", "bedroom", "before", "begin", "behind", "believe", "below", "best", "better", "between", "big", "bird", "black", "blue", "body", "book", "both", "boy", "bread", "breakfast", "bring", "brother", "brown", "build", "bus", "business", "but", "buy", "by", "call", "can", "car", "cat", "chair", "change", "child", "children", "city", "class", "clean", "close", "clothes", "coat", "coffee", "cold", "color", "come", "computer", "cook", "cool", "correct", "could", "country", "day", "December", "different", "dinner", "do", "doctor", "dog", "door", "down", "draw", "drink", "drive", "during", "each", "early", "easy", "eat", "eight", "eighteen", "eighty", "eleven", "else", "end", "English", "enough", "even", "evening", "every", "everyone", "everything", "example", "eye", "face", "family", "far", "fast", "father", "February", "feel", "few", "fifteen", "fifty", "find", "fine", "finish", "first", "fish", "five", "floor", "food", "foot", "for", "forget", "forty", "four", "fourteen", "Friday", "friend", "from", "full", "game", "get", "girl", "give", "go", "good", "great", "green", "grey", "group", "grow", "hair", "half", "hand", "happen", "happy", "hard", "has", "have", "he", "head", "hear", "help", "her", "here", "high", "him", "his", "home", "hope", "hospital", "hot", "hotel", "hour", "house", "how", "hundred", "hungry", "I", "idea", "if", "important", "in", "inside", "into", "is", "it", "its", "January", "job", "July", "June", "just", "keep", "kind", "kitchen", "know", "large", "last", "late", "later", "learn", "leave", "left", "leg", "less", "let", "life", "light", "like", "listen", "little", "live", "long", "look", "lose", "lot", "love", "lunch", "make", "man", "many", "March", "May", "maybe", "me", "mean", "meet", "milk", "minute", "Monday", "money", "month", "more", "morning", "mother", "move", "much", "music", "must", "my", "name", "near", "need", "never", "new", "next", "night", "nine", "nineteen", "ninety", "no", "not", "nothing", "November", "now", "number", "October", "of", "off", "often", "old", "on", "once", "one", "only", "open", "or", "orange", "other", "our", "out", "outside", "over", "parent", "part", "people", "person", "phone", "place", "play", "please", "point", "put", "question", "rain", "read", "ready", "really", "red", "remember", "right", "room", "run", "same", "Saturday", "say", "school", "second", "see", "September", "seven", "seventeen", "seventy", "she", "shirt", "shoe", "shop", "short", "should", "show", "sister", "sit", "six", "sixteen", "sixty", "sleep", "small", "snow", "so", "some", "something", "sometimes", "son", "soon", "speak", "spring", "stand", "start", "stay", "still", "stop", "street", "student", "study", "summer", "Sunday", "table", "take", "talk", "tea", "teacher", "tell", "ten", "than", "thank", "that", "the", "their", "them", "then", "there", "these", "they", "thing", "think", "thirteen", "thirty", "this", "those", "three", "Thursday", "time", "tired", "to", "today", "together", "tomorrow", "too", "train", "tree", "Tuesday", "twelve", "twenty", "two", "under", "understand", "until", "up", "us", "use", "usually", "very", "wait", "walk", "want", "warm", "was", "watch", "water", "way", "we", "weather", "Wednesday", "week", "weekend", "well", "were", "what", "when", "where", "which", "white", "who", "why", "will", "window", "winter", "with", "woman", "word", "work", "world", "would", "write", "wrong", "year", "yellow", "yes", "yesterday", "you", "young", "your", "zero", "airport", "aunt", "uncle", "cousin", "grandmother", "grandfather", "wife", "husband", "daughter", "living", "garden", "key", "station", "supermarket", "restaurant", "cafe", "office", "university", "lesson", "homework", "pen", "pencil"];
 const WORD_TRANSLATIONS={"a":"неопределённый артикль","about":"о; около","above":"выше","again":"снова","against":"против","age":"возраст","ago":"назад","air":"воздух","all":"все; весь","also":"также","always":"всегда","am":"есть; являюсь","an":"неопределённый артикль","and":"и","animal":"животное","another":"другой; ещё один","answer":"ответ; отвечать","any":"любой; какой-нибудь","apple":"яблоко","april":"апрель","are":"есть; являются","arm":"рука","around":"вокруг; примерно","arrive":"прибывать","as":"как; в качестве","ask":"спрашивать","at":"в; у; на","august":"август","autumn":"осень","away":"прочь; далеко","baby":"младенец","back":"назад; спина","bad":"плохой","bag":"сумка","banana":"банан","bathroom":"ванная комната","be":"быть","beautiful":"красивый","because":"потому что","bed":"кровать","bedroom":"спальня","before":"до; перед","begin":"начинать","behind":"позади","believe":"верить","below":"ниже","best":"лучший","better":"лучше","between":"между","big":"большой","bird":"птица","black":"чёрный","blue":"синий","body":"тело","book":"книга","both":"оба","boy":"мальчик","bread":"хлеб","breakfast":"завтрак","bring":"приносить","brother":"брат","brown":"коричневый","build":"строить","bus":"автобус","business":"бизнес; дело","but":"но","buy":"покупать","by":"у; рядом; посредством","call":"звонить; называть","can":"мочь","car":"машина","cat":"кошка","chair":"стул","change":"менять; изменение","child":"ребёнок","children":"дети","city":"город","class":"класс; занятие","clean":"чистый; чистить","close":"закрывать; близкий","clothes":"одежда","coat":"пальто","coffee":"кофе","cold":"холодный; холод","color":"цвет","come":"приходить","computer":"компьютер","cook":"готовить","cool":"прохладный; классный","correct":"правильный","could":"мог; мог бы","country":"страна","day":"день","december":"декабрь","different":"разный","dinner":"ужин","do":"делать","doctor":"врач","dog":"собака","door":"дверь","down":"вниз","draw":"рисовать","drink":"пить; напиток","drive":"водить","during":"во время","each":"каждый","early":"рано; ранний","easy":"лёгкий","eat":"есть","eight":"восемь","eighteen":"восемнадцать","eighty":"восемьдесят","eleven":"одиннадцать","else":"ещё; другой","end":"конец; заканчивать","english":"английский","enough":"достаточно","even":"даже","evening":"вечер","every":"каждый","everyone":"все; каждый","everything":"всё","example":"пример","eye":"глаз","face":"лицо","family":"семья","far":"далеко","fast":"быстрый; быстро","father":"отец","february":"февраль","feel":"чувствовать","few":"несколько; мало","fifteen":"пятнадцать","fifty":"пятьдесят","find":"находить","fine":"хорошо; прекрасный","finish":"заканчивать","first":"первый","fish":"рыба","five":"пять","floor":"пол; этаж","food":"еда","foot":"ступня; фут","for":"для","forget":"забывать","forty":"сорок","four":"четыре","fourteen":"четырнадцать","friday":"пятница","friend":"друг","from":"из; от","full":"полный","game":"игра","get":"получать; становиться","girl":"девочка","give":"давать","go":"идти; ехать","good":"хороший","great":"отличный; великий","green":"зелёный","grey":"серый","group":"группа","grow":"расти","hair":"волосы","half":"половина","hand":"рука; кисть","happen":"случаться","happy":"счастливый","hard":"трудный; твёрдый","has":"имеет","have":"иметь","he":"он","head":"голова","hear":"слышать","help":"помогать; помощь","her":"её; ей","here":"здесь","high":"высокий","him":"ему; его","his":"его","home":"дом; домой","hope":"надеяться; надежда","hospital":"больница","hot":"горячий; жаркий","hotel":"отель","hour":"час","house":"дом","how":"как","hundred":"сто","hungry":"голодный","i":"я","idea":"идея","if":"если","important":"важный","in":"в","inside":"внутри","into":"внутрь; в","is":"есть; является","it":"это; оно","its":"его; её (для предмета)","january":"январь","job":"работа","july":"июль","june":"июнь","just":"только; просто","keep":"держать; сохранять","kind":"вид; добрый","kitchen":"кухня","know":"знать","large":"большой","last":"последний; длиться","late":"поздний; поздно","later":"позже","learn":"учить; узнавать","leave":"уходить; оставлять","left":"левый; ушёл","leg":"нога","less":"меньше","let":"позволять","life":"жизнь","light":"свет; лёгкий","like":"нравиться; как","listen":"слушать","little":"маленький; мало","live":"жить","long":"длинный; долго","look":"смотреть; выглядеть","lose":"терять","lot":"много; множество","love":"любить; любовь","lunch":"обед","make":"делать; создавать","man":"мужчина","many":"много","march":"март","may":"май","maybe":"может быть","me":"меня; мне","mean":"значить; иметь в виду","meet":"встречать","milk":"молоко","minute":"минута","monday":"понедельник","money":"деньги","month":"месяц","more":"больше","morning":"утро","mother":"мать","move":"двигаться; переезжать","much":"много","music":"музыка","must":"должен","my":"мой","name":"имя","near":"рядом; близко","need":"нуждаться; нужно","never":"никогда","new":"новый","next":"следующий","night":"ночь","nine":"девять","nineteen":"девятнадцать","ninety":"девяносто","no":"нет; никакой","not":"не","nothing":"ничего","november":"ноябрь","now":"сейчас","number":"число; номер","october":"октябрь","of":"из; родительный предлог","off":"прочь; выключено","often":"часто","old":"старый","on":"на","once":"однажды; один раз","one":"один","only":"только","open":"открывать; открытый","or":"или","orange":"апельсин; оранжевый","other":"другой","our":"наш","out":"наружу","outside":"снаружи","over":"над; через; закончено","parent":"родитель","part":"часть","people":"люди","person":"человек","phone":"телефон","place":"место","play":"играть","please":"пожалуйста","point":"точка; смысл","put":"класть; ставить","question":"вопрос","rain":"дождь; идти о дожде","read":"читать","ready":"готовый","really":"действительно","red":"красный","remember":"помнить","right":"правый; правильно","room":"комната","run":"бежать","same":"тот же","saturday":"суббота","say":"говорить; сказать","school":"школа","second":"второй; секунда","see":"видеть","september":"сентябрь","seven":"семь","seventeen":"семнадцать","seventy":"семьдесят","she":"она","shirt":"рубашка","shoe":"обувь; туфля","shop":"магазин; покупать","short":"короткий","should":"следует","show":"показывать","sister":"сестра","sit":"сидеть","six":"шесть","sixteen":"шестнадцать","sixty":"шестьдесят","sleep":"спать","small":"маленький","snow":"снег","so":"так; поэтому","some":"некоторые; немного","something":"что-то","sometimes":"иногда","son":"сын","soon":"скоро","speak":"говорить","spring":"весна","stand":"стоять","start":"начинать","stay":"оставаться","still":"всё ещё","stop":"останавливать(ся)","street":"улица","student":"студент","study":"учиться; изучать","summer":"лето","sunday":"воскресенье","table":"стол","take":"брать","talk":"разговаривать","tea":"чай","teacher":"учитель","tell":"рассказывать; говорить","ten":"десять","than":"чем","thank":"благодарить","that":"тот; что","the":"определённый артикль","their":"их","them":"им; их","then":"тогда; затем","there":"там","these":"эти","they":"они","thing":"вещь","think":"думать","thirteen":"тринадцать","thirty":"тридцать","this":"этот","those":"те","three":"три","thursday":"четверг","time":"время","tired":"уставший","to":"к; в; частица инфинитива","today":"сегодня","together":"вместе","tomorrow":"завтра","too":"тоже; слишком","train":"поезд; тренировать","tree":"дерево","tuesday":"вторник","twelve":"двенадцать","twenty":"двадцать","two":"два","under":"под","understand":"понимать","until":"до (времени)","up":"вверх","us":"нас; нам","use":"использовать","usually":"обычно","very":"очень","wait":"ждать","walk":"ходить; прогулка","want":"хотеть","warm":"тёплый","was":"был; была","watch":"смотреть; часы","water":"вода","way":"путь; способ","we":"мы","weather":"погода","wednesday":"среда","week":"неделя","weekend":"выходные","well":"хорошо","were":"были","what":"что; какой","when":"когда","where":"где; куда","which":"который; какой","white":"белый","who":"кто","why":"почему","will":"будет; воля","window":"окно","winter":"зима","with":"с","woman":"женщина","word":"слово","work":"работать; работа","world":"мир","would":"бы; хотел бы","write":"писать","wrong":"неправильный","year":"год","yellow":"жёлтый","yes":"да","yesterday":"вчера","you":"ты; вы","young":"молодой","your":"твой; ваш","zero":"ноль","airport":"аэропорт","aunt":"тётя","uncle":"дядя","cousin":"двоюродный брат; сестра","grandmother":"бабушка","grandfather":"дедушка","wife":"жена","husband":"муж","daughter":"дочь","living":"живущий; проживание","garden":"сад","key":"ключ","station":"станция","supermarket":"супермаркет","restaurant":"ресторан","cafe":"кафе","office":"офис","university":"университет","lesson":"урок","homework":"домашнее задание","pen":"ручка","pencil":"карандаш","after":"после"};
+let appReady=false,applyingSnapshot=false;
 let trainerVocabKind='passive';
 function ensureDefaultPassiveWords(){
   let changed=false;
@@ -510,7 +554,7 @@ function addBankWord(word,translation=''){
 function bulkImportWords(){
   const input=bulkWords.value.split(/\r?\n/).map(x=>x.replace(/^[*#\-\s]+|[\*\s]+$/g,'').trim()).filter(Boolean);let added=0;
   for(const line of input){const [word,...translation]=line.split(/\s*[—–\t]\s*/);if(!getCoreItem(word))added++;addBankWord(word,translation.join('; '));}
-  saveAll();populateCoreFilters();renderDictionary();updateHome();bulkStatus.textContent=`${added} слов добавлено в общий банк`;bulkWords.value='';
+  saveAll();populateCoreFilters();renderDictionary();updateHome();bulkStatus.textContent=`${added} words added to the bank`;bulkWords.value='';
 }
 
 
@@ -607,7 +651,8 @@ function generalProduction(item,ok,aggregate){
   p.lessonCorrect=draft.correct;p.lessonWrong=draft.wrong;p.lessonUses=draft.uses;p.lessonHistory=draft.productionHistory;
   if(draft.productionWindowCount!=null)p.productionWindowCount=draft.productionWindowCount;
 }
-function recordWordAttempt(item,direction,ok,countTrainer=true){
+function recordWordAttempt(item,direction,ok,countTrainer=true,usedAt=new Date().toISOString()){
+  stampWordUse(item,usedAt);
   if(direction==='en-ru')recordRecognition(item,ok);
   else {const w=words.find(x=>norm(x.word)===norm(item.word));if(w)recordProduction(w,ok);else generalProduction(item,ok);}
   if(countTrainer){if(ok)stats.vocabCorrect=(stats.vocabCorrect||0)+1;else stats.vocabWrong=(stats.vocabWrong||0)+1;}
@@ -618,6 +663,7 @@ function promoteGeneralToPassive(item){
     const p=coreProgressFor(item.word);
     w={id:Date.now()+Math.random(),word:item.word,translation:item.translation||'',kind:'passive',correct:p.lessonCorrect||0,wrong:p.lessonWrong||0,uses:p.lessonUses||0,productionHistory:[...(p.lessonHistory||[])],coreRank:item.rank};
     if(p.productionWindowCount!=null)w.productionWindowCount=p.productionWindowCount;
+    if(p.lastUsedAt)w.lastUsedAt=p.lastUsedAt;
     words.push(w);
   }else if(w.kind!=='active')w.kind='passive';
   return w;
@@ -832,7 +878,7 @@ function renderCalibration(){
   calibrationMeta.textContent=`#${item.rank} · ${item.pos} · ${item.topic} · current: ${state}`;
   const sorted=coreBank.filter(x=>coreWordState(x)!=='general').length;
   calibrationProgress.textContent=`${sorted} sorted · word #${item.rank} / ${coreBank.length}`;
-  calibrationRange.textContent='Общий банк';
+  calibrationRange.textContent='Bank';
 }
 function openCalibrationMode(){
   calibrationOpen=true;calibrationShell.classList.add('show');
@@ -849,8 +895,8 @@ function calibrationKeyHandler(e){
   else if(e.code==='Space'){e.preventDefault();const item=calibrationCurrent();if(item)speakWord(item.word)}
 }
 
-const pageMeta={home:['English',''],dictionary:['Dictionary',''],grammar:['Grammar',''],trainer:['Trainer','']};
-function saveAll(){snapshotTrainerClock();words.forEach(migrateWord);localStorage.setItem(K.words,JSON.stringify(words));localStorage.setItem(K.stats,JSON.stringify(stats));localStorage.setItem(K.units,JSON.stringify(units));localStorage.setItem(K.days,JSON.stringify(studyDays));localStorage.setItem(K.core,JSON.stringify(coreProgress));localStorage.setItem(K.settings,JSON.stringify(settings));if(cloudSyncClient)cloudSyncClient.changed()}
+const pageMeta={home:['English',''],dictionary:['Dictionary',''],grammar:['Grammar',''],trainer:['Trainer',''],progress:['Progress','']};
+function saveAll(){snapshotTrainerClock();if(appReady&&!applyingSnapshot)recordProgressSnapshot();words.forEach(migrateWord);localStorage.setItem(K.words,JSON.stringify(words));localStorage.setItem(K.stats,JSON.stringify(stats));localStorage.setItem(K.units,JSON.stringify(units));localStorage.setItem(K.days,JSON.stringify(studyDays));localStorage.setItem(K.core,JSON.stringify(coreProgress));localStorage.setItem(K.settings,JSON.stringify(settings));if(cloudSyncClient)cloudSyncClient.changed()}
 function esc(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))} function norm(s=''){return String(s).trim().toLowerCase()} function acc(c,w){const t=c+w;return t?Math.round(c/t*100)+'%':'—'}
 function totals(){return {correct:(stats.verbCorrect||0)+(stats.vocabCorrect||0),wrong:(stats.verbWrong||0)+(stats.vocabWrong||0)}}
 function updateHome(){
@@ -863,7 +909,7 @@ function updateHome(){
   const streak=getStudyStreak();homeStreak.textContent=streak;homeStreakMeta.textContent=streak===1?'day in a row':'days in a row';
   renderCoreStats();
 }
-function setPage(p,recordHistory=true){if(!pageMeta[p])return;if(recordHistory&&document.querySelector('.section.active')?.id!==p)history.pushState({...history.state,barkaloo:true,page:p},'','#/'+p);document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById(p).classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===p));pageTitle.textContent=pageMeta[p][0];if(p==='dictionary')renderDictionary();if(p==='trainer')resumeTrainerClock();else pauseTrainerClock();if(innerWidth<=820)setMenu(false)}
+function setPage(p,recordHistory=true){if(!pageMeta[p])return;if(recordHistory&&document.querySelector('.section.active')?.id!==p)history.pushState({...history.state,barkaloo:true,page:p},'','#/'+p);document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById(p).classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===p));pageTitle.textContent=pageMeta[p][0];if(p==='dictionary')renderDictionary();if(p==='progress'){if(appReady)saveAll();renderProgress();}if(p==='trainer')resumeTrainerClock();else pauseTrainerClock();if(innerWidth<=820)setMenu(false)}
 function setMenu(open){menuOpen=open;if(innerWidth<=820){sidebar.classList.toggle('show',open);overlay.classList.toggle('show',open)}else{sidebar.classList.toggle('hidden',!open);main.classList.toggle('expanded',!open)}}
 function maybePromoteWord(w){return evaluateProduction(w)==='active'}
 function applyPromotions(){words.forEach(migrateWord);return 0}
@@ -877,13 +923,13 @@ function renderDictionary(){
       const s=coreWordState(item);
       return (!q||norm(item.word).includes(q)||norm(translationText(item)).includes(q))&&(sf==='all'||s===sf)&&(pf==='all'||item.pos===pf)&&(tf==='all'||item.topic===tf);
     });
-    dictList.innerHTML='';dictCount.textContent=`${list.length} слов`;
+    dictList.innerHTML='';dictCount.textContent=`${list.length} words`;
     if(!coreBank.length){dictList.innerHTML='<div class="empty">Loading Core 1500…</div>';renderCoreStats();return}
     if(!list.length){dictList.innerHTML='<div class="empty">No words match these filters.</div>';renderCoreStats();return}
     list.forEach(item=>{
       const state=coreWordState(item),p=coreProgressFor(item.word),production=words.find(w=>norm(w.word)===norm(item.word));
       const r=document.createElement('div');r.className='table-row';
-      r.innerHTML=`<div class="word-cell"><div class="word-line"><span>#${item.rank} ${esc(item.word)}</span><button class="speak-btn" title="Pronounce">🔊</button></div></div><div><span>${esc(translationText(item)||'—')}</span> <button class="speak-btn edit-translation" title="Edit translation">✎</button></div><div><span class="small">${esc(item.pos)}</span><br><span class="muted">${esc(item.topic)}</span></div><div>${levelControlsHTML(state)}</div><div>${p.recognitionCorrect||0} recognition correct · ${p.recognitionWrong||0} wrong<br><span class="small">${production?production.uses||0:p.lessonUses||0} RU → EN · ${acc(production?production.correct||0:p.lessonCorrect||0,production?production.wrong||0:p.lessonWrong||0)}</span></div>`;
+      r.innerHTML=`<div class="word-cell"><div class="word-line"><span>#${item.rank} ${esc(item.word)}</span><button class="speak-btn" title="Pronounce">🔊</button></div></div><div><span>${esc(translationText(item)||'—')}</span> <button class="speak-btn edit-translation" title="Edit translation">✎</button></div><div><span class="small">${esc(item.pos)}</span><br><span class="muted">${esc(item.topic)}</span></div><div>${levelControlsHTML(state)}</div><div>${p.recognitionCorrect||0} recognition correct · ${p.recognitionWrong||0} wrong<br><span class="small">${production?production.uses||0:p.lessonUses||0} RU → EN · ${acc(production?production.correct||0:p.lessonCorrect||0,production?production.wrong||0:p.lessonWrong||0)}</span><br><span class="small word-last-used">${esc(lastUsedLabel(item))}</span></div>`;
       const speak=r.querySelector('.speak-btn:not(.edit-translation)');if(speak)speak.onclick=()=>speakWord(item.word);
       const edit=r.querySelector('.edit-translation');if(edit)edit.onclick=()=>editCoreTranslation(item);
       bindLevelControls(r,item.word,state);dictList.appendChild(r)
@@ -898,7 +944,7 @@ function renderDictionary(){
   list.forEach(w=>{
     migrateWord(w);const recent=w.productionHistory.slice(-10),recentAcc=recent.length?Math.round(recent.filter(Boolean).length/recent.length*100)+'%':'—';
     const r=document.createElement('div');r.className='table-row';
-    r.innerHTML=`<div class="word-cell"><div class="word-line"><span>${esc(w.word)}</span><button class="speak-btn" title="Pronounce">🔊</button></div></div><div>${esc(translationText(w)||'—')} <button class="speak-btn edit-translation" title="Edit translation">✎</button></div><div>${levelControlsHTML(w.kind)}</div><div>${w.uses||0} RU → EN · ${acc(w.correct||0,w.wrong||0)}<br><span class="small">last ${recent.length||0}: ${recentAcc}</span></div><div><button class="icon-btn">✕</button></div>`;
+    r.innerHTML=`<div class="word-cell"><div class="word-line"><span>${esc(w.word)}</span><button class="speak-btn" title="Pronounce">🔊</button></div></div><div>${esc(translationText(w)||'—')} <button class="speak-btn edit-translation" title="Edit translation">✎</button></div><div>${levelControlsHTML(w.kind)}</div><div>${w.uses||0} RU → EN · ${acc(w.correct||0,w.wrong||0)}<br><span class="small">last ${recent.length||0}: ${recentAcc}</span><br><span class="small word-last-used">${esc(lastUsedLabel(w))}</span></div><div><button class="icon-btn">✕</button></div>`;
     r.querySelector('.speak-btn').onclick=()=>speakWord(w.word);
     bindLevelControls(r,w.word,w.kind);
     r.querySelector('.edit-translation').onclick=()=>editCoreTranslation(w);
@@ -911,7 +957,7 @@ function renderUnits(){const done=Object.values(units).filter(Boolean).length;mu
 function renderVerbs(){const q=norm(verbSearch.value);verbsList.innerHTML='';verbs.filter(v=>v.some(x=>norm(x).includes(q))).forEach(v=>{const r=document.createElement('div');r.className='table-row';r.innerHTML=`<div>${esc(v[0])}</div><div>${esc(v[1])}</div><div>${esc(v[2])}</div><div>${esc(v[3])}</div>`;verbsList.appendChild(r)})}
 function showGrammarModule(m){document.querySelector('.grammar-hub').style.display='none';murphyDetail.classList.toggle('show',m==='murphy');verbsDetail.classList.toggle('show',m==='verbs');(m==='murphy'?murphyDetail:verbsDetail).scrollIntoView({behavior:'smooth',block:'start'})}function backToGrammar(){murphyDetail.classList.remove('show');verbsDetail.classList.remove('show');document.querySelector('.grammar-hub').style.display='grid'}
 function match(input,expected){return String(expected).toLowerCase().split('/').map(x=>x.trim()).includes(norm(input))}
-function newVerb(){document.getElementById('verbAnswerSpeak').hidden=true;currentVerb=verbs[Math.floor(Math.random()*verbs.length)];verbPrompt.textContent=`${currentVerb[0]} → ? → ?`;if(settings.autoSpeak)speakWord(currentVerb[0]);pastInput.value='';partInput.value='';verbAnswered=false;verbFeedback.textContent='';verbFeedback.className='feedback';updateVerbStats()} function checkVerb(){if(!currentVerb||verbAnswered)return;const ok=match(pastInput.value,currentVerb[1])&&match(partInput.value,currentVerb[2]);verbAnswered=true;document.getElementById('verbAnswerSpeak').hidden=false;if(ok){stats.verbCorrect++;verbFeedback.textContent='✓ Correct';verbFeedback.className='feedback good'}else{stats.verbWrong++;verbFeedback.textContent=`✕ ${currentVerb[0]} — ${currentVerb[1]} — ${currentVerb[2]}`;verbFeedback.className='feedback bad'}saveAll();updateHome();updateVerbStats()} function updateVerbStats(){verbStatsText.textContent=`Correct: ${stats.verbCorrect} · Wrong: ${stats.verbWrong} · Accuracy: ${acc(stats.verbCorrect,stats.verbWrong)}`}
+function newVerb(){document.getElementById('verbAnswerSpeak').hidden=true;currentVerb=verbs[Math.floor(Math.random()*verbs.length)];verbPrompt.textContent=`${currentVerb[0]} → ? → ?`;if(settings.autoSpeak)speakWord(currentVerb[0]);pastInput.value='';partInput.value='';verbAnswered=false;verbFeedback.textContent='';verbFeedback.className='feedback';updateVerbStats()} function checkVerb(){if(!currentVerb||verbAnswered)return;const ok=match(pastInput.value,currentVerb[1])&&match(partInput.value,currentVerb[2]);verbAnswered=true;if(getCoreItem(currentVerb[0]))stampWordUse(getCoreItem(currentVerb[0]),new Date().toISOString());document.getElementById('verbAnswerSpeak').hidden=false;if(ok){stats.verbCorrect++;verbFeedback.textContent='✓ Correct';verbFeedback.className='feedback good'}else{stats.verbWrong++;verbFeedback.textContent=`✕ ${currentVerb[0]} — ${currentVerb[1]} — ${currentVerb[2]}`;verbFeedback.className='feedback bad'}saveAll();updateHome();updateVerbStats()} function updateVerbStats(){verbStatsText.textContent=`Correct: ${stats.verbCorrect} · Wrong: ${stats.verbWrong} · Accuracy: ${acc(stats.verbCorrect,stats.verbWrong)}`}
 
 function normalizeAnswer(value){
   return String(value||'').normalize('NFKC').toLowerCase().replace(/ё/g,'е').replace(/\s+/g,' ').trim().replace(/[.!?]+$/,'').trim();
@@ -937,13 +983,13 @@ function newVocab(){
   document.getElementById('vocabAnswerSpeak').hidden=true;
   const p=vocabList();vocabAnswer.value='';vocabFeedback.textContent='';vocabFeedback.className='feedback';vocabAnswered=false;
   if(trainerVocabKind==='general'){
-    vocabModeLabel.textContent='Общий банк · английский → русский';
+    vocabModeLabel.textContent='Bank · English → Russian';
     vocabDirection.value='toTranslation';vocabDirection.disabled=true;
     trainerRuleText.textContent='5 correct English → Russian recognitions move a Core word to Passive.';
   }else{
     vocabModeLabel.textContent=trainerVocabKind==='passive'?'Passive vocabulary':'Active vocabulary';
     vocabDirection.disabled=false;
-    trainerRuleText.textContent=trainerVocabKind==='passive'?'Пассивный → активный: 4 верных из последних 5 ответов русский → английский.':'Активный → пассивный: ниже 70% за последние 10 ответов или 3 ошибки подряд (русский → английский).';
+    trainerRuleText.textContent=trainerVocabKind==='passive'?'Passive → Active: 4 correct in the last 5 Russian → English answers.':'Active → Passive: below 70% over the last 10 answers, or 3 mistakes in a row (Russian → English).';
   }
   if(!p.length){currentVocab=null;renderVocabLevelControls();vocabPrompt.textContent=trainerVocabKind==='general'?'Core bank is loading or all Core words are already known.':(trainerVocabKind==='passive'?'No passive words available.':'No active words yet.');updateVocabStats();return}
   currentVocab=p[Math.floor(Math.random()*p.length)];
@@ -978,29 +1024,29 @@ async function importLessonData(){
   if(lessonImportRunning)return;
   importStatus.textContent='';importStatus.className='status';
   let data,entries;
-  const integer=value=>{if(value==null)return 0;if(!Number.isInteger(value)||value<0||value>10000)throw new Error('Счётчики должны быть целыми числами от 0 до 10000');return value};
+  const integer=value=>{if(value==null)return 0;if(!Number.isInteger(value)||value<0||value>10000)throw new Error('Counters must be whole numbers from 0 to 10000');return value};
   try{
     data=JSON.parse(lessonData.value);
-    if(!data||!Array.isArray(data.words)||data.words.length>10000)throw new Error('Нужен объект с массивом words');
+    if(!data||!Array.isArray(data.words)||data.words.length>10000)throw new Error('Provide an object with a words array');
     if(data.trainer)for(const name of ['vocabCorrect','vocabWrong','verbCorrect','verbWrong'])integer(data.trainer[name]);
     entries=data.words.map(item=>{
-      if(!item||typeof item.word!=='string'||!item.word.trim())throw new Error('Укажите word для каждого слова');
-      if(item.direction!=null&&!['en-ru','ru-en'].includes(item.direction))throw new Error('Направление: en-ru или ru-en');
-      if(item.attempts!=null&&(!Array.isArray(item.attempts)||item.attempts.length>10000||item.attempts.some(a=>!a||!['en-ru','ru-en'].includes(a.direction)||typeof a.correct!=='boolean')))throw new Error('Каждая попытка: {direction: "en-ru" или "ru-en", correct: true или false}');
+      if(!item||typeof item.word!=='string'||!item.word.trim())throw new Error('Provide a word for every entry');
+      if(item.direction!=null&&!['en-ru','ru-en'].includes(item.direction))throw new Error('Direction must be en-ru or ru-en');
+      if(item.attempts!=null&&(!Array.isArray(item.attempts)||item.attempts.length>10000||item.attempts.some(a=>!a||!['en-ru','ru-en'].includes(a.direction)||typeof a.correct!=='boolean')))throw new Error('Each attempt: {direction: "en-ru" or "ru-en", correct: true or false}');
       return {word:item.word.trim(),translation:typeof item.translation==='string'?item.translation:'',attempts:item.attempts,
-        direction:item.direction||'ru-en',correct:integer(item.correct),wrong:integer(item.wrong),recognitionCorrect:integer(item.recognitionCorrect),recognitionWrong:integer(item.recognitionWrong)};
+        usedAt:BarkalooProgress.normalizeDate(item.lastUsedAt)||BarkalooProgress.normalizeDate(data.date)||new Date().toISOString(),direction:item.direction||'ru-en',correct:integer(item.correct),wrong:integer(item.wrong),recognitionCorrect:integer(item.recognitionCorrect),recognitionWrong:integer(item.recognitionWrong)};
     });
-  }catch(error){importStatus.textContent=error.message||'Некорректный JSON';importStatus.classList.add('bad');return;}
+  }catch(error){importStatus.textContent=error.message||'Invalid JSON';importStatus.classList.add('bad');return;}
   lessonImportRunning=true;
   try{
     const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(data)));
     const key=data.id?'id:'+String(data.id):'sha256:'+Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join('');
-    if((settings.importedLessonKeys||[]).includes(key)){importStatus.textContent='Этот урок уже учтён. Повторный импорт не меняет статистику.';return;}
+    if((settings.importedLessonKeys||[]).includes(key)){importStatus.textContent='This lesson was already imported. Importing it again does not change statistics.';return;}
     let added=0,answers=0,unordered=false;
     for(const entry of entries){
       if(!getCoreItem(entry.word))added++;
       const item=addBankWord(entry.word,entry.translation);
-      if(entry.attempts){for(const attempt of entry.attempts){recordWordAttempt(item,attempt.direction,attempt.correct,false);answers++;}}
+      if(entry.attempts){for(const attempt of entry.attempts){recordWordAttempt(item,attempt.direction,attempt.correct,false,BarkalooProgress.normalizeDate(attempt.at)||entry.usedAt);answers++;}}
       else{
         if(entry.direction==='en-ru'){
           const p=coreProgressFor(item.word);p.recognitionCorrect=(p.recognitionCorrect||0)+entry.correct;p.recognitionWrong=(p.recognitionWrong||0)+entry.wrong;
@@ -1011,14 +1057,15 @@ async function importLessonData(){
           unordered=true;
         }
         if(entry.recognitionCorrect+entry.recognitionWrong){const p=coreProgressFor(item.word);p.recognitionCorrect=(p.recognitionCorrect||0)+entry.recognitionCorrect;p.recognitionWrong=(p.recognitionWrong||0)+entry.recognitionWrong;if(coreWordState(item)==='general'&&p.recognitionCorrect-(p.recognitionBaseline||0)>=5)promoteGeneralToPassive(item);}
+        if(entry.correct+entry.wrong+entry.recognitionCorrect+entry.recognitionWrong)stampWordUse(item,entry.usedAt);
         answers+=entry.correct+entry.wrong+entry.recognitionCorrect+entry.recognitionWrong;
       }
     }
     settings.importedLessonKeys=[...(settings.importedLessonKeys||[]),key];
     if(data.date&&/^\d{4}-\d{2}-\d{2}$/.test(data.date))studyDays[data.date]=true;
     saveAll();populateCoreFilters();renderDictionary();updateHome();renderCalendar();renderLesson();
-    importStatus.textContent=`В словаре учтено ${answers} ответов; ${added} новых слов. Счётчики тренажёра не изменены.`+(unordered?' Суммы без порядка сохранены; для переходов нужны последние ответы по порядку.':'');importStatus.classList.add('good');
-  }catch(error){importStatus.textContent='Импорт не завершён: '+error.message;importStatus.classList.add('bad');}
+    importStatus.textContent=`Recorded ${answers} word answers; ${added} new words. Trainer counters are unchanged.`+(unordered?' Unordered totals were saved; level changes require chronological recent answers.':'');importStatus.classList.add('good');
+  }catch(error){importStatus.textContent='Import failed: '+error.message;importStatus.classList.add('bad');}
   finally{lessonImportRunning=false;}
 }
 
@@ -1059,6 +1106,8 @@ function downloadBackup(){
 function restoreBackupObject(data){
   if(!data || typeof data!=="object") throw new Error("Invalid backup");
   if(!Array.isArray(data.words)) throw new Error("Missing words");
+  const previousApplying=applyingSnapshot;applyingSnapshot=true;
+  try{
   words=data.words;
   stats=(data.stats && typeof data.stats==="object")?data.stats:{verbCorrect:0,verbWrong:0,vocabCorrect:0,vocabWrong:0};
   units=(data.units && typeof data.units==="object")?data.units:{};
@@ -1081,7 +1130,8 @@ function restoreBackupObject(data){
   renderLesson();
   newVerb();
   newVocab();
-  renderCoreStats();resumeTrainerClock();renderTrainerTimer();
+  renderCoreStats();resumeTrainerClock();renderTrainerTimer();renderProgress();
+  }finally{applyingSnapshot=previousApplying;}
 }
 function importBackupFileHandler(file){
   if(!file) return;
@@ -1107,7 +1157,7 @@ function importBackupFileHandler(file){
   reader.readAsText(file);
 }
 
-const lessonTitles={daily:'Ежедневный урок',errors:'Разбор ошибок',new:'10 новых слов'};
+const lessonTitles={review:'Review',daily:'Daily lesson',errors:'Mistake review',new:'10 new words'};
 function lessonToday(){const d=new Date();return dateKey(d.getFullYear(),d.getMonth(),d.getDate())}
 function currentLesson(){return BarkalooLessons.valid(settings.trainerLesson)?settings.trainerLesson:null}
 function lessonExamples(word){return getCoreItem(word)?.examples||LESSON_EXAMPLES[norm(word)]||[]}
@@ -1118,11 +1168,11 @@ function lessonCandidates(type){
 function startLesson(type){
   const existing=currentLesson();
   if(existing&&existing.phase!=='complete'){
-    document.getElementById('lessonMenuStatus').textContent=existing.type===type?'Урок продолжен.':'Сначала завершите текущий урок. Можно завершить его досрочно — ответы сохранятся.';
+    document.getElementById('lessonMenuStatus').textContent=existing.type===type?'Lesson resumed.':'Finish the current lesson first. You can finish early without losing answered-word statistics.';
     renderLesson();document.getElementById('lessonPanel').scrollIntoView({block:'start'});return;
   }
   const items=lessonCandidates(type);
-  if(!items.length){document.getElementById('lessonMenuStatus').textContent=type==='errors'?'Пока нет пассивных слов со статистикой ответов. Начните с ежедневного урока.':type==='new'?'Нет незнакомых слов с доступными примерами.':'В пассивном словаре пока нет слов с переводами.';return;}
+  if(!items.length){document.getElementById('lessonMenuStatus').textContent=type==='errors'?'No passive words with answer statistics yet. Start a daily lesson.':type==='new'?'No unknown words with available examples.':'No passive words with translations yet.';return;}
   settings.trainerLesson=BarkalooLessons.create(type,items.map(item=>({...item,translation:translationText(item)})),lessonToday());
   settings.trainerLesson.direction=type==='new'?'en-ru':'ru-en';
   trainerTimerState().pausedByUser=false;resetTrainerClock();
@@ -1140,17 +1190,18 @@ function renderLesson(){
   const completed=s.phase==='complete',studying=s.phase==='study',item=s.queue[studying?s.studyIndex:s.index];
   document.getElementById('lessonTitle').textContent=lessonTitles[s.type];
   const done=s.results.length,correct=s.results.filter(x=>x.ok).length;
-  document.getElementById('lessonProgressText').textContent=completed?`Завершено · ${done} из ${s.queue.length} ответов`:
-    studying?`Изучение · ${s.studyIndex+1} / ${s.queue.length}`:`Тест · ${s.index+1} / ${s.queue.length} · Верно ${correct} из ${done}`;
+  document.getElementById('lessonProgressText').textContent=completed?`Finished · ${done} of ${s.queue.length} answered`:
+    studying?`Study · ${s.studyIndex+1} / ${s.queue.length}`:`Test · ${s.index+1} / ${s.queue.length} · ${correct} of ${done} correct`;
   document.getElementById('lessonProgressBar').style.width=(completed?100:100*(studying?s.studyIndex:s.index)/s.queue.length)+'%';
   document.getElementById('lessonStudy').hidden=!studying;
   document.getElementById('lessonTest').hidden=studying||completed;
   document.getElementById('lessonSummary').hidden=!completed;
   document.getElementById('finishLessonEarly').hidden=completed;
   renderTrainerLevels('lessonLevels',completed?null:item);
+  document.getElementById('lessonLastUsed').textContent=completed?'':lastUsedLabel(item);
   if(completed){
-    document.getElementById('lessonScore').textContent=`${correct} / ${done} правильно${done?' · '+Math.round(correct/done*100)+'%':''}`;
-    document.getElementById('lessonMistakes').innerHTML=s.results.filter(x=>!x.ok).map(x=>`<li><strong>${esc(x.word)}</strong> — ${esc(x.translation)}<br><span class="muted">Ваш ответ: ${esc(x.answer||'Не знаю')}</span></li>`).join('')||'<li>Ошибок нет.</li>';
+    document.getElementById('lessonScore').textContent=`${correct} / ${done} correct${done?' · '+Math.round(correct/done*100)+'%':''}`;
+    document.getElementById('lessonMistakes').innerHTML=s.results.filter(x=>!x.ok).map(x=>`<li><strong>${esc(x.word)}</strong> — ${esc(x.translation)}<br><span class="muted">Your answer: ${esc(x.answer||'I don’t know')}</span></li>`).join('')||'<li>No mistakes.</li>';
     return;
   }
   if(!item)return;
@@ -1158,22 +1209,22 @@ function renderLesson(){
     document.getElementById('lessonStudyWord').textContent=item.word;
     document.getElementById('lessonStudyTranslation').textContent=item.translation;
     document.getElementById('lessonExamples').innerHTML=lessonExamples(item.word).slice(0,3).map(([en,ru])=>`<li><p>${highlightedExample(en,item.word)}</p><p class="muted">${esc(ru)}</p></li>`).join('');
-    document.getElementById('lessonStudyNext').textContent=s.studyIndex===s.queue.length-1?'Начать тест':'Следующее слово';
+    document.getElementById('lessonStudyNext').textContent=s.studyIndex===s.queue.length-1?'Start test':'Next word';
   }else{
     const recognition=s.direction==='en-ru';
-    document.getElementById('lessonTestInstruction').textContent=recognition?'Напишите русский перевод английского слова':'Напишите английское слово по русскому переводу';
-    document.getElementById('lessonAnswerLabel').textContent=recognition?'Ответ на русском':'Ответ на английском';
+    document.getElementById('lessonTestInstruction').textContent=recognition?'Type the Russian translation of this English word':'Type the English word for this Russian translation';
+    document.getElementById('lessonAnswerLabel').textContent=recognition?'Answer in Russian':'Answer in English';
     document.getElementById('lessonPrompt').textContent=recognition?item.word:item.translation;
     document.getElementById('lessonAnswer').lang=recognition?'ru':'en';
-    document.getElementById('lessonAnswer').placeholder=recognition?'Перевод':'English word';
+    document.getElementById('lessonAnswer').placeholder=recognition?'Translation':'English word';
     const result=s.results[s.index],answer=document.getElementById('lessonAnswer');
     answer.value=result?result.answer:'';answer.readOnly=!!result;answer.disabled=false;
     document.getElementById('lessonAnswerSpeak').hidden=!result;
     document.getElementById('lessonCheck').disabled=!!result;
     document.getElementById('lessonUnknown').disabled=!!result;
     document.getElementById('lessonNext').hidden=!result;
-    document.getElementById('lessonNext').textContent=s.index===s.queue.length-1?'Результаты':'Дальше';
-    const feedback=document.getElementById('lessonFeedback');feedback.textContent=result?(result.ok?'✓ Верно: ':'✕ Правильный ответ: ')+(recognition?item.translation:item.word):'';
+    document.getElementById('lessonNext').textContent=s.index===s.queue.length-1?'Results':'Next';
+    const feedback=document.getElementById('lessonFeedback');feedback.textContent=result?(result.ok?'✓ Correct: ':'✕ Correct answer: ')+(recognition?item.translation:item.word):'';
     feedback.className='feedback'+(result?(result.ok?' good':' bad'):'');
   }
 }
@@ -1185,7 +1236,7 @@ function advanceLessonStudy(){
 function answerLesson(unknown=false){
   const s=currentLesson();if(!s||s.phase!=='test'||s.results[s.index])return;
   const item=s.queue[s.index],input=document.getElementById('lessonAnswer').value.trim();
-  if(!unknown&&!input){document.getElementById('lessonFeedback').textContent='Введите ответ или нажмите «Не знаю».';return;}
+  if(!unknown&&!input){document.getElementById('lessonFeedback').textContent='Enter an answer or choose “I don’t know”.';return;}
   const direction=s.direction||'ru-en';
   const ok=!unknown&&answerMatches(input,direction==='en-ru'?item.translation:item.word);
   recordWordAttempt(getCoreItem(item.word)||item,direction,ok);
@@ -1224,14 +1275,14 @@ function setTrainerWordLevel(item,target){
 }
 function renderTrainerLevels(id,item){
   const box=document.getElementById(id);box.replaceChildren();if(!item){box.hidden=true;return;}box.hidden=false;
-  const state=coreWordState(item),label=document.createElement('span');label.className='small';label.textContent='Уровень слова:';box.append(label);
-  for(const [level,text] of [['general','В незнакомые'],['passive','В пассивный'],['active','В активный']]){
+  const state=coreWordState(item),label=document.createElement('span');label.className='small';label.textContent='Word level:';box.append(label);
+  for(const [level,text] of [['general','Move to unknown'],['passive','Move to passive'],['active','Move to active']]){
     const button=document.createElement('button');button.className='btn';button.textContent=text;button.dataset.level=level;button.disabled=state===level;
     button.onclick=()=>setTrainerWordLevel(item,level);box.append(button);
   }
-  const hint=document.createElement('span');hint.className='hint trainer-level-hint';hint.textContent='Переводы и статистика сохраняются. Новый автоматический переход — по ответам после ручной смены.';box.append(hint);
+  const hint=document.createElement('span');hint.className='hint trainer-level-hint';hint.textContent='Translations and statistics are preserved. Future automatic level changes use answers after this manual change.';box.append(hint);
 }
-function renderVocabLevelControls(){renderTrainerLevels('vocabLevels',currentVocab)}
+function renderVocabLevelControls(){renderTrainerLevels('vocabLevels',currentVocab);document.getElementById('vocabLastUsed').textContent=currentVocab?lastUsedLabel(currentVocab):''}
 let trainerClockStart=null;
 function trainerTimerState(){return settings.trainerTimer||(settings.trainerTimer={elapsedMs:0,pausedByUser:false})}
 function trainerElapsed(){return Math.max(0,Number(settings.trainerTimer?.elapsedMs)||0)+(trainerClockStart===null?0:Math.max(0,performance.now()-trainerClockStart))}
@@ -1239,7 +1290,7 @@ function snapshotTrainerClock(){if(trainerClockStart!==null){trainerTimerState()
 function renderTrainerTimer(){
   const seconds=Math.floor(trainerElapsed()/1000),hours=Math.floor(seconds/3600),minutes=Math.floor(seconds/60)%60;
   document.getElementById('trainerElapsed').textContent=(hours?String(hours).padStart(2,'0')+':':'')+String(minutes).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');
-  document.getElementById('trainerTimerToggle').textContent=trainerClockStart===null?'Продолжить':'Пауза';
+  document.getElementById('trainerTimerToggle').textContent=trainerClockStart===null?'Continue':'Pause';
 }
 function resumeTrainerClock(){
   if(document.hidden||!document.getElementById('trainer').classList.contains('active'))return;
@@ -1273,11 +1324,11 @@ document.addEventListener('keydown',event=>{
   }
 });
 
-function routePage(){const match=location.hash.match(/^#\/(home|dictionary|grammar|trainer)$/);return match?match[1]:'home'}
+function routePage(){const match=location.hash.match(/^#\/(home|dictionary|grammar|trainer|progress)$/);return match?match[1]:'home'}
 function restorePageFromHistory(){const page=routePage();if(document.querySelector('.section.active')?.id!==page)setPage(page,false)}
 function initializePageHistory(){
   const page=routePage();
-  if(!location.hash||/^#\/(home|dictionary|grammar|trainer)$/.test(location.hash))history.replaceState({...history.state,barkaloo:true,page},'','#/'+page);
+  if(!location.hash||/^#\/(home|dictionary|grammar|trainer|progress)$/.test(location.hash))history.replaceState({...history.state,barkaloo:true,page},'','#/'+page);
   setPage(page,false);
 }
 window.addEventListener('popstate',restorePageFromHistory);
@@ -1286,6 +1337,74 @@ document.getElementById('brandHome').onclick=event=>{
   if(event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
   event.preventDefault();setPage('home');
 };
+
+const progressMetricNames={active:'Active vocabulary',passive:'Passive vocabulary',unknown:'Unknown vocabulary',trainerAttempts:'Trainer attempts'};
+let progressMetric='active',progressDays=30;
+function stampWordUse(item,usedAt){
+  const at=BarkalooProgress.normalizeDate(usedAt);if(!at)return;
+  const p=coreProgressFor(item.word),w=words.find(x=>norm(x.word)===norm(item.word));
+  const current=BarkalooProgress.lastUsed(w||item,coreProgress);
+  const latest=current&&Date.parse(current)>=Date.parse(at)?current:at;
+  p.lastUsedAt=latest;if(w)w.lastUsedAt=latest;
+}
+function lastUsedLabel(item){
+  const w=words.find(x=>norm(x.word)===norm(item.word));const at=BarkalooProgress.lastUsed(w||item,coreProgress);
+  return 'Last used: '+(at?new Date(at.length===10?at+'T12:00:00Z':at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'Not recorded');
+}
+function recordProgressSnapshot(){
+  if(!coreBank.length)return;
+  const history=settings.progressHistory||(settings.progressHistory={});
+  BarkalooProgress.record(history,lessonToday(),BarkalooProgress.snapshot(words,coreBank,stats),new Date().toISOString());
+}
+function renderProgress(){
+  const container=document.getElementById('progressChart');if(!container)return;
+  const current=BarkalooProgress.snapshot(words,coreBank,stats);
+  for(const metric of Object.keys(progressMetricNames))document.getElementById('progressValue-'+metric).textContent=current[metric].toLocaleString('en-US');
+  document.querySelectorAll('[data-progress-metric]').forEach(b=>{const selected=b.dataset.progressMetric===progressMetric;b.classList.toggle('active',selected);b.setAttribute('aria-pressed',String(selected))});
+  document.querySelectorAll('[data-progress-days]').forEach(b=>{const selected=Number(b.dataset.progressDays)===progressDays;b.classList.toggle('active',selected);b.setAttribute('aria-pressed',String(selected))});
+  const data=BarkalooProgress.series(settings.progressHistory,progressMetric,progressDays,lessonToday());
+  document.getElementById('progressChartTitle').textContent=progressMetricNames[progressMetric];
+  document.getElementById('progressHistoryNote').textContent=data.length>1?'Daily snapshots. Only recorded days are shown.':data.length===1?'One day recorded. History starts here; earlier values are not available.':'No recorded days in this range. Open Progress after using the app to record a snapshot.';
+  document.getElementById('progressPoint').textContent=data.length?`${data.at(-1).date} · ${data.at(-1).value.toLocaleString('en-US')}`:'';
+  document.getElementById('progressDataRows').innerHTML=data.map(p=>`<tr><td>${esc(p.date)}</td><td>${p.value}</td></tr>`).join('');
+  if(!data.length){container.innerHTML='<p class="muted">No recorded history yet.</p>';return;}
+  const width=Math.max(280,Math.round(container.clientWidth||900)),height=width<600?300:360,left=54,right=25,top=25,bottom=46,plotWidth=width-left-right,plotHeight=height-top-bottom;
+  const maxValue=Math.max(1,...data.map(p=>p.value)),ceiling=Math.max(4,Math.ceil(maxValue*1.12/4)*4);
+  const start=Date.parse(data[0].date),end=Date.parse(data.at(-1).date);
+  const x=p=>data.length===1?left+plotWidth/2:left+(Date.parse(p.date)-start)/(end-start)*plotWidth,y=p=>top+plotHeight*(1-p.value/ceiling);
+  const grid=Array.from({length:5},(_,i)=>{const value=ceiling*i/4,position=top+plotHeight*(1-i/4);return `<line x1="${left}" y1="${position}" x2="${width-right}" y2="${position}" class="chart-grid"/><text x="${left-12}" y="${position+4}" text-anchor="end">${Math.round(value).toLocaleString('en-US')}</text>`}).join('');
+  const labels=[...new Set([0,Math.floor((data.length-1)/2),data.length-1])].map(i=>`<text x="${x(data[i])}" y="${height-14}" text-anchor="middle">${esc(new Date(data[i].date+'T12:00:00Z').toLocaleDateString('en-GB',{day:'numeric',month:'short'}))}</text>`).join('');
+  const line=data.map((p,i)=>(i?'L':'M')+x(p).toFixed(2)+','+y(p).toFixed(2)).join(' ');
+  const dots=data.map((p,i)=>`<circle cx="${x(p)}" cy="${y(p)}" r="5" tabindex="0" data-point="${i}" aria-label="${esc(p.date+': '+p.value)}"><title>${esc(p.date+': '+p.value)}</title></circle>`).join('');
+  container.innerHTML=`<svg viewBox="0 0 ${width} ${height}" role="img" aria-labelledby="progressChartTitle progressHistoryNote">${grid}<path d="${line}" class="chart-line"/>${dots}${labels}</svg>`;
+  container.querySelectorAll('[data-point]').forEach(dot=>{const show=()=>{const p=data[Number(dot.dataset.point)];document.getElementById('progressPoint').textContent=`${p.date} · ${p.value.toLocaleString('en-US')}`};dot.onmouseenter=show;dot.onfocus=show;dot.onclick=show;});
+}
+function prepareChatContext(){
+  const chosen=BarkalooProgress.contextWords(words);
+  const panel=document.getElementById('chatContextOutput'),status=document.getElementById('chatContextStatus');
+  panel.hidden=!chosen.length;
+  if(!chosen.length){status.textContent='No passive words available yet.';return;}
+  const entries=chosen.map(w=>({word:w.word,translation:translationText(w),correct:w.correct||0,wrong:w.wrong||0,uses:w.uses||0,lastUsedAt:BarkalooProgress.lastUsed(w,coreProgress)}));
+  const id='chat-'+lessonToday()+'-'+(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36));
+  document.getElementById('chatContextText').value=`Help me practise English. My native language is Russian. These ${entries.length} passive-vocabulary words are ranked by my total mistake count (highest first).\n\nAsk one Russian → English question at a time. Do not reveal the English answer before I respond. Give brief feedback, explain mistakes in Russian, and accept appropriate listed translation variants. Prioritize words with more errors. Do not invent previous practice or results.\n\nVocabulary and existing statistics (these totals are context, NOT new attempts):\n${JSON.stringify(entries,null,2)}\n\nWhen I ask to finish, provide an importable JSON code block with id ${JSON.stringify(id)}, date in YYYY-MM-DD format and a words array. For each practised word, include only the NEW attempts from this chat in chronological order: {"word":"...","attempts":[{"direction":"ru-en","correct":true}]}. Use "en-ru" only if I actually translated English → Russian. Do not repeat the existing totals, invent answers, specify a kind/level, or include trainer totals. Omit words that were not practised.`;
+  status.textContent=`Prepared ${entries.length} passive words, highest mistake count first. Copy the text into ChatGPT.`;
+}
+async function copyChatContext(){
+  const text=document.getElementById('chatContextText');if(!text.value)return;
+  try{await navigator.clipboard.writeText(text.value);document.getElementById('chatContextStatus').textContent='Context copied.';}
+  catch{text.focus();text.select();document.getElementById('chatContextStatus').textContent='Select and copy the context manually.';}
+}
+function downloadChatContext(){
+  const text=document.getElementById('chatContextText').value;if(!text)return;
+  const url=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='barkaloo-chat-context-'+lessonToday()+'.txt';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+document.querySelectorAll('[data-progress-metric]').forEach(b=>b.onclick=()=>{progressMetric=b.dataset.progressMetric;saveAll();renderProgress()});
+document.querySelectorAll('[data-progress-days]').forEach(b=>b.onclick=()=>{progressDays=Number(b.dataset.progressDays);saveAll();renderProgress()});
+let progressResizeTimer;
+window.addEventListener('resize',()=>{clearTimeout(progressResizeTimer);if(document.getElementById('progress').classList.contains('active'))progressResizeTimer=setTimeout(renderProgress,300)});
+document.getElementById('prepareChatContext').onclick=prepareChatContext;
+document.getElementById('copyChatContext').onclick=copyChatContext;
+document.getElementById('downloadChatContext').onclick=downloadChatContext;
 
 // events
 const systemTheme=matchMedia('(prefers-color-scheme: dark)');
@@ -1309,7 +1428,7 @@ calibrationPrev.onclick=()=>{if(calibrationIndex>0)calibrationIndex--;renderCali
 calibrationSkip.onclick=()=>{if(calibrationIndex<coreBank.length-1)calibrationIndex++;renderCalibration()};
 
 document.addEventListener('keydown',calibrationKeyHandler);pastInput.onkeydown=e=>{if(e.key==='Enter'&&!e.repeat&&!e.isComposing){e.preventDefault();if(verbAnswered)newVerb();else checkVerb()}};partInput.onkeydown=e=>{if(e.key==='Enter'&&!e.repeat&&!e.isComposing){e.preventDefault();if(verbAnswered)newVerb();else checkVerb()}};vocabAnswer.onkeydown=e=>{if(e.key==='Enter'&&!e.repeat&&!e.isComposing){e.preventDefault();if(vocabAnswered)newVocab();else checkVocab()}};prevMonth.onclick=()=>{calDate=new Date(calDate.getFullYear(),calDate.getMonth()-1,1);renderCalendar()};nextMonth.onclick=()=>{calDate=new Date(calDate.getFullYear(),calDate.getMonth()+1,1);renderCalendar()};todayMonth.onclick=()=>{const n=new Date();calDate=new Date(n.getFullYear(),n.getMonth(),1);renderCalendar()};importToggle.onclick=()=>importBox.classList.toggle('show');importLesson.onclick=importLessonData;
-applyEmbeddedBackupOnce();words.forEach(migrateWord);applyPromotions();saveAll();syncVoiceControls();applyTheme();renderDictionary();renderUnits();renderVerbs();renderCalendar();updateHome();updateVerbStats();updateVocabStats();newVerb();newVocab();setMenu(innerWidth>820);loadCoreBank();renderLesson();initializePageHistory();
+applyEmbeddedBackupOnce();words.forEach(migrateWord);applyPromotions();saveAll();syncVoiceControls();applyTheme();renderDictionary();renderUnits();renderVerbs();renderCalendar();updateHome();updateVerbStats();updateVocabStats();newVerb();newVocab();setMenu(innerWidth>820);loadCoreBank();renderLesson();appReady=true;initializePageHistory();
 </script>
 <!-- BARKALOO_CLOUD_UI -->
 </body></html>

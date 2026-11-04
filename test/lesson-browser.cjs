@@ -29,7 +29,7 @@ async function main(){
  await p.evaluate(()=>cloudSyncClient.sync());await p.waitForFunction(()=>cloudSyncClient.phase==='synced');assert.equal(await p.evaluate(()=>currentLesson().results.length),3);
  // Complete the frozen queue once; no random repeats and no dropped words.
  await p.evaluate(()=>{while(currentLesson().phase!=='complete'){const s=currentLesson();if(!s.results[s.index]){document.getElementById('lessonAnswer').value=s.queue[s.index].word;answerLesson();}advanceLessonTest();}});
- assert.equal(await p.evaluate(()=>currentLesson().results.length),100);assert.equal(await p.locator('#lessonScore').textContent(),'98 / 100 правильно · 98%');
+ assert.equal(await p.evaluate(()=>currentLesson().results.length),100);assert.equal(await p.locator('#lessonScore').textContent(),'98 / 100 correct · 98%');
  assert.equal(await p.evaluate(()=>words.find(w=>w.word==='word002').uses),3);
  console.log('PASS: least-used top 100, blank/unknown/wrong/correct answers, no duplicates, reload and two-device Supabase simulation');
  await other.close();await p.evaluate(()=>cloudSyncClient.signOut());
@@ -51,7 +51,7 @@ async function main(){
   const word=await p.evaluate(()=>answerVariants(currentLesson().queue[currentLesson().index].translation)[0]);
   await p.locator('#lessonAnswer').fill(word);await p.locator('#lessonCheck').click();await p.locator('#lessonNext').click();
  }
- assert.equal(await p.locator('#lessonScore').textContent(),'9 / 10 правильно · 90%');
+ assert.equal(await p.locator('#lessonScore').textContent(),'9 / 10 correct · 90%');
  assert.equal(await p.evaluate(()=>words.length),0);
  assert.equal(await p.evaluate(()=>Object.values(coreProgress).filter(p=>p.recognitionCorrect===1).length),9);
  assert.equal(await p.evaluate(()=>stats.vocabCorrect),9);assert.equal(await p.evaluate(()=>stats.vocabWrong),1);

@@ -14,7 +14,7 @@ cloudSyncClient = new BarkalooCloud({
     document.getElementById('cloudConflict').hidden = !view.conflict;
     document.getElementById('cloudUseCloud').disabled = !view.conflict?.row;
     document.getElementById('cloudUseLocal').textContent = view.conflict?.reason === 'account'
-      ? 'Перенести данные в этот аккаунт' : 'Сохранить версию этого устройства';
+      ? 'Transfer data to this account' : 'Keep this device’s version';
     document.getElementById('cloudBackup').hidden = !view.hasBackup;
     document.getElementById('cloudOriginalBackup').hidden = !view.hasOriginalBackup;
     document.getElementById('cloudSyncNow').disabled = view.phase === 'syncing';
@@ -28,12 +28,12 @@ async function cloudAuthenticate(createAccount) {
   const signIn = document.getElementById('cloudSignIn');
   const signUp = document.getElementById('cloudSignUp');
   signIn.disabled = signUp.disabled = true;
-  cloudSyncClient.notify('auth', createAccount ? 'Создание аккаунта…' : 'Вход…');
+  cloudSyncClient.notify('auth', createAccount ? 'Creating account…' : 'Signing in…');
   try {
     if (createAccount) await cloudSyncClient.signUp(email, password.value);
     else await cloudSyncClient.signIn(email, password.value);
   } catch (error) {
-    cloudSyncClient.notify('error', 'Не удалось войти: ' + error.message);
+    cloudSyncClient.notify('error', 'Could not sign in: ' + error.message);
   } finally {
     password.value = '';
     signIn.disabled = signUp.disabled = false;
@@ -47,11 +47,11 @@ document.getElementById('cloudUseCloud').onclick = () => cloudSyncClient.sync('c
 document.getElementById('cloudUseLocal').onclick = () => cloudSyncClient.sync('local');
 document.getElementById('cloudBackup').onclick = () => cloudSyncClient.downloadBackup();
 document.getElementById('cloudOriginalBackup').onclick = () => cloudSyncClient.downloadBackup(true);
-cloudSyncClient.notify('local', 'Войдите в один аккаунт на телефоне и компьютере');
+cloudSyncClient.notify('local', 'Sign in to the same account on your phone and computer');
 if (cloudSyncClient.session) cloudSyncClient.sync();
 window.addEventListener('online', () => cloudSyncClient.sync());
 window.addEventListener('offline', () => {
-  if (cloudSyncClient.session) cloudSyncClient.notify('offline', 'Нет сети. Прогресс сохранён на устройстве');
+  if (cloudSyncClient.session) cloudSyncClient.notify('offline', 'Offline. Progress is saved on this device');
 });
 window.addEventListener('focus', () => { if (!document.hidden) cloudSyncClient.sync(); });
 document.addEventListener('visibilitychange', () => cloudSyncClient.sync());

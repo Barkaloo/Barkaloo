@@ -5,9 +5,10 @@ const { readArchive } = require('./archive.cjs');
 const { html } = readArchive();
 const cloud = fs.readFileSync(path.join(__dirname, 'source/cloud-sync.js'), 'utf8');
 const cloudUI = fs.readFileSync(path.join(__dirname, 'source/cloud-ui.js'), 'utf8');
-for (const marker of ['<!-- BARKALOO_CLOUD_RUNTIME -->', '<!-- BARKALOO_CLOUD_UI -->', '<!-- BARKALOO_LESSONS -->','<!-- BARKALOO_PROGRESSION -->']) {
+for (const marker of ['<!-- BARKALOO_CLOUD_RUNTIME -->', '<!-- BARKALOO_CLOUD_UI -->', '<!-- BARKALOO_LESSONS -->','<!-- BARKALOO_PROGRESSION -->','<!-- BARKALOO_PROGRESS -->']) {
   if (html.toString('utf8').split(marker).length !== 2) throw new Error('Missing or duplicated cloud integration marker');
 }
+const progress=fs.readFileSync(path.join(__dirname,'source/progress.js'),'utf8');
 const progression=fs.readFileSync(path.join(__dirname,'source/progression.js'),'utf8');
 const lessons=fs.readFileSync(path.join(__dirname,'source/lessons.js'),'utf8');
 const examples=JSON.stringify(JSON.parse(fs.readFileSync(path.join(__dirname,'source/lesson-examples.json'),'utf8')));
@@ -20,6 +21,7 @@ const pwa = '<link rel="manifest" href="./manifest.webmanifest">\n';
 const startup = `<script>if('serviceWorker' in navigator&&location.protocol!=='file:'){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(console.error));}</script>\n`;
 const page = html.toString('utf8')
   .replace('__BARKALOO_CHARACTER_LOGO__',()=> 'data:image/png;base64,'+logo.toString('base64'))
+  .replace('<!-- BARKALOO_PROGRESS -->',()=>'<script>\n'+progress+'\n</script>')
   .replace('<!-- BARKALOO_PROGRESSION -->',()=>'<script>\n'+progression+'\n</script>')
   .replace('<!-- BARKALOO_LESSONS -->',()=>'<script>\n'+lessons+'\nconst LESSON_EXAMPLES='+examples.replace(/</g,'\\u003c')+';\n</script>')
   .replace('<!-- BARKALOO_CLOUD_RUNTIME -->', () => '<script>\n' + cloud + '\n</script>')

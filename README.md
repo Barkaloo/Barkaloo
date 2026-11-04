@@ -187,7 +187,7 @@ no premature promotion, three-error demotion, import deduplication and reload.
 
 ### Trainer controls
 
-The Dictionary has a separate **Незнакомые** tab: only bank entries whose level
+The Dictionary has a separate **Unknown** tab: only bank entries whose level
 is general, excluding passive/active vocabulary. The original General Bank tab
 still shows every level and supports its filters and adding words.
 
@@ -275,3 +275,39 @@ Screen). Desktop emulation validates metadata, simulated safe insets and asset
 loading; the physical iOS/Android system bar still needs checking on the device.
 
 Checks: `node --test phone-icons.test.cjs` and `node test/phone-theme-browser.cjs`.
+
+### Progress, Review and ChatGPT context
+
+Progress adds four selectable SVG charts: active, passive, unknown vocabulary and
+cumulative trainer attempts. Daily snapshots live in `settings.progressHistory`
+and travel with backups and the existing Supabase state. One snapshot is retained
+per recorded local date; later changes on that date update its final values. History
+starts when this version records actual app state. Earlier days and missing days
+are not backfilled with estimates. Range controls offer 7 days, 30 days and all
+recorded dates, with focusable points and an accessible recorded-data table.
+Restoring cloud/backup state does not create a fresh local history edit by itself.
+
+Every checked vocabulary answer records `lastUsedAt` in the word/core progress;
+viewing or speaking a word and preparing context do not count as practice. Existing
+words without a reliable timestamp show “Last used: Not recorded”. The Review
+lesson freezes up to 100 passive words sorted by oldest last use, with missing
+dates first and usage/alphabetical ties. It uses Russian → English and the same
+counters, level rules, Enter controls and resume/sync support as other lessons.
+Dated chat imports use the supplied `date` (or a per-word `lastUsedAt` / per-attempt
+`at` timestamp). An older import never rolls a newer use date backwards. Imports
+still do not add trainer attempts. Without a supplied date, the import time is used.
+
+The Home “Prepare ChatGPT context” button collects up to 100 passive words ranked
+by absolute `wrong` count, then accuracy/usage ties. This differs from Mistake review,
+which ranks accuracy first. The context contains translations, existing statistics
+and last-use dates, plus instructions for a one-word-at-a-time lesson and an
+importable chronological attempt JSON with a unique lesson id. It can be copied
+or downloaded as text; generating it leaves word/trainer statistics unchanged.
+
+Home and Trainer interface labels, hints and cloud status messages are English.
+Russian translations and bilingual learning examples remain learning content.
+Active word-level labels use saturated blue, separately from lavender UI controls.
+
+Checks: `node --test progress.test.cjs` and `node test/progress-browser.cjs` cover
+real-history/range logic, context ranking, Review ordering, date monotonicity,
+English UI, export, counters, reload and simulated two-device Supabase restoration.
