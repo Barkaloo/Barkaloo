@@ -1,4 +1,4 @@
-const CACHE='barkaloo-v2.14-progress-review-1';
+const CACHE='barkaloo-v2.14-neutral-counts-2';
 self.addEventListener('install',e=>e.waitUntil((async()=>{
   const cache=await caches.open(CACHE);
   await cache.addAll(['./','./index.html','./manifest.webmanifest','./icon.svg','./apple-touch-icon.png','./icons/icon-192.png','./icons/icon-512.png','./icons/icon-maskable-512.png','./icons/apple-touch-icon.png','./icons/favicon-32.png']);
