@@ -10,24 +10,25 @@
   const fmt = n => new Intl.NumberFormat('ru-RU',{maximumFractionDigits:2}).format(n);
   const dateLabel = s => parseDate(s).toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
   const escape = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  let workouts = [], imports = [], activityDays = {}, draftWorkouts = [], settings = {}, days = 7, editing = null, view = 'overview', metric = 'duration';
+  let workouts = [], imports = [], activityDays = {}, draftWorkouts = [], dailyEntries = {}, settings = {}, days = 7, editing = null, view = 'overview', metric = 'duration';
   let month = new Date(new Date().getFullYear(),new Date().getMonth(),1);
   let journalMonth = new Date(month);
+  let nutritionMonth = new Date(month);
   let storageBroken = false;
   try {
     const raw = localStorage.getItem(KEY);
     const saved = raw ? JSON.parse(raw) : {workouts:[],goal:3};
-    const normalized=FitData.state(saved);workouts=normalized.workouts;imports=normalized.imports;activityDays=normalized.activityDays;draftWorkouts=normalized.draftWorkouts;settings=normalized.settings;
+    const normalized=FitData.state(saved);workouts=normalized.workouts;imports=normalized.imports;activityDays=normalized.activityDays;draftWorkouts=normalized.draftWorkouts;dailyEntries=normalized.dailyEntries;settings=normalized.settings;
   } catch {
     storageBroken = true;
     setTimeout(() => toast('Не удалось прочитать сохранённые данные. Экспортируйте исходные данные перед новой записью.'),100);
   }
   let toastTimer;
   function toast(message) { $('#toast').textContent = message; $('#toast').style.display='block'; clearTimeout(toastTimer); toastTimer=setTimeout(()=>$('#toast').style.display='none',6000); }
-  function snapshot(){return FitData.state({workouts,imports,activityDays,draftWorkouts,settings});}
+  function snapshot(){return FitData.state({workouts,imports,activityDays,draftWorkouts,dailyEntries,settings});}
   function saveState(value, notify=true){
     if(storageBroken){toast('Локальные данные повреждены. Сохранение заблокировано, чтобы не потерять исходную копию.');return false;}
-    try{const next=FitData.state(value);localStorage.setItem(KEY,JSON.stringify(next));workouts=next.workouts;imports=next.imports;activityDays=next.activityDays;draftWorkouts=next.draftWorkouts;settings=next.settings;if(notify)window.fitCloud?.changed();return true;}
+    try{const next=FitData.state(value);localStorage.setItem(KEY,JSON.stringify(next));workouts=next.workouts;imports=next.imports;activityDays=next.activityDays;draftWorkouts=next.draftWorkouts;dailyEntries=next.dailyEntries;settings=next.settings;if(notify)window.fitCloud?.changed();return true;}
     catch{toast('Не удалось сохранить данные на устройстве');return false;}
   }
   function period() {const end=new Date();end.setHours(0,0,0,0);const start=new Date(end);start.setDate(start.getDate()-days+1);return {start,end};}
@@ -47,7 +48,7 @@
       return `<section class="training-week"><div class="training-week-head"><h3>${label}</h3><span>${entries.length} трен.</span></div>${entries.map(w=>{
         const source=w.sourceImportId?'ChatGPT':'Вручную',details=w.chatData||w.data;
         const rows=tableRows(w);
-        return `<article class="workout-card"><div class="workout-card-head"><div><h3>${dateLabel(w.date)}<span class="workout-weekday">${parseDate(w.date).toLocaleDateString('ru-RU',{weekday:'long'})}</span></h3><span class="small">${source}</span></div><div class="entry-actions"><button class="icon-btn" data-edit="${escape(w.id)}" aria-label="Редактировать тренировку ${dateLabel(w.date)}" title="Редактировать">✎</button><button class="icon-btn" data-delete="${escape(w.id)}" aria-label="Удалить тренировку ${dateLabel(w.date)}" title="Удалить">×</button></div></div><div class="strength-table-wrap"><table class="strength-table"><caption class="visually-hidden">Силовая тренировка ${dateLabel(w.date)}</caption><thead><tr><th scope="col">Упражнение</th><th scope="col">Подходы</th><th scope="col">Повторы</th><th scope="col">RIR</th></tr></thead><tbody>${rows.map(row=>`<tr><td>${escape(row.exercise)||'—'}</td><td>${escape(row.sets)||'—'}</td><td>${escape(row.reps)||'—'}</td><td>${escape(row.rir)||'—'}</td></tr>`).join('')}</tbody></table></div>${details?`<details class="card-source"><summary>Данные из ChatGPT</summary><pre>${escape(JSON.stringify(details,null,2))}</pre></details>`:''}${w.notes?`<details class="card-source"><summary>Ранее сохранённые заметки</summary><p class="workout-notes">${escape(w.notes)}</p></details>`:''}</article>`;
+        return `<article class="workout-card"><div class="workout-card-head"><div><h3>${dateLabel(w.date)}<span class="workout-weekday">${parseDate(w.date).toLocaleDateString('ru-RU',{weekday:'long'})}</span></h3><span class="small">${source}</span><span class="workout-duration">${Number.isFinite(w.duration)?fmt(w.duration)+' мин':'Время не указано'}</span></div><div class="entry-actions"><button class="icon-btn" data-edit="${escape(w.id)}" aria-label="Редактировать тренировку ${dateLabel(w.date)}" title="Редактировать">✎</button><button class="icon-btn" data-delete="${escape(w.id)}" aria-label="Удалить тренировку ${dateLabel(w.date)}" title="Удалить">×</button></div></div><div class="strength-table-wrap"><table class="strength-table"><caption class="visually-hidden">Силовая тренировка ${dateLabel(w.date)}</caption><thead><tr><th scope="col">Упражнение</th><th scope="col">Подходы</th><th scope="col">Повторы</th><th scope="col">RIR</th></tr></thead><tbody>${rows.map(row=>`<tr><td>${escape(row.exercise)||'—'}</td><td>${escape(row.sets)||'—'}</td><td>${escape(row.reps)||'—'}</td><td>${escape(row.rir)||'—'}</td></tr>`).join('')}</tbody></table></div>${details?`<details class="card-source"><summary>Данные из ChatGPT</summary><pre>${escape(JSON.stringify(details,null,2))}</pre></details>`:''}${w.notes?`<details class="card-source"><summary>Ранее сохранённые заметки</summary><p class="workout-notes">${escape(w.notes)}</p></details>`:''}</article>`;
       }).join('')}</section>`;
     }).join('');
   }
@@ -58,6 +59,47 @@
     $('#journalSummary').textContent=`${journalMonth.toLocaleDateString('ru-RU',{month:'long',year:'numeric'})} · Тренировок: ${entries.length}`;
     $('#entries').innerHTML=cards(entries);
   }
+  function renderNutrition(){
+    const key=localDate(nutritionMonth).slice(0,7),last=new Date(nutritionMonth.getFullYear(),nutritionMonth.getMonth()+1,0).getDate();
+    $('#nutritionMonthSelect').value=key;
+    const filled=Object.keys(dailyEntries).filter(date=>date.startsWith(key)).length;
+    $('#nutritionSummary').textContent=`Заполнено дней: ${filled}`;
+    const labels={calories:'Ккал',protein:'Белки, г',fat:'Жиры, г',carbs:'Углеводы, г',weight:'Вес утром, кг'};
+    let html='';
+    for(let day=1;day<=last;day++){
+      const date=localDate(new Date(nutritionMonth.getFullYear(),nutritionMonth.getMonth(),day)),entry=dailyEntries[date];
+      html+=`<tr data-daily-date="${date}" class="${entry?'has-entry ':''}${date===localDate()?'today':''}"><th scope="row"><span class="daily-date">${dateLabel(date)}</span><span class="daily-weekday">${parseDate(date).toLocaleDateString('ru-RU',{weekday:'short'})}</span></th>${FitData.dailyFields.map(field=>`<td data-label="${labels[field]}">${entry?.[field]===null||entry?.[field]===undefined?'—':fmt(entry[field])}</td>`).join('')}<td class="daily-action"><button class="mini-btn" data-edit-day="${date}" aria-label="${entry?'Изменить':'Заполнить'} запись за ${dateLabel(date)}">${entry?'Изменить':'Заполнить'}</button></td></tr>`;
+    }
+    $('#nutritionDays').innerHTML=html;
+  }
+  function loadDailyFields(){
+    const form=$('#nutritionForm'),date=form.elements.date.value,entry=dailyEntries[date];
+    for(const field of FitData.dailyFields)form.elements[field].value=entry?.[field]??'';
+    $('#nutritionDelete').hidden=!entry;$('#nutritionError').textContent='';
+  }
+  function openDailyForm(date){
+    $('#nutritionForm').reset();$('#nutritionForm').elements.date.value=date;loadDailyFields();$('#nutritionModal').showModal();
+  }
+  $('#nutritionAdd').onclick=()=>openDailyForm(localDate(nutritionMonth).slice(0,7)===localDate().slice(0,7)?localDate():localDate(nutritionMonth));
+  $('#nutritionClose').onclick=()=>$('#nutritionModal').close();
+  $('#nutritionForm').elements.date.onchange=loadDailyFields;
+  $('#nutritionForm').onsubmit=e=>{
+    e.preventDefault();const form=e.target,date=form.elements.date.value;
+    try{
+      if(!validDate(date))throw Error('Проверьте дату');
+      const entry=FitData.dailyRecord(Object.fromEntries(FitData.dailyFields.map(key=>[key,form.elements[key].value===''?null:Number(form.elements[key].value)])));
+      if(saveState({...snapshot(),dailyEntries:{...dailyEntries,[date]:entry}})){$('#nutritionModal').close();nutritionMonth=new Date(parseDate(date).getFullYear(),parseDate(date).getMonth(),1);render();toast('Запись за день сохранена');}
+    }catch(error){$('#nutritionError').textContent=error.message;}
+  };
+  $('#nutritionDelete').onclick=()=>{
+    const date=$('#nutritionForm').elements.date.value;
+    if(!dailyEntries[date]||!confirm(`Удалить питание и вес за ${dateLabel(date)}?`))return;
+    const next={...dailyEntries};delete next[date];if(saveState({...snapshot(),dailyEntries:next})){$('#nutritionModal').close();render();toast('Запись за день удалена');}
+  };
+  $('#nutritionPrev').onclick=()=>{nutritionMonth.setMonth(nutritionMonth.getMonth()-1);renderNutrition();};
+  $('#nutritionNext').onclick=()=>{nutritionMonth.setMonth(nutritionMonth.getMonth()+1);renderNutrition();};
+  $('#nutritionToday').onclick=()=>{nutritionMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1);renderNutrition();};
+  $('#nutritionMonthSelect').onchange=e=>{const key=e.target.value;if(!/^\d{4}-\d{2}$/.test(key)||!validDate(key+'-01')){renderNutrition();return;}const date=parseDate(key+'-01');nutritionMonth=new Date(date.getFullYear(),date.getMonth(),1);renderNutrition();};
   function renderChart(list) {
     const {start}=period();
     const totals=Array.from({length:days},(_,i)=>{const d=new Date(start);d.setDate(d.getDate()+i);const date=localDate(d), entries=list.filter(w=>w.date===date);return {date,total:metric==='count'?entries.length:metric==='active'?Number(entries.length>0):entries.reduce((sum,w)=>sum+w[metric],0)};});
@@ -75,9 +117,9 @@
     const timed=workouts.filter(w=>Number.isFinite(w.duration)&&w.duration>0),allMinutes=timed.reduce((sum,w)=>sum+w.duration,0);
     $('#count').textContent=workouts.length;$('#duration').innerHTML=timed.length?`${fmt(allMinutes)} <em>мин</em>`:'—';
     const treadDistance=workouts.reduce((sum,w)=>sum+(w.type==='Беговая дорожка'?w.distance:(w.treadmillDistance||0)),0);
-    const treadTime=workouts.reduce((sum,w)=>sum+(w.type==='Беговая дорожка'?w.duration:(w.treadmillDuration||0)),0);
+    const treadTime=FitData.treadmillAverage(workouts);
     $('#distance').innerHTML=`${fmt(treadDistance)} <em>км</em>`;
-    $('#treadmillTime').innerHTML=`${fmt(treadTime)} <em>мин</em>`;
+    $('#treadmillTime').innerHTML=treadTime===null?'—':`${fmt(treadTime)} <em>мин</em>`;
     $('#average').textContent=timed.length?fmt(allMinutes/timed.length):'—';
     let streak=0,cursor=new Date();const dates=new Set(Object.keys(activityDays));if(!activityDays[localDate(cursor)])cursor.setDate(cursor.getDate()-1);
     while(dates.has(localDate(cursor))){streak++;cursor.setDate(cursor.getDate()-1);}
@@ -89,6 +131,7 @@
     $('#donut').style.background=segments.length?`conic-gradient(${segments.join(',')})`:'#eef1e8';
     renderJournal();
     renderCalendars();
+    renderNutrition();
   }
   function renderCalendar(date, titleId, gridId) {
     $(titleId).textContent=date.toLocaleDateString('ru-RU',{month:'long',year:'numeric'});
@@ -116,6 +159,7 @@
     $('#heading').textContent=({overview:'Спорт',journal:'Журнал тренировок',nutrition:'Учёт КБЖУ и вес',progress:'Статистика',activity:'Активность'})[next];
     if(push&&location.hash!==`#/${next==='overview'?'home':next}`)history.pushState({},'',`#/${next==='overview'?'home':next}`);
     if(matchMedia('(max-width:820px)').matches)closeMenu();
+    if(push)window.scrollTo(0,0);
   }
   function readExerciseRows(){
     return [...$('#exerciseRows').querySelectorAll('tr')].map(row=>Object.fromEntries(['exercise','sets','reps','rir'].map(key=>[key,row.querySelector(`[data-exercise-field="${key}"]`).value.trim()])));
@@ -128,6 +172,7 @@
     const w=strengthEntries().find(w=>w.id===id);
     $('#form').elements.date.value=w?.date||date||localDate();
     $('#form').elements.date.max=localDate();
+    $('#form').elements.duration.value=w?.duration??'';
     renderExerciseRows(w?tableRows(w):[FitData.blankExercise()]);
     $('#modal').showModal();
   }
@@ -139,7 +184,7 @@
     const date=$('#form').elements.date.value;
     if(!validDate(date)||date>localDate()){$('#formError').textContent='Проверьте дату тренировки';return;}
     const original=[...workouts,...draftWorkouts].find(old=>old.id===editing);
-    const w={...original,id:editing||crypto.randomUUID(),title:original?.title||'Силовая тренировка',type:'Силовая',format:'strength-table-v1',date,duration:original?.duration??null,distance:original?.distance??0,exercises:readExerciseRows()};
+    const w={...original,id:editing||crypto.randomUUID(),title:original?.title||'Силовая тренировка',type:'Силовая',format:'strength-table-v1',date,duration:$('#form').elements.duration.value===''?null:Number($('#form').elements.duration.value),distance:original?.distance??0,exercises:readExerciseRows()};
     delete w.data;
     if(original?.sourceImportId){w.sourceImportId=original.sourceImportId;w.chatData=original.chatData||original.data;}
     try{FitData.workout(w);}catch(error){$('#formError').textContent=error.message;return;}
@@ -147,6 +192,7 @@
     if(saveState({...snapshot(),workouts:next,draftWorkouts:draftWorkouts.filter(old=>old.id!==editing),activityDays:{...activityDays,[w.date]:true}})){$('#modal').close();journalMonth=new Date(parseDate(w.date).getFullYear(),parseDate(w.date).getMonth(),1);render();toast('Тренировка сохранена');}
   };
   document.addEventListener('click',e=>{
+    const day=e.target.closest('[data-edit-day]');if(day){openDailyForm(day.dataset.editDay);return;}
     const edit=e.target.closest('[data-edit]'),del=e.target.closest('[data-delete]');
     if(edit)openForm(edit.dataset.edit);
     if(del&&confirm('Удалить эту карточку тренировки?')){
@@ -195,13 +241,14 @@
       const canonical=v=>Array.isArray(v)?'['+v.map(canonical).join(',')+']':v&&typeof v==='object'?'{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+canonical(v[k])).join(',')+'}':JSON.stringify(v);
       const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(canonical(payload)));
       const id=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
-      const created=FitData.importCards(payload,id,localDate());
+      const created=FitData.importCards(payload,id,localDate()),nutrition=FitData.nutritionPatch(payload,localDate());
       const existing=new Set([...workouts,...draftWorkouts].map(w=>w.id));
       const newWorkouts=created.workouts.filter(w=>!existing.has(w.id)),newDrafts=created.draftWorkouts.filter(w=>!existing.has(w.id));
       const imported=imports.some(i=>i.id===id);
       if(imported&&!newWorkouts.length&&!newDrafts.length){status.textContent='Эта запись уже сохранена';status.className='status';return;}
-      if(!saveState({...snapshot(),imports:imported?imports:[...imports,{id,receivedAt:new Date().toISOString(),payload}],workouts:[...workouts,...newWorkouts],draftWorkouts:[...draftWorkouts,...newDrafts],activityDays:{...activityDays,...Object.fromEntries(newWorkouts.map(w=>[w.date,true]))}}))throw Error('Не удалось сохранить запись');
-      status.textContent=newWorkouts.length+newDrafts.length?`Данные сохранены. Карточек в журнале: ${newWorkouts.length+newDrafts.length}.`:'Исходные данные сохранены. Распознавание показателей настроим позже.';status.className='status good';$('#chatData').value='';render();
+      const nextDaily={...dailyEntries};if(nutrition&&!imported)nextDaily[nutrition.date]=FitData.dailyRecord({...nextDaily[nutrition.date],...nutrition.values});
+      if(!saveState({...snapshot(),dailyEntries:nextDaily,imports:imported?imports:[...imports,{id,receivedAt:new Date().toISOString(),payload}],workouts:[...workouts,...newWorkouts],draftWorkouts:[...draftWorkouts,...newDrafts],activityDays:{...activityDays,...Object.fromEntries(newWorkouts.map(w=>[w.date,true]))}}))throw Error('Не удалось сохранить запись');
+      status.textContent=newWorkouts.length+newDrafts.length?`Данные сохранены. Карточек в журнале: ${newWorkouts.length+newDrafts.length}.`:(nutrition?'Данные за день сохранены.':'Исходные данные сохранены. Распознавание показателей настроим позже.');status.className='status good';$('#chatData').value='';render();
     }catch(error){status.textContent=error.message;status.className='status bad';}finally{button.disabled=false;}
   };
   window.FitApp={read(){if(storageBroken)throw Error("Локальное хранилище повреждено. Синхронизация остановлена.");return snapshot();},apply(value){if(!saveState(value,false))throw Error('Не удалось сохранить облачную версию');render();},download(value,name){const url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}};

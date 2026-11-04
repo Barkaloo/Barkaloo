@@ -44,7 +44,55 @@
     const draftWorkouts=value.draftWorkouts||[];
     if(!Array.isArray(draftWorkouts)||!draftWorkouts.every(w=>plain(w)&&typeof w.id==='string'&&typeof w.title==='string'&&validDate(w.date)&&plain(w.data)&&typeof w.sourceImportId==='string'))throw Error('Некорректные карточки тренировок');
     if(new Set([...workouts,...draftWorkouts].map(w=>w.id)).size!==workouts.length+draftWorkouts.length)throw Error('Повторяющиеся карточки');
-    return {workouts,imports:copy(imports),activityDays:copy(activityDays),draftWorkouts:copy(draftWorkouts),settings:plain(value.settings)?copy(value.settings):{}};
+    let dailyEntries=value.dailyEntries;
+    if(dailyEntries===undefined){
+      dailyEntries={};
+      // Recover previously saved daily ChatGPT data once. An explicit empty
+      // journal stays empty after a user deletes an entry.
+      for(const item of imports){
+        try{const parsed=nutritionPatch(item.payload);if(parsed)dailyEntries[parsed.date]={...dailyEntries[parsed.date],...parsed.values};}catch{/* Original import remains available in the backup. */}
+      }
+    }
+    if(!plain(dailyEntries))throw Error('Некорректный журнал питания');
+    const normalizedDays={};
+    for(const [date,entry] of Object.entries(dailyEntries)){
+      if(!validDate(date))throw Error('Некорректная дата журнала питания');
+      normalizedDays[date]=dailyRecord(entry);
+    }
+    return {workouts,imports:copy(imports),activityDays:copy(activityDays),draftWorkouts:copy(draftWorkouts),dailyEntries:normalizedDays,settings:plain(value.settings)?copy(value.settings):{}};
+  }
+  const dailyFields=['calories','protein','fat','carbs','weight'];
+  function dailyRecord(value){
+    if(!plain(value))throw Error('Некорректная запись за день');
+    const result={};
+    for(const key of dailyFields){
+      const n=value[key]??null;
+      if(n!==null&&(!Number.isFinite(n)||n<0||(key==='weight'&&n===0)))throw Error(key==='weight'?'Утренний вес должен быть положительным числом':'КБЖУ должны быть неотрицательными числами');
+      result[key]=n;
+    }
+    if(dailyFields.every(key=>result[key]===null))throw Error('Укажите хотя бы один показатель за день');
+    return result;
+  }
+  function nutritionPatch(payload,today){
+    if(!plain(payload))return null;
+    const source=plain(payload.nutrition)?payload.nutrition:{};
+    const raw={calories:source.calories??source.kcal,protein:source.protein??source.proteins,fat:source.fat??source.fats,carbs:source.carbs??source.carbohydrates,weight:payload.morningWeight??payload.weight};
+    const values={};
+    for(const key of dailyFields){
+      if(raw[key]===undefined||raw[key]===null||raw[key]==='')continue;
+      const v=raw[key];
+      if(typeof v!=='number'&&!(typeof v==='string'&&/^\s*\d+(?:[.,]\d+)?\s*$/.test(v)))throw Error('Проверьте числовые значения КБЖУ и веса');
+      values[key]=typeof v==='number'?v:Number(v.trim().replace(',','.'));
+    }
+    if(!Object.keys(values).length)return null;
+    const date=payload.date??today;
+    if(!validDate(date))throw Error('Укажите дату питания в формате ГГГГ-ММ-ДД');
+    dailyRecord(values);
+    return {date,values};
+  }
+  function treadmillAverage(workouts){
+    const times=workouts.map(w=>w.type==='Беговая дорожка'?w.duration:w.treadmillDuration).filter(n=>Number.isFinite(n)&&n>0);
+    return times.length?times.reduce((sum,n)=>sum+n,0)/times.length:null;
   }
   function importCards(payload,importId,today){
     const source=payload.workouts??payload.workout??payload.training??payload['тренировка'];
@@ -67,7 +115,7 @@
     });
     return result;
   }
-  const empty=()=>({workouts:[],imports:[],activityDays:{},draftWorkouts:[],settings:{}});
-  const api={types,validDate,workout,state,empty,importCards,blankExercise,exerciseRows};
+  const empty=()=>({workouts:[],imports:[],activityDays:{},draftWorkouts:[],dailyEntries:{},settings:{}});
+  const api={types,validDate,workout,state,empty,importCards,blankExercise,exerciseRows,dailyRecord,nutritionPatch,treadmillAverage,dailyFields};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.FitData=api;
 })(globalThis);

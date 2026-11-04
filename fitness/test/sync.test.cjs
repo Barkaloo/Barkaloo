@@ -64,3 +64,6 @@ test('strength exercise tables with unknown time and RIR zero round-trip across 
  const server=backend(),a=device(t,server),b=device(t,server);await login(a);await login(b);
  a.local.value.workouts=[{...workout('strength'),format:'strength-table-v1',duration:null,exercises:[{exercise:'Жим',sets:'3',reps:'8–10',rir:'0'}]}];await a.client.sync();await b.client.sync();assert.deepEqual(b.local.value.workouts,a.local.value.workouts);assert.equal(b.local.value.workouts[0].duration,null);
 });
+test('nutrition records, morning weight, real zero calories and day deletion synchronize',async t=>{
+ const server=backend(),a=device(t,server),b=device(t,server);await login(a);await login(b);a.local.value.dailyEntries={'2026-11-01':Data.dailyRecord({weight:79.4,calories:0,protein:150}),'2026-11-02':Data.dailyRecord({weight:79.2})};await a.client.sync();await b.client.sync();assert.deepEqual(b.local.value.dailyEntries,a.local.value.dailyEntries);delete b.local.value.dailyEntries['2026-11-02'];await b.client.sync();await a.client.sync();assert.equal(a.local.value.dailyEntries['2026-11-02'],undefined);assert.equal(a.local.value.dailyEntries['2026-11-01'].fat,null);
+});
