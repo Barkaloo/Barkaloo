@@ -55,3 +55,8 @@ test('invalid cloud fitness data does not replace local data',async t=>{
 test('treadmill duration may not exceed workout duration',()=>{
  assert.throws(()=>Data.workout({...workout('invalid'),treadmillDuration:51}));assert.doesNotThrow(()=>Data.workout({...workout('valid'),treadmillDuration:20,treadmillDistance:2}));
 });
+test('manual marks and imported draft cards synchronize separately from workout statistics',async t=>{
+ const server=backend(),a=device(t,server),b=device(t,server);await login(a);await login(b);
+ a.local.value.activityDays={'2026-11-02':true};a.local.value.draftWorkouts=[{id:'draft',title:'Из ChatGPT',date:'2026-11-02',data:{exercises:['Жим']},sourceImportId:'hash'}];await a.client.sync();await b.client.sync();assert.deepEqual(b.local.value.activityDays,a.local.value.activityDays);assert.deepEqual(b.local.value.draftWorkouts,a.local.value.draftWorkouts);assert.equal(b.local.value.workouts.length,0);
+ b.local.value.activityDays={};await b.client.sync();await a.client.sync();assert.deepEqual(a.local.value.activityDays,{});assert.equal(a.local.value.draftWorkouts.length,1);
+});

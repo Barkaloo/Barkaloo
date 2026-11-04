@@ -16,9 +16,32 @@
     if(new Set(workouts.map(w=>w.id)).size!==workouts.length)throw Error('Повторяющиеся тренировки');
     const imports=value.imports||[];
     if(!Array.isArray(imports)||!imports.every(i=>plain(i)&&typeof i.id==='string'&&typeof i.receivedAt==='string'&&plain(i.payload)))throw Error('Некорректные данные импорта');
-    return {workouts,imports:copy(imports),settings:plain(value.settings)?copy(value.settings):{}};
+    // Existing workout dates become initial marks once. An explicit empty map
+    // remains empty, so unmarking a date isn't undone by reload or sync.
+    const activityDays=value.activityDays===undefined?Object.fromEntries(workouts.map(w=>[w.date,true])):value.activityDays;
+    if(!plain(activityDays)||!Object.entries(activityDays).every(([date,marked])=>validDate(date)&&marked===true))throw Error('Некорректные отметки календаря');
+    const draftWorkouts=value.draftWorkouts||[];
+    if(!Array.isArray(draftWorkouts)||!draftWorkouts.every(w=>plain(w)&&typeof w.id==='string'&&typeof w.title==='string'&&validDate(w.date)&&plain(w.data)&&typeof w.sourceImportId==='string'))throw Error('Некорректные карточки тренировок');
+    if(new Set([...workouts,...draftWorkouts].map(w=>w.id)).size!==workouts.length+draftWorkouts.length)throw Error('Повторяющиеся карточки');
+    return {workouts,imports:copy(imports),activityDays:copy(activityDays),draftWorkouts:copy(draftWorkouts),settings:plain(value.settings)?copy(value.settings):{}};
   }
-  const empty=()=>({workouts:[],imports:[],settings:{}});
-  const api={types,validDate,workout,state,empty};
+  function importCards(payload,importId,today){
+    const source=payload.workouts??payload.workout??payload.training??payload['тренировка'];
+    if(source===undefined||source===null||source===false)return {workouts:[],draftWorkouts:[]};
+    const entries=Array.isArray(source)?source:[source];
+    const result={workouts:[],draftWorkouts:[]};
+    entries.forEach((raw,index)=>{
+      if(!plain(raw))throw Error('Тренировка должна быть JSON-объектом');
+      const date=raw.date??payload.date??today;
+      if(!validDate(date)||date>today)throw Error('Проверьте дату тренировки');
+      const id=`chat:${importId}:${index}`,title=typeof raw.title==='string'&&raw.title.trim()?raw.title.trim().slice(0,80):'Тренировка из ChatGPT';
+      const candidate={...copy(raw),id,title,date,distance:raw.distance??0,sourceImportId:importId,chatData:copy(raw)};
+      try{result.workouts.push(workout(candidate));}
+      catch{result.draftWorkouts.push({id,title,date,data:copy(raw),sourceImportId:importId});}
+    });
+    return result;
+  }
+  const empty=()=>({workouts:[],imports:[],activityDays:{},draftWorkouts:[],settings:{}});
+  const api={types,validDate,workout,state,empty,importCards};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.FitData=api;
 })(globalThis);
