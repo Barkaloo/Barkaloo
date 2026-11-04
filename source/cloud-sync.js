@@ -10,6 +10,8 @@
     if (!value || !Array.isArray(value.words)) throw new Error('Invalid cloud data');
     const result = {};
     for (const key of fields) result[key] = copy(value[key] || (key === 'words' || key === 'coreBank' ? [] : {}));
+    // Fitness is synchronized independently and must not look like an English edit.
+    delete result.settings.barkalooFit;
     // Match the app's word migration so reloads don't look like user edits.
     result.words = result.words.map(word => ({ ...word,
       productionHistory: Array.isArray(word.productionHistory) ? word.productionHistory : [],
@@ -185,7 +187,7 @@
       const generation = this.generation;
       this.backup();
       this.applying = true;
-      try { await this.apply(copy(row.state)); }
+      try { await this.apply(state(row.state)); }
       finally { this.applying = false; }
       this.assertCurrent(generation);
       this.remember(row);
@@ -200,6 +202,8 @@
     }
     async push(snapshot, row) {
       const user = this.session.user.id;
+      const payload = state(snapshot);
+      if (row?.state?.settings?.barkalooFit) payload.settings.barkalooFit = copy(row.state.settings.barkalooFit);
       const timestamp = new Date(Math.max(Date.now(), (Date.parse(row?.updated_at) || 0) + 1)).toISOString();
       const update = row
         ? '/rest/v1/app_state?user_id=eq.' + encodeURIComponent(user) + '&updated_at=eq.' + encodeURIComponent(row.updated_at)
@@ -207,7 +211,7 @@
       const rows = await this.request(update, {
         method: row ? 'PATCH' : 'POST',
         headers: { Prefer: row ? 'return=representation' : 'resolution=ignore-duplicates,return=representation' },
-        body: JSON.stringify(row ? { state: snapshot, updated_at: timestamp } : { user_id: user, state: snapshot, updated_at: timestamp })
+        body: JSON.stringify(row ? { state: payload, updated_at: timestamp } : { user_id: user, state: payload, updated_at: timestamp })
       });
       if (!Array.isArray(rows) || !rows.length) {
         this.showConflict(await this.fetchRow());

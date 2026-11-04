@@ -1,0 +1,33 @@
+const {chromium}=require('playwright');const assert=require('node:assert/strict');const fs=require('node:fs');const path=require('node:path');const http=require('node:http');const {backend}=require('../../test/supabase-fake.cjs');
+(async()=>{
+ const root=path.resolve(__dirname,'../..');const key=fs.readFileSync(path.join(root,'fitness/cloud-ui.js'),'utf8').match(/key: "([^"]+)"/)[1];const api=backend(key);
+ const english={words:[{id:'hello',word:'hello',kind:'active'}],stats:{vocabCorrect:10},units:{1:true},studyDays:{'2026-11-01':true},coreProgress:{},coreBank:[],settings:{theme:'dark'}};
+ api.rows.set('person',{user_id:'person',state:structuredClone(english),updated_at:new Date().toISOString()});
+ const server=http.createServer((req,res)=>{const name=new URL(req.url,'http://localhost').pathname;let file=path.join(root,name);if(fs.existsSync(file)&&fs.statSync(file).isDirectory())file=path.join(file,'index.html');if(!fs.existsSync(file)){res.writeHead(404).end();return;}const ext=path.extname(file);res.setHeader('Content-Type',({'.html':'text/html','.js':'text/javascript','.css':'text/css','.png':'image/png','.webmanifest':'application/manifest+json'})[ext]||'application/octet-stream');res.end(fs.readFileSync(file));});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
+ try{
+  browser=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox']});const errors=[];
+  const desktop=await browser.newContext({viewport:{width:1440,height:1100}});const mobile=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+  for(const context of [desktop,mobile])await context.route('https://*.supabase.co/**',async route=>{const r=route.request(),headers=r.headers();const result=await api.fetch(r.url(),{method:r.method(),body:r.postData(),headers:{...headers,Authorization:headers.authorization}});await route.fulfill({status:result.status,contentType:'application/json',headers:{'Access-Control-Allow-Origin':'*'},body:await result.text()});});
+  // Exact supplied URLs are intercepted with explicit test images here;
+  // this verifies image wiring, not live Pinterest delivery.
+  for(const context of [desktop,mobile])await context.route('https://i.pinimg.com/**',route=>route.fulfill({contentType:'image/png',body:fs.readFileSync(path.join(root,'source/logo-character.png'))}));
+  const p=await desktop.newPage(),m=await mobile.newPage();for(const page of [p,m])page.on('pageerror',e=>errors.push(e.message));
+  const url=`http://127.0.0.1:${server.address().port}/fitness/`;await p.goto(url);await m.goto(url);
+  assert.equal(await p.title(),'Barkaloo Fit');assert((await p.locator('.header-icon').getAttribute('src')).includes('9eb454bde90e9f6a15e34e91dabd7b9f'));await p.waitForFunction(()=>document.querySelector('.header-icon').naturalWidth>0);assert.equal(await p.locator('.nav-btn').count(),5);assert.equal(await p.locator('footer').count(),0);assert.equal(await p.locator('.logo-sub').count(),0);assert.deepEqual(await p.locator('#overview .stats-grid h3').allTextContents(),['Тренировки','Время тренировок','Средняя тренировка','Дистанция','Время на дорожке','Серия активности']);
+  assert.equal(await p.locator('#goal,#recent,#demo,#export').count(),0);
+  await p.locator('#importToggle').click();await p.locator('#chatData').fill('{broken');await p.locator('#saveChatData').click();assert.match(await p.locator('#importStatus').textContent(),/JSON/);
+  const payload={date:'2026-11-04',weight:80,nutrition:{calories:2200,protein:150,fat:70,carbs:240},notes:'<script>alert(1)</script>'};await p.locator('#chatData').fill(JSON.stringify(payload));await p.locator('#saveChatData').click();assert.match(await p.locator('#importStatus').textContent(),/сохранены/);await p.locator('#chatData').fill(JSON.stringify(payload));await p.locator('#saveChatData').click();assert.match(await p.locator('#importStatus').textContent(),/уже сохранена/);
+  await p.locator('[data-view=journal]').click();
+  async function add(title,type,duration,distance){await p.locator('#journalAdd').click();await p.locator('[name=title]').fill(title);await p.locator('[name=type]').selectOption(type);await p.locator('[name=duration]').fill(String(duration));await p.locator('[name=distance]').fill(String(distance));await p.getByRole('button',{name:'Сохранить тренировку'}).click();}
+  await add('Тестовая дорожка','Беговая дорожка',30,4.5);await add('Бег на улице','Бег',50,8);await p.locator('[data-view=overview]').click();assert.match(await p.locator('#distance').textContent(),/4,5/);assert.match(await p.locator('#treadmillTime').textContent(),/30/);assert.equal(await p.locator('#count').textContent(),'2');assert.equal(await p.locator('#average').textContent(),'40');
+  async function login(page){await page.locator('#cloudEmail').fill('person@example.test');await page.locator('#cloudPassword').fill('test-password');await page.locator('#cloudSignIn').click();await page.waitForFunction(()=>fitCloud.phase==='synced');}
+  await login(p);await login(m);assert.equal(await m.locator('#count').textContent(),'2');assert.equal(await m.evaluate(()=>FitApp.read().imports.length),1);
+  const saved=structuredClone(api.rows.get('person').state);delete saved.settings.barkalooFit;assert.deepEqual(saved,english);
+  await p.reload();await p.waitForFunction(()=>fitCloud.phase==='synced');assert.equal(await p.locator('#count').textContent(),'2');
+  await p.locator('#themeSelect').selectOption('dark');await p.waitForTimeout(300);await p.screenshot({path:'/tmp/barkaloo-fit-v3-desktop.png',fullPage:true});await m.locator('#themeSelect').selectOption('dark');await m.waitForTimeout(300);assert(await m.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await m.screenshot({path:'/tmp/barkaloo-fit-v3-mobile.png',fullPage:true});
+  await m.locator('#burger').click();await m.locator('[data-view=nutrition]').click();assert(await m.locator('#nutrition').isVisible());assert.equal(await m.locator('#overlay').isVisible(),false);await m.locator('#burger').click();await m.locator('[data-view=activity]').click();assert(await m.locator('#activity').isVisible());
+  await p.locator('#cloudSignOut').click();assert(await p.locator('#cloudAuthForm').isVisible());assert.equal(await p.locator('#count').textContent(),'2');assert.deepEqual(errors,[]);
+  console.log('PASS: exact home structure, five sections, treadmill-only metrics, raw JSON import/dedup, sign-in, independent desktop/mobile sync, English preservation, reload/logout, mobile layout; simulated backend.');
+ }finally{await browser?.close();await new Promise(r=>server.close(r));}
+})().catch(e=>{console.error(e);process.exit(1)});

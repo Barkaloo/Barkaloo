@@ -41,10 +41,15 @@ for(const file of ['icon-192.png','icon-512.png','icon-maskable-512.png','apple-
 // Publish the independent training prototype at /fitness/ alongside English.
 const fitnessOutput = path.join(output, 'fitness');
 fs.mkdirSync(fitnessOutput, { recursive: true });
-for (const file of ['index.html', 'app.js', 'barkaloo.css', 'style.css']) {
+for (const file of ['index.html', 'app.js', 'data.js', 'cloud-sync.js', 'cloud-ui.js', 'manifest.webmanifest', 'barkaloo.css', 'style.css']) {
   fs.copyFileSync(path.join(__dirname, 'fitness', file), path.join(fitnessOutput, file));
 }
 fs.cpSync(path.join(__dirname, 'fitness', 'assets'), path.join(fitnessOutput, 'assets'), { recursive: true });
+// Vercel can retain the supplied artwork and export platform-specific icons.
+// Plain local builds still use the original URLs without network prerequisites.
+if (process.env.VERCEL === '1') {
+  require('node:child_process').execFileSync(process.execPath, [path.join(__dirname, 'scripts/build-fitness-assets.cjs'), fitnessOutput], { stdio: 'inherit' });
+}
 // Remove archive copies left behind by the previous build format.
 for (const file of ['archive.json', ...fs.readdirSync(output).filter(file => /^app-.*\.b64$/.test(file))]) {
   fs.rmSync(path.join(output, file), { force: true });
