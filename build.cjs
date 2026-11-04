@@ -38,6 +38,13 @@ fs.mkdirSync(path.join(output,'icons'),{recursive:true});
 for(const file of ['icon-192.png','icon-512.png','icon-maskable-512.png','apple-touch-icon.png','favicon-32.png']){
   fs.copyFileSync(path.join(__dirname,'icons',file),path.join(output,'icons',file));
 }
+// Publish the independent training prototype at /fitness/ alongside English.
+const fitnessOutput = path.join(output, 'fitness');
+fs.mkdirSync(fitnessOutput, { recursive: true });
+for (const file of ['index.html', 'app.js', 'barkaloo.css', 'style.css']) {
+  fs.copyFileSync(path.join(__dirname, 'fitness', file), path.join(fitnessOutput, file));
+}
+fs.cpSync(path.join(__dirname, 'fitness', 'assets'), path.join(fitnessOutput, 'assets'), { recursive: true });
 // Remove archive copies left behind by the previous build format.
 for (const file of ['archive.json', ...fs.readdirSync(output).filter(file => /^app-.*\.b64$/.test(file))]) {
   fs.rmSync(path.join(output, file), { force: true });
