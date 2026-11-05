@@ -1,6 +1,7 @@
 (function(root){
   'use strict';
   const types=['Силовая','Бег','Беговая дорожка','Велосипед','Ходьба','Йога'];
+  const muscleGroups={chest:'Грудь',back:'Спина',quads:'Квадрицепсы',hamstrings:'Задняя поверхность бедра',glutes:'Ягодицы',frontDelts:'Передняя дельта',sideDelts:'Средняя дельта',rearDelts:'Задняя дельта',biceps:'Бицепс',triceps:'Трицепс',calves:'Икры',abs:'Пресс',erectors:'Разгибатели спины',forearms:'Предплечья'};
   const copy=value=>JSON.parse(JSON.stringify(value));
   const plain=v=>v&&typeof v==='object'&&!Array.isArray(v);
   function validDate(s){if(typeof s!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(s))return false;const d=new Date(s+'T12:00:00');return Number.isFinite(+d)&&d.getFullYear()===+s.slice(0,4)&&d.getMonth()+1===+s.slice(5,7)&&d.getDate()===+s.slice(8,10);}
@@ -68,7 +69,22 @@
     const sleepEntries=normalizeDates(value.sleepEntries??{},sleepRecord);
     const weightGoal=value.weightGoal??null;
     if(weightGoal!==null&&(!plain(weightGoal)||!Number.isFinite(weightGoal.target)||weightGoal.target<=0||!validDate(weightGoal.createdOn)||(weightGoal.start!==null&&(!Number.isFinite(weightGoal.start)||weightGoal.start<=0))||(weightGoal.capturedOn!==null&&!validDate(weightGoal.capturedOn))))throw Error('Некорректная цель веса');
-    return {workouts,imports:copy(imports),activityDays:copy(activityDays),trainingDays:copy(trainingDays),draftWorkouts:copy(draftWorkouts),dailyEntries:normalizedDays,extraActivity,measurements,sleepEntries,weightGoal:copy(weightGoal),settings:plain(value.settings)?copy(value.settings):{}};
+    const settings=plain(value.settings)?copy(value.settings):{};
+    if(settings.exerciseMuscles!==undefined){
+      if(!plain(settings.exerciseMuscles)||Object.keys(settings.exerciseMuscles).length>1000)throw Error('Некорректный справочник упражнений');
+      settings.exerciseMuscles=Object.fromEntries(Object.entries(settings.exerciseMuscles).map(([key,mapping])=>{
+        if(!key||key.length>230)throw Error('Некорректное название упражнения');
+        return [key,exerciseMapping(mapping)];
+      }));
+    }
+    return {workouts,imports:copy(imports),activityDays:copy(activityDays),trainingDays:copy(trainingDays),draftWorkouts:copy(draftWorkouts),dailyEntries:normalizedDays,extraActivity,measurements,sleepEntries,weightGoal:copy(weightGoal),settings};
+  }
+  function exerciseMapping(value){
+    if(!plain(value)||typeof value.label!=='string'||!value.label.trim()||value.label.length>200)throw Error('Проверьте название упражнения');
+    for(const field of ['primary','secondary'])if(!Array.isArray(value[field])||!value[field].every(key=>Object.hasOwn(muscleGroups,key))||new Set(value[field]).size!==value[field].length)throw Error('Проверьте мышечные группы');
+    if(!value.primary.length)throw Error('Выберите хотя бы одну основную мышечную группу');
+    if(value.primary.some(key=>value.secondary.includes(key)))throw Error('Одна мышца не может быть основной и вспомогательной одновременно');
+    return {label:value.label.trim(),primary:[...value.primary],secondary:[...value.secondary]};
   }
   function normalizeDates(value,normalize){
     if(!plain(value))throw Error('Некорректный дневник');
@@ -171,6 +187,6 @@
     return result;
   }
   const empty=()=>({workouts:[],imports:[],activityDays:{},trainingDays:{},draftWorkouts:[],dailyEntries:{},extraActivity:{},measurements:{},sleepEntries:{},weightGoal:null,settings:{}});
-  const api={types,validDate,workout,state,empty,importCards,blankExercise,exerciseRows,dailyRecord,nutritionPatch,treadmillAverage,dailyFields,activityRecord,measurementRecord,measurementFields,sleepRecord,sleepPatch};
+  const api={types,validDate,workout,state,empty,importCards,blankExercise,exerciseRows,dailyRecord,nutritionPatch,treadmillAverage,dailyFields,activityRecord,measurementRecord,measurementFields,sleepRecord,sleepPatch,muscleGroups,exerciseMapping};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.FitData=api;
 })(globalThis);
