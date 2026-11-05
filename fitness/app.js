@@ -10,7 +10,7 @@
   const fmt = n => new Intl.NumberFormat('ru-RU',{maximumFractionDigits:2}).format(n);
   const dateLabel = s => parseDate(s).toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
   const escape = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  let workouts = [], imports = [], activityDays = {}, draftWorkouts = [], dailyEntries = {}, settings = {}, days = 7, editing = null, view = 'overview', metric = 'duration';
+  let workouts = [], imports = [], activityDays = {}, trainingDays = {}, draftWorkouts = [], dailyEntries = {}, settings = {}, days = 7, editing = null, view = 'overview', metric = 'duration';
   let month = new Date(new Date().getFullYear(),new Date().getMonth(),1);
   let journalMonth = new Date(month);
   let nutritionMonth = new Date(month);
@@ -18,17 +18,17 @@
   try {
     const raw = localStorage.getItem(KEY);
     const saved = raw ? JSON.parse(raw) : {workouts:[],goal:3};
-    const normalized=FitData.state(saved);workouts=normalized.workouts;imports=normalized.imports;activityDays=normalized.activityDays;draftWorkouts=normalized.draftWorkouts;dailyEntries=normalized.dailyEntries;settings=normalized.settings;
+    const normalized=FitData.state(saved);workouts=normalized.workouts;imports=normalized.imports;activityDays=normalized.activityDays;trainingDays=normalized.trainingDays;draftWorkouts=normalized.draftWorkouts;dailyEntries=normalized.dailyEntries;settings=normalized.settings;
   } catch {
     storageBroken = true;
     setTimeout(() => toast('Не удалось прочитать сохранённые данные. Экспортируйте исходные данные перед новой записью.'),100);
   }
   let toastTimer;
   function toast(message) { $('#toast').textContent = message; $('#toast').style.display='block'; clearTimeout(toastTimer); toastTimer=setTimeout(()=>$('#toast').style.display='none',6000); }
-  function snapshot(){return FitData.state({workouts,imports,activityDays,draftWorkouts,dailyEntries,settings});}
+  function snapshot(){return FitData.state({workouts,imports,activityDays,trainingDays,draftWorkouts,dailyEntries,settings});}
   function saveState(value, notify=true){
     if(storageBroken){toast('Локальные данные повреждены. Сохранение заблокировано, чтобы не потерять исходную копию.');return false;}
-    try{const next=FitData.state(value);localStorage.setItem(KEY,JSON.stringify(next));workouts=next.workouts;imports=next.imports;activityDays=next.activityDays;draftWorkouts=next.draftWorkouts;dailyEntries=next.dailyEntries;settings=next.settings;if(notify)window.fitCloud?.changed();return true;}
+    try{const next=FitData.state(value);localStorage.setItem(KEY,JSON.stringify(next));workouts=next.workouts;imports=next.imports;activityDays=next.activityDays;trainingDays=next.trainingDays;draftWorkouts=next.draftWorkouts;dailyEntries=next.dailyEntries;settings=next.settings;if(notify)window.fitCloud?.changed();return true;}
     catch{toast('Не удалось сохранить данные на устройстве');return false;}
   }
   function period() {const end=new Date();end.setHours(0,0,0,0);const start=new Date(end);start.setDate(start.getDate()-days+1);return {start,end};}
@@ -133,24 +133,24 @@
     renderCalendars();
     renderNutrition();
   }
-  function renderCalendar(date, titleId, gridId) {
+  function renderCalendar(date, titleId, gridId, marks, calendar) {
     $(titleId).textContent=date.toLocaleDateString('ru-RU',{month:'long',year:'numeric'});
     const offset=(date.getDay()+6)%7;
     let html='';
     for(let i=0;i<42;i++){
-      const d=new Date(date.getFullYear(),date.getMonth(),i-offset+1),key=localDate(d),marked=!!activityDays[key];
-      html+=`<button type="button" data-mark-day="${key}" class="day ${d.getMonth()!==date.getMonth()?'muted-day ':''}${marked?'studied ':''}${key===localDate()?'current':''}" aria-label="${dateLabel(key)}: ${marked?'отмечен':'не отмечен'}" aria-pressed="${marked}" title="Двойное нажатие — поставить или убрать отметку">${d.getDate()}</button>`;
+      const d=new Date(date.getFullYear(),date.getMonth(),i-offset+1),key=localDate(d),marked=!!marks[key];
+      html+=`<button type="button" data-calendar="${calendar}" data-mark-day="${key}" class="day ${d.getMonth()!==date.getMonth()?'muted-day ':''}${marked?'studied ':''}${key===localDate()?'current':''}" aria-label="${dateLabel(key)}: ${marked?'отмечен':'не отмечен'}" aria-pressed="${marked}" title="Двойное нажатие — поставить или убрать отметку">${d.getDate()}</button>`;
     }
     $(gridId).innerHTML=html;
   }
   function renderCalendars() {
-    renderCalendar(month,'#month','#calendarGrid');
-    renderCalendar(journalMonth,'#journalMonth','#journalCalendarGrid');
+    renderCalendar(month,'#month','#calendarGrid',activityDays,'home');
+    renderCalendar(journalMonth,'#journalMonth','#journalCalendarGrid',trainingDays,'training');
   }
-  function toggleDay(key) {
+  function toggleDay(key,calendar) {
     if(!validDate(key))return;
-    const next={...activityDays};if(next[key])delete next[key];else next[key]=true;
-    if(saveState({...snapshot(),activityDays:next})){render();}
+    const field=calendar==='training'?'trainingDays':'activityDays',next={...(field==='trainingDays'?trainingDays:activityDays)};if(next[key])delete next[key];else next[key]=true;
+    if(saveState({...snapshot(),[field]:next})){render();}
   }
   function switchView(next, push=true) {
     if(!['overview','journal','nutrition','progress','activity'].includes(next))next='overview';
@@ -189,7 +189,7 @@
     if(original?.sourceImportId){w.sourceImportId=original.sourceImportId;w.chatData=original.chatData||original.data;}
     try{FitData.workout(w);}catch(error){$('#formError').textContent=error.message;return;}
     const next=workouts.some(old=>old.id===editing)?workouts.map(old=>old.id===editing?w:old):[...workouts,w];
-    if(saveState({...snapshot(),workouts:next,draftWorkouts:draftWorkouts.filter(old=>old.id!==editing),activityDays:{...activityDays,[w.date]:true}})){$('#modal').close();journalMonth=new Date(parseDate(w.date).getFullYear(),parseDate(w.date).getMonth(),1);render();toast('Тренировка сохранена');}
+    if(saveState({...snapshot(),workouts:next,draftWorkouts:draftWorkouts.filter(old=>old.id!==editing),trainingDays:{...trainingDays,[w.date]:true}})){$('#modal').close();journalMonth=new Date(parseDate(w.date).getFullYear(),parseDate(w.date).getMonth(),1);render();toast('Тренировка сохранена');}
   };
   document.addEventListener('click',e=>{
     const day=e.target.closest('[data-edit-day]');if(day){openDailyForm(day.dataset.editDay);return;}
@@ -200,8 +200,8 @@
       if(saveState({...snapshot(),workouts:workouts.filter(w=>w.id!==id),draftWorkouts:draftWorkouts.filter(w=>w.id!==id)})){render();toast('Карточка удалена');}
     }
   });
-  document.addEventListener('dblclick',e=>{if(performance.now()<ignoreNativeDblclickUntil)return;const day=e.target.closest('[data-mark-day]');if(day)toggleDay(day.dataset.markDay);});
-  document.addEventListener('keydown',e=>{if(e.repeat)return;const day=e.target.closest('[data-mark-day]');if(day&&(e.key==='Enter'||e.key===' ')){e.preventDefault();toggleDay(day.dataset.markDay);}});
+  document.addEventListener('dblclick',e=>{if(performance.now()<ignoreNativeDblclickUntil)return;const day=e.target.closest('[data-mark-day]');if(day)toggleDay(day.dataset.markDay,day.dataset.calendar);});
+  document.addEventListener('keydown',e=>{if(e.repeat)return;const day=e.target.closest('[data-mark-day]');if(day&&(e.key==='Enter'||e.key===' ')){e.preventDefault();toggleDay(day.dataset.markDay,day.dataset.calendar);}});
   // A native double-click works on desktop. Touch needs a double-tap handler;
   // prevent its synthetic click sequence so it cannot toggle a second time.
   let lastTouch=null,ignoreNativeDblclickUntil=0;
@@ -209,7 +209,7 @@
     if(e.pointerType!=='touch')return;
     const day=e.target.closest('[data-mark-day]');if(!day){lastTouch=null;return;}
     const now=performance.now();
-    if(lastTouch?.element===day&&now-lastTouch.at<400){e.preventDefault();lastTouch=null;ignoreNativeDblclickUntil=now+800;toggleDay(day.dataset.markDay);}else lastTouch={element:day,at:now};
+    if(lastTouch?.element===day&&now-lastTouch.at<400){e.preventDefault();lastTouch=null;ignoreNativeDblclickUntil=now+800;toggleDay(day.dataset.markDay,day.dataset.calendar);}else lastTouch={element:day,at:now};
   });
   document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
   document.querySelectorAll('[data-days]').forEach(b=>b.onclick=()=>{days=Number(b.dataset.days);document.querySelectorAll('[data-days]').forEach(x=>x.classList.toggle('active',x.dataset.days===b.dataset.days));render();});
@@ -247,7 +247,7 @@
       const imported=imports.some(i=>i.id===id);
       if(imported&&!newWorkouts.length&&!newDrafts.length){status.textContent='Эта запись уже сохранена';status.className='status';return;}
       const nextDaily={...dailyEntries};if(nutrition&&!imported)nextDaily[nutrition.date]=FitData.dailyRecord({...nextDaily[nutrition.date],...nutrition.values});
-      if(!saveState({...snapshot(),dailyEntries:nextDaily,imports:imported?imports:[...imports,{id,receivedAt:new Date().toISOString(),payload}],workouts:[...workouts,...newWorkouts],draftWorkouts:[...draftWorkouts,...newDrafts],activityDays:{...activityDays,...Object.fromEntries(newWorkouts.map(w=>[w.date,true]))}}))throw Error('Не удалось сохранить запись');
+      if(!saveState({...snapshot(),dailyEntries:nextDaily,imports:imported?imports:[...imports,{id,receivedAt:new Date().toISOString(),payload}],workouts:[...workouts,...newWorkouts],draftWorkouts:[...draftWorkouts,...newDrafts],trainingDays:{...trainingDays,...Object.fromEntries(newWorkouts.map(w=>[w.date,true]))}}))throw Error('Не удалось сохранить запись');
       status.textContent=newWorkouts.length+newDrafts.length?`Данные сохранены. Карточек в журнале: ${newWorkouts.length+newDrafts.length}.`:(nutrition?'Данные за день сохранены.':'Исходные данные сохранены. Распознавание показателей настроим позже.');status.className='status good';$('#chatData').value='';render();
     }catch(error){status.textContent=error.message;status.className='status bad';}finally{button.disabled=false;}
   };

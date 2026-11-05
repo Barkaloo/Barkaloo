@@ -31,6 +31,7 @@
       this.refreshing = null;
       this.queued = false;
       this.applying = false;
+      this.emailCooldownUntil = 0;
     }
     stored(key) {
       try { return JSON.parse(this.storage.getItem(key) || 'null'); } catch { return null; }
@@ -61,7 +62,8 @@
         if (!response.ok) {
           const error = new Error(data?.msg || data?.message || data?.error_description || `Cloud error: HTTP ${response.status}`);
           error.status = response.status;
-          error.code = data?.code;
+          error.code = data?.error_code || data?.code;
+          error.retryAfter = Number(response.headers?.get?.('Retry-After')) || 0;
           throw error;
         }
         return data;
@@ -120,10 +122,51 @@
     }
     async signUp(email, password) {
       const generation = this.generation;
-      const data = await this.json('/auth/v1/signup', { method: 'POST', body: JSON.stringify({ email, password }) });
+      const data = await this.json('/auth/v1/signup' + this.redirectQuery(), { method: 'POST', body: JSON.stringify({ email, password }) });
       if (generation !== this.generation) return;
       if (data?.access_token) await this.connect(data);
-      else this.notify('confirm', 'Подтвердите почту по ссылке из письма, затем войдите');
+      else {
+        const user = data?.user || data;
+        if (!user?.id) throw new Error('Сервер не подтвердил запрос регистрации');
+        this.emailCooldownUntil = Date.now() + 60000;
+        this.notify('confirm', 'Подтвердите почту по ссылке из письма. Если аккаунт уже создан, нажмите «Войти».');
+      }
+    }
+    redirectQuery() {
+      return this.redirectTo ? '?redirect_to=' + encodeURIComponent(this.redirectTo) : '';
+    }
+    async resendConfirmation(email) {
+      const remaining = Math.ceil((this.emailCooldownUntil - Date.now()) / 1000);
+      if (remaining > 0) throw Object.assign(new Error('Повторная отправка пока недоступна'), { code: 'local_email_cooldown', retryAfter: remaining });
+      const generation = this.generation;
+      try {
+        await this.json('/auth/v1/resend' + this.redirectQuery(), { method: 'POST', body: JSON.stringify({ type: 'signup', email }) });
+      } catch (error) {
+        if (error.status === 429) this.emailCooldownUntil = Date.now() + Math.max(60, error.retryAfter || 0) * 1000;
+        throw error;
+      }
+      if (generation !== this.generation) return;
+      this.emailCooldownUntil = Date.now() + 60000;
+      this.notify('confirm', 'Запрос на повторную отправку принят. Проверьте входящие и спам.');
+    }
+    async consumeCallback(fragment) {
+      const params = new URLSearchParams(fragment.replace(/^#/, ''));
+      if (params.has('error') || params.has('error_description')) {
+        this.notify('error', 'Не удалось подтвердить почту: ссылка недействительна или истекла. Запросите письмо повторно.');
+        return;
+      }
+      const access_token = params.get('access_token'), refresh_token = params.get('refresh_token');
+      if (!access_token || !refresh_token) { this.notify('error', 'Неполная ссылка подтверждения. Запросите письмо повторно.'); return; }
+      const generation = this.generation;
+      try {
+        const user = await this.json('/auth/v1/user', { headers: { Authorization: 'Bearer ' + access_token } });
+        if (generation !== this.generation) return;
+        if (!user?.id) throw new Error('Не удалось проверить аккаунт');
+        const expires_in = Number(params.get('expires_in')) || 3600;
+        await this.connect({ access_token, refresh_token, expires_in, user });
+      } catch (error) {
+        if (generation === this.generation) this.notify('error', 'Не удалось завершить вход по ссылке. Войдите с почтой и паролем.');
+      }
     }
     async connect(data) {
       if (!data?.access_token || !data.user?.id) throw new Error('Could not sign in');

@@ -37,3 +37,6 @@ test('numeric sets must be whole and values cannot be attached to an unnamed exe
 test('per-set import retains actual reps and RIR without inventing missing entries',()=>{
  const raw={exercises:[{name:'Присед',sets:[{reps:8,rir:2},{reps:6,rir:0}]}]};const card=Data.importCards({date:'2026-11-01',workout:raw},'hash','2026-11-04').workouts[0];assert.deepEqual(card.exercises,[{exercise:'Присед',sets:'2',reps:'8 / 6',rir:'2 / 0'}]);assert.deepEqual(card.chatData,raw);
 });
+test('legacy shared marks are copied once; home and training calendars then stay independent',()=>{
+ const old=Data.state({workouts:[],activityDays:{'2026-11-01':true}});assert.deepEqual(old.trainingDays,old.activityDays);assert.notEqual(old.trainingDays,old.activityDays);delete old.activityDays['2026-11-01'];const restored=Data.state(old);assert.deepEqual(restored.activityDays,{});assert.deepEqual(restored.trainingDays,{'2026-11-01':true});restored.trainingDays={};assert.deepEqual(Data.state(restored).trainingDays,{});
+});

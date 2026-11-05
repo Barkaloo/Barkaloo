@@ -3,7 +3,7 @@ const clone = value => JSON.parse(JSON.stringify(value));
 function backend(expectedKey = 'public-key') {
   const rows = new Map();
   const calls = [];
-  const server = { rows, calls, refreshes: 0, beforePatch: null, rejectToken: false, confirmation: false, missing: false };
+  const server = { rows, calls, refreshes: 0, beforePatch: null, rejectToken: false, confirmation: false, missing: false, resends: 0, emailError: null };
   let revision = Date.now();
   const response = (body, status = 200) => new Response(body == null ? null : JSON.stringify(body), { status });
   const session = id => ({ access_token: 'token-' + id, refresh_token: 'refresh-' + id, expires_at: Math.floor(Date.now() / 1000) + 3600, user: { id, email: id + '@example.test' } });
@@ -12,6 +12,16 @@ function backend(expectedKey = 'public-key') {
     const body = options.body ? JSON.parse(options.body) : null;
     calls.push({ path: url.pathname, method: options.method || 'GET' });
     assert.equal(options.headers.apikey, expectedKey);
+    if (url.pathname.endsWith('/resend')) {
+      server.resends++;
+      if (server.emailError) return response({message:server.emailError.message,error_code:server.emailError.code},server.emailError.status);
+      assert.equal(body.type,'signup');return response({});
+    }
+    if (url.pathname.endsWith('/user')) {
+      const token=options.headers.Authorization||'';
+      if(!token.startsWith('Bearer token-'))return response({message:'Invalid token'},401);
+      return response(session(token.slice('Bearer token-'.length)).user);
+    }
     if (url.pathname.endsWith('/token') || url.pathname.endsWith('/signup')) {
       if (url.searchParams.get('grant_type') === 'refresh_token') {
         server.refreshes++; server.rejectToken = false;

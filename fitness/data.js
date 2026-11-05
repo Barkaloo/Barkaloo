@@ -41,6 +41,10 @@
     // remains empty, so unmarking a date isn't undone by reload or sync.
     const activityDays=value.activityDays===undefined?Object.fromEntries(workouts.map(w=>[w.date,true])):value.activityDays;
     if(!plain(activityDays)||!Object.entries(activityDays).every(([date,marked])=>validDate(date)&&marked===true))throw Error('Некорректные отметки календаря');
+    // Previously both calendars shared one map. Copy it once, then preserve
+    // independent maps, including an explicit empty training calendar.
+    const trainingDays=value.trainingDays===undefined?activityDays:value.trainingDays;
+    if(!plain(trainingDays)||!Object.entries(trainingDays).every(([date,marked])=>validDate(date)&&marked===true))throw Error('Некорректные отметки журнала тренировок');
     const draftWorkouts=value.draftWorkouts||[];
     if(!Array.isArray(draftWorkouts)||!draftWorkouts.every(w=>plain(w)&&typeof w.id==='string'&&typeof w.title==='string'&&validDate(w.date)&&plain(w.data)&&typeof w.sourceImportId==='string'))throw Error('Некорректные карточки тренировок');
     if(new Set([...workouts,...draftWorkouts].map(w=>w.id)).size!==workouts.length+draftWorkouts.length)throw Error('Повторяющиеся карточки');
@@ -59,7 +63,7 @@
       if(!validDate(date))throw Error('Некорректная дата журнала питания');
       normalizedDays[date]=dailyRecord(entry);
     }
-    return {workouts,imports:copy(imports),activityDays:copy(activityDays),draftWorkouts:copy(draftWorkouts),dailyEntries:normalizedDays,settings:plain(value.settings)?copy(value.settings):{}};
+    return {workouts,imports:copy(imports),activityDays:copy(activityDays),trainingDays:copy(trainingDays),draftWorkouts:copy(draftWorkouts),dailyEntries:normalizedDays,settings:plain(value.settings)?copy(value.settings):{}};
   }
   const dailyFields=['calories','protein','fat','carbs','weight'];
   function dailyRecord(value){
@@ -115,7 +119,7 @@
     });
     return result;
   }
-  const empty=()=>({workouts:[],imports:[],activityDays:{},draftWorkouts:[],dailyEntries:{},settings:{}});
+  const empty=()=>({workouts:[],imports:[],activityDays:{},trainingDays:{},draftWorkouts:[],dailyEntries:{},settings:{}});
   const api={types,validDate,workout,state,empty,importCards,blankExercise,exerciseRows,dailyRecord,nutritionPatch,treadmillAverage,dailyFields};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.FitData=api;
 })(globalThis);
