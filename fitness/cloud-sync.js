@@ -279,7 +279,7 @@
       if (row?.missingFitness) { await this.push(local, row); return; }
       if (!this.base) {
         if (row) {
-          if ((local.workouts.length || local.imports.length) && !equal(local, row.state)) {this.showConflict(row);return;}
+          if (!equal(local, FitData.empty()) && !equal(local, row.state)) {this.showConflict(row);return;}
           await this.pull(row); return;
         }
         const owner = this.storage.getItem(OWNER);

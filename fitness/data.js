@@ -63,7 +63,28 @@
       if(!validDate(date))throw Error('Некорректная дата журнала питания');
       normalizedDays[date]=dailyRecord(entry);
     }
-    return {workouts,imports:copy(imports),activityDays:copy(activityDays),trainingDays:copy(trainingDays),draftWorkouts:copy(draftWorkouts),dailyEntries:normalizedDays,settings:plain(value.settings)?copy(value.settings):{}};
+    const extraActivity=normalizeDates(value.extraActivity??{},activityRecord);
+    const measurements=normalizeDates(value.measurements??{},measurementRecord);
+    const weightGoal=value.weightGoal??null;
+    if(weightGoal!==null&&(!plain(weightGoal)||!Number.isFinite(weightGoal.target)||weightGoal.target<=0||!validDate(weightGoal.createdOn)||(weightGoal.start!==null&&(!Number.isFinite(weightGoal.start)||weightGoal.start<=0))||(weightGoal.capturedOn!==null&&!validDate(weightGoal.capturedOn))))throw Error('Некорректная цель веса');
+    return {workouts,imports:copy(imports),activityDays:copy(activityDays),trainingDays:copy(trainingDays),draftWorkouts:copy(draftWorkouts),dailyEntries:normalizedDays,extraActivity,measurements,weightGoal:copy(weightGoal),settings:plain(value.settings)?copy(value.settings):{}};
+  }
+  function normalizeDates(value,normalize){
+    if(!plain(value))throw Error('Некорректный дневник');
+    return Object.fromEntries(Object.entries(value).map(([date,entry])=>{if(!validDate(date))throw Error('Некорректная дата дневника');return [date,normalize(entry)];}));
+  }
+  function activityRecord(value){
+    if(!plain(value))throw Error('Некорректная активность');
+    const result={};
+    for(const field of ['treadmill','posture','forearms']){if(value[field]!==undefined&&typeof value[field]!=='boolean')throw Error('Проверьте отметки активности');result[field]=value[field]??false;}
+    for(const field of ['distance','duration']){const n=value[field]??null;if(n!==null&&(!Number.isFinite(n)||n<0||n>(field==='duration'?1440:1000)))throw Error('Проверьте дистанцию и время');result[field]=n;}
+    return result;
+  }
+  const measurementFields={chest:'Грудь',waist:'Талия',hips:'Бёдра',arm:'Плечо',thigh:'Бедро',calf:'Голень',neck:'Шея'};
+  function measurementRecord(value){
+    if(!plain(value))throw Error('Некорректные замеры');const result={};
+    for(const field of Object.keys(measurementFields)){const n=value[field]??null;if(n!==null&&(!Number.isFinite(n)||n<=0))throw Error('Замеры должны быть положительными числами');result[field]=n;}
+    if(Object.values(result).every(n=>n===null))throw Error('Заполните хотя бы один замер');return result;
   }
   const dailyFields=['calories','protein','fat','carbs','weight'];
   function dailyRecord(value){
@@ -119,7 +140,7 @@
     });
     return result;
   }
-  const empty=()=>({workouts:[],imports:[],activityDays:{},trainingDays:{},draftWorkouts:[],dailyEntries:{},settings:{}});
-  const api={types,validDate,workout,state,empty,importCards,blankExercise,exerciseRows,dailyRecord,nutritionPatch,treadmillAverage,dailyFields};
+  const empty=()=>({workouts:[],imports:[],activityDays:{},trainingDays:{},draftWorkouts:[],dailyEntries:{},extraActivity:{},measurements:{},weightGoal:null,settings:{}});
+  const api={types,validDate,workout,state,empty,importCards,blankExercise,exerciseRows,dailyRecord,nutritionPatch,treadmillAverage,dailyFields,activityRecord,measurementRecord,measurementFields};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.FitData=api;
 })(globalThis);
