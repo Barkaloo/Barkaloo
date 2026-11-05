@@ -8,7 +8,7 @@
   const fmt = n => new Intl.NumberFormat('ru-RU',{maximumFractionDigits:2}).format(n);
   const dateLabel = s => parseDate(s).toLocaleDateString('ru-RU',{day:'numeric',month:'short'});
   const escape = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  let workouts = [], imports = [], activityDays = {}, trainingDays = {}, draftWorkouts = [], dailyEntries = {}, settings = {}, extraActivity = {}, measurements = {}, weightGoal = null, editing = null, view = 'overview';
+  let workouts = [], imports = [], activityDays = {}, trainingDays = {}, draftWorkouts = [], dailyEntries = {}, settings = {}, extraActivity = {}, measurements = {}, sleepEntries = {}, weightGoal = null, editing = null, view = 'overview';
   let month = new Date(new Date().getFullYear(),new Date().getMonth(),1);
   let journalMonth = new Date(month);
   let nutritionMonth = new Date(month);
@@ -16,17 +16,17 @@
   try {
     const raw = localStorage.getItem(KEY);
     const saved = raw ? JSON.parse(raw) : {workouts:[],goal:3};
-    const normalized=FitData.state(saved);workouts=normalized.workouts;imports=normalized.imports;activityDays=normalized.activityDays;trainingDays=normalized.trainingDays;draftWorkouts=normalized.draftWorkouts;dailyEntries=normalized.dailyEntries;settings=normalized.settings;extraActivity=normalized.extraActivity;measurements=normalized.measurements;weightGoal=normalized.weightGoal;
+    const normalized=FitData.state(saved);workouts=normalized.workouts;imports=normalized.imports;activityDays=normalized.activityDays;trainingDays=normalized.trainingDays;draftWorkouts=normalized.draftWorkouts;dailyEntries=normalized.dailyEntries;settings=normalized.settings;extraActivity=normalized.extraActivity;measurements=normalized.measurements;sleepEntries=normalized.sleepEntries;weightGoal=normalized.weightGoal;
   } catch {
     storageBroken = true;
     setTimeout(() => toast('Не удалось прочитать сохранённые данные. Экспортируйте исходные данные перед новой записью.'),100);
   }
   let toastTimer;
   function toast(message) { $('#toast').textContent = message; $('#toast').style.display='block'; clearTimeout(toastTimer); toastTimer=setTimeout(()=>$('#toast').style.display='none',6000); }
-  function snapshot(){return FitData.state({workouts,imports,activityDays,trainingDays,draftWorkouts,dailyEntries,settings,extraActivity,measurements,weightGoal});}
+  function snapshot(){return FitData.state({workouts,imports,activityDays,trainingDays,draftWorkouts,dailyEntries,settings,extraActivity,measurements,sleepEntries,weightGoal});}
   function saveState(value, notify=true){
     if(storageBroken){toast('Локальные данные повреждены. Сохранение заблокировано, чтобы не потерять исходную копию.');return false;}
-    try{const next=FitInsights.anchorGoal(FitData.state(value),localDate());localStorage.setItem(KEY,JSON.stringify(next));workouts=next.workouts;imports=next.imports;activityDays=next.activityDays;trainingDays=next.trainingDays;draftWorkouts=next.draftWorkouts;dailyEntries=next.dailyEntries;settings=next.settings;extraActivity=next.extraActivity;measurements=next.measurements;weightGoal=next.weightGoal;if(notify)window.fitCloud?.changed();return true;}
+    try{const next=FitInsights.anchorGoal(FitData.state(value),localDate());localStorage.setItem(KEY,JSON.stringify(next));workouts=next.workouts;imports=next.imports;activityDays=next.activityDays;trainingDays=next.trainingDays;draftWorkouts=next.draftWorkouts;dailyEntries=next.dailyEntries;settings=next.settings;extraActivity=next.extraActivity;measurements=next.measurements;sleepEntries=next.sleepEntries;weightGoal=next.weightGoal;if(notify)window.fitCloud?.changed();return true;}
     catch{toast('Не удалось сохранить данные на устройстве');return false;}
   }
   function sorted(list) {return [...list].sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id));}
@@ -131,10 +131,10 @@
     if(saveState({...snapshot(),[field]:next})){render();}
   }
   function switchView(next, push=true) {
-    if(!['overview','journal','nutrition','progress','activity'].includes(next))next='overview';
-    view=next;['overview','journal','nutrition','progress','activity'].forEach(id=>$('#'+id).hidden=id!==next);
+    if(!['overview','journal','nutrition','progress','activity','sleep'].includes(next))next='overview';
+    view=next;['overview','journal','nutrition','progress','activity','sleep'].forEach(id=>$('#'+id).hidden=id!==next);
     document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===next));
-    $('#heading').textContent=({overview:'Спорт',journal:'Журнал тренировок',nutrition:'Учёт КБЖУ и вес',progress:'Статистика',activity:'Активность'})[next];
+    $('#heading').textContent=({overview:'Спорт',journal:'Журнал тренировок',nutrition:'Учёт КБЖУ и вес',progress:'Статистика',activity:'Активность',sleep:'Сон'})[next];
     if(push&&location.hash!==`#/${next==='overview'?'home':next}`)history.pushState({},'',`#/${next==='overview'?'home':next}`);
     if(matchMedia('(max-width:820px)').matches)closeMenu();
     if(push)window.scrollTo(0,0);
@@ -222,10 +222,11 @@
       const newWorkouts=created.workouts.filter(w=>!existing.has(w.id)),newDrafts=created.draftWorkouts.filter(w=>!existing.has(w.id));
       const imported=imports.some(i=>i.id===id);
       if(imported&&!newWorkouts.length&&!newDrafts.length){status.textContent='Эта запись уже сохранена';status.className='status';return;}
+      const sleep=!imported?FitData.sleepPatch(payload,localDate(),sleepEntries):null;
       const nextDaily={...dailyEntries};if(nutrition&&!imported)nextDaily[nutrition.date]=FitData.dailyRecord({...nextDaily[nutrition.date],...nutrition.values});
       const nextActivity={...extraActivity},nextMeasurements={...measurements};if(!imported&&(payload.activity||payload.measurements)){const date=payload.date??localDate();if(!validDate(date))throw Error('Проверьте дату активности или замеров');if(payload.activity)nextActivity[date]=FitData.activityRecord({...nextActivity[date],...payload.activity});if(payload.measurements)nextMeasurements[date]=FitData.measurementRecord({...nextMeasurements[date],...payload.measurements});}
-      if(!saveState({...snapshot(),dailyEntries:nextDaily,extraActivity:nextActivity,measurements:nextMeasurements,imports:imported?imports:[...imports,{id,receivedAt:new Date().toISOString(),payload}],workouts:[...workouts,...newWorkouts],draftWorkouts:[...draftWorkouts,...newDrafts],trainingDays:{...trainingDays,...Object.fromEntries(newWorkouts.map(w=>[w.date,true]))}}))throw Error('Не удалось сохранить запись');
-      status.textContent=newWorkouts.length+newDrafts.length?`Данные сохранены. Карточек в журнале: ${newWorkouts.length+newDrafts.length}.`:(nutrition||payload.activity||payload.measurements?'Данные за день сохранены.':'Исходные данные сохранены. Распознавание показателей настроим позже.');status.className='status good';$('#chatData').value='';render();
+      if(!saveState({...snapshot(),dailyEntries:nextDaily,extraActivity:nextActivity,measurements:nextMeasurements,sleepEntries:sleep?{...sleepEntries,[sleep.date]:sleep.record}:sleepEntries,imports:imported?imports:[...imports,{id,receivedAt:new Date().toISOString(),payload}],workouts:[...workouts,...newWorkouts],draftWorkouts:[...draftWorkouts,...newDrafts],trainingDays:{...trainingDays,...Object.fromEntries(newWorkouts.map(w=>[w.date,true]))}}))throw Error('Не удалось сохранить запись');
+      status.textContent=newWorkouts.length+newDrafts.length?`Данные сохранены. Карточек в журнале: ${newWorkouts.length+newDrafts.length}.`:(nutrition||sleep||payload.activity||payload.measurements?'Данные за день сохранены.':'Исходные данные сохранены. Распознавание показателей настроим позже.');status.className='status good';$('#chatData').value='';render();
     }catch(error){status.textContent=error.message;status.className='status bad';}finally{button.disabled=false;}
   };
   window.FitApp={update(value){if(!saveState(value))return false;render();return true;},read(){if(storageBroken)throw Error("Локальное хранилище повреждено. Синхронизация остановлена.");return snapshot();},apply(value){if(!saveState(value,false))throw Error('Не удалось сохранить облачную версию');render();},download(value,name){const url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}};

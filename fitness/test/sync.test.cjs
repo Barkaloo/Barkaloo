@@ -78,3 +78,12 @@ test('first login preserves local goals, activity and checkpoints even without w
   const server=backend(),a=device(t,server);a.local.value.workouts.push(workout('cloud'));await login(a);const local=Data.state({...Data.empty(),...fields}),b=device(t,server,false,local);await login(b);assert.equal(b.client.phase,'conflict');assert.deepEqual(b.local.value,local);assert.equal(server.rows.get('person').state.settings.barkalooFit.workouts[0].id,'cloud');
  }
 });
+test('sleep create, partial edit and deletion synchronize without changing English or marks',async t=>{
+ const server=backend(),a=device(t,server),b=device(t,server);await login(a);await login(b);const before=clone(server.rows.get('person').state);delete before.settings.barkalooFit;
+ a.local.value.sleepEntries={'2026-11-05':Data.sleepRecord({bedtime:'00:30'})};await a.client.sync();await b.client.sync();assert.equal(b.local.value.sleepEntries['2026-11-05'].wakeTime,null);
+ b.local.value.sleepEntries['2026-11-05']=Data.sleepRecord({...b.local.value.sleepEntries['2026-11-05'],wakeTime:'08:15',latency:15,quality:4});await b.client.sync();await a.client.sync();assert.equal(a.local.value.sleepEntries['2026-11-05'].latency,15);assert.deepEqual(a.local.value.trainingDays,{});assert.deepEqual(a.local.value.activityDays,{});
+ const after=clone(server.rows.get('person').state);delete after.settings.barkalooFit;assert.deepEqual(after,before);delete a.local.value.sleepEntries['2026-11-05'];await a.client.sync();await b.client.sync();assert.deepEqual(b.local.value.sleepEntries,{});
+});
+test('first login protects a sleep-only local journal from silent replacement',async t=>{
+ const server=backend(),a=device(t,server);await login(a);a.local.value.workouts.push(workout('remote'));await a.client.sync();const b=device(t,server);b.local.value.sleepEntries={'2026-11-05':Data.sleepRecord({bedtime:'23:45'})};await login(b);assert.equal(b.client.phase,'conflict');assert.equal(b.local.value.sleepEntries['2026-11-05'].bedtime,'23:45');
+});

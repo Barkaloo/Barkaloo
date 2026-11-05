@@ -65,13 +65,43 @@
     }
     const extraActivity=normalizeDates(value.extraActivity??{},activityRecord);
     const measurements=normalizeDates(value.measurements??{},measurementRecord);
+    const sleepEntries=normalizeDates(value.sleepEntries??{},sleepRecord);
     const weightGoal=value.weightGoal??null;
     if(weightGoal!==null&&(!plain(weightGoal)||!Number.isFinite(weightGoal.target)||weightGoal.target<=0||!validDate(weightGoal.createdOn)||(weightGoal.start!==null&&(!Number.isFinite(weightGoal.start)||weightGoal.start<=0))||(weightGoal.capturedOn!==null&&!validDate(weightGoal.capturedOn))))throw Error('Некорректная цель веса');
-    return {workouts,imports:copy(imports),activityDays:copy(activityDays),trainingDays:copy(trainingDays),draftWorkouts:copy(draftWorkouts),dailyEntries:normalizedDays,extraActivity,measurements,weightGoal:copy(weightGoal),settings:plain(value.settings)?copy(value.settings):{}};
+    return {workouts,imports:copy(imports),activityDays:copy(activityDays),trainingDays:copy(trainingDays),draftWorkouts:copy(draftWorkouts),dailyEntries:normalizedDays,extraActivity,measurements,sleepEntries,weightGoal:copy(weightGoal),settings:plain(value.settings)?copy(value.settings):{}};
   }
   function normalizeDates(value,normalize){
     if(!plain(value))throw Error('Некорректный дневник');
     return Object.fromEntries(Object.entries(value).map(([date,entry])=>{if(!validDate(date))throw Error('Некорректная дата дневника');return [date,normalize(entry)];}));
+  }
+  function sleepRecord(value){
+    if(!plain(value))throw Error('Сон должен быть JSON-объектом');
+    const result={};
+    for(const field of ['bedtime','wakeTime']){
+      const time=value[field]??null;
+      if(time!==null&&(typeof time!=='string'||!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)))throw Error('Время сна: ЧЧ:ММ');
+      result[field]=time;
+    }
+    const latency=value.latency??null,quality=value.quality??null;
+    if(latency!==null&&(!Number.isInteger(latency)||latency<0||latency>=1440))throw Error('Время засыпания: целое число минут от 0 до 1439');
+    if(quality!==null&&(!Number.isInteger(quality)||quality<1||quality>5))throw Error('Качество сна: от 1 до 5');
+    result.latency=latency;result.quality=quality;
+    if(Object.values(result).every(v=>v===null))throw Error('Заполните хотя бы один показатель сна');
+    if(result.bedtime!==null&&result.wakeTime!==null){
+      const minutes=time=>Number(time.slice(0,2))*60+Number(time.slice(3));
+      const span=(minutes(result.wakeTime)-minutes(result.bedtime)+1440)%1440;
+      if(span===0)throw Error('Укажите разное время отхода ко сну и подъёма');
+      if(latency!==null&&latency>=span)throw Error('Время засыпания должно быть меньше времени в постели');
+    }
+    return result;
+  }
+  function sleepPatch(payload,today,previous={}){
+    if(payload.sleep===undefined)return null;
+    if(!plain(payload.sleep))throw Error('Сон должен быть JSON-объектом');
+    const date=payload.date??today;
+    if(!validDate(date))throw Error('Укажите дату пробуждения в формате ГГГГ-ММ-ДД');
+    const record=sleepRecord({...previous[date],...payload.sleep});
+    return {date,record};
   }
   function activityRecord(value){
     if(!plain(value))throw Error('Некорректная активность');
@@ -140,7 +170,7 @@
     });
     return result;
   }
-  const empty=()=>({workouts:[],imports:[],activityDays:{},trainingDays:{},draftWorkouts:[],dailyEntries:{},extraActivity:{},measurements:{},weightGoal:null,settings:{}});
-  const api={types,validDate,workout,state,empty,importCards,blankExercise,exerciseRows,dailyRecord,nutritionPatch,treadmillAverage,dailyFields,activityRecord,measurementRecord,measurementFields};
+  const empty=()=>({workouts:[],imports:[],activityDays:{},trainingDays:{},draftWorkouts:[],dailyEntries:{},extraActivity:{},measurements:{},sleepEntries:{},weightGoal:null,settings:{}});
+  const api={types,validDate,workout,state,empty,importCards,blankExercise,exerciseRows,dailyRecord,nutritionPatch,treadmillAverage,dailyFields,activityRecord,measurementRecord,measurementFields,sleepRecord,sleepPatch};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.FitData=api;
 })(globalThis);
