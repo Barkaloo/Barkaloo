@@ -25,7 +25,7 @@
       ]
     },
     {
-      "source": "/tutor/:path*",
+      "source": "/tutor/(.*)",
       "headers": [
         {
           "key": "X-Content-Type-Options",
