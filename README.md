@@ -1,5 +1,10 @@
 # Barkaloo
 
+Barkaloo Tutor добавлен как самостоятельное приложение в `/tutor/`.
+Запуск, схема Supabase и границы MVP: [tutor/README.md](tutor/README.md).
+Сборка всей экосистемы: `npm ci && npm run build`. Для разработки Tutor:
+`npm run dev:tutor`.
+
 Personal English-learning PWA based on the supplied `Barkaloo-English-v2.4.html`,
 with account-based Supabase synchronization added in v2.5.
 
@@ -311,3 +316,4 @@ Active word-level labels use saturated blue, separately from lavender UI control
 Checks: `node --test progress.test.cjs` and `node test/progress-browser.cjs` cover
 real-history/range logic, context ranking, Review ordering, date monotonicity,
 English UI, export, counters, reload and simulated two-device Supabase restoration.
+

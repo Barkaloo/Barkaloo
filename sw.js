@@ -6,6 +6,8 @@ self.addEventListener('install',e=>e.waitUntil((async()=>{
 })()));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('barkaloo-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{
+  // Tutor requires its own authenticated network flow; do not return English's offline page.
+  if(new URL(e.request.url).pathname.startsWith('/tutor/'))return;
   if(e.request.method!=='GET'||new URL(e.request.url).origin!==self.location.origin)return;
   e.respondWith(fetch(e.request).catch(async()=>{
     const cache=await caches.open(CACHE);
@@ -15,3 +17,4 @@ self.addEventListener('fetch',e=>{
     return Response.error();
   }));
 });
+
