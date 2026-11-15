@@ -105,4 +105,3 @@ test('Real PostgreSQL: publishing, grading, isolation, history and preview', asy
   await as(null); await assert.rejects(api('data'),/Требуется вход/);
   await db.close();
 });
-

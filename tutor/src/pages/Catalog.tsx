@@ -663,4 +663,3 @@ function NewModule({ topic, onClose }: { topic: Topic; onClose: () => void }) {
     </Modal>
   );
 }
-

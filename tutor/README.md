@@ -180,4 +180,3 @@ Supabase Auth. Эта настройка не менялась; информац
 https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection .
 
 Политики и данные `app_state` не изменяются миграциями Tutor.
-

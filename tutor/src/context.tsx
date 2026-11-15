@@ -15,4 +15,3 @@ export function useApp() {
   if (!ctx) throw new Error("Missing app context");
   return ctx;
 }
-

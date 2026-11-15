@@ -358,4 +358,3 @@ insert into public.tutor_sections(number,title,position)
 select n,'Задание №' || n,n from generate_series(1,27) n;
 notify pgrst, 'reload schema';
 commit;
-

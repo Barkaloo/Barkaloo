@@ -132,4 +132,3 @@ export const taskLabels: Record<TaskType, string> = {
   multiple: "Несколько вариантов",
   manual: "Ручная проверка",
 };
-

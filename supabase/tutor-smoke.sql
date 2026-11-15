@@ -34,4 +34,3 @@ begin
 end $$;
 rollback;
 select 'PASS: live RPC, draft isolation, publication, exact grading, solution protection, progress, manual review; fixtures rolled back' as result;
-

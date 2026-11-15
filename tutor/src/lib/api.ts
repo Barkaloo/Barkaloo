@@ -114,4 +114,3 @@ export function answerLabel(
   );
   return labels.join(", ");
 }
-

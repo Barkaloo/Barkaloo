@@ -219,4 +219,3 @@ export default function TaskPlayer({ task }: { task: Task }) {
     </article>
   );
 }
-

@@ -1,4 +1,3 @@
 # The archived HTML is byte verified; keep its editable source byte compatible on Windows.
 source/app.html text eol=lf
 index.html text eol=lf
-

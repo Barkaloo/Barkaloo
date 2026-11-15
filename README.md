@@ -316,4 +316,3 @@ Active word-level labels use saturated blue, separately from lavender UI control
 Checks: `node --test progress.test.cjs` and `node test/progress-browser.cjs` cover
 real-history/range logic, context ranking, Review ordering, date monotonicity,
 English UI, export, counters, reload and simulated two-device Supabase restoration.
-

@@ -374,4 +374,3 @@ create policy tutor_images_read on storage.objects for select to authenticated u
   )
 );
 commit;
-

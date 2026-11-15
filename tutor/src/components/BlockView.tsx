@@ -155,4 +155,3 @@ export default function BlockView({ block }: { block: Block }) {
       return null;
   }
 }
-

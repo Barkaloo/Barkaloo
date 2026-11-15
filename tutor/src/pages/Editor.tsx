@@ -571,4 +571,3 @@ export default function Editor({ id }: { id: string }) {
     </div>
   );
 }
-
