@@ -54,10 +54,22 @@ export async function studentAccess<T>(
   action: string,
   payload: object = {},
 ): Promise<T> {
-  const { data, error } = await supabase.functions.invoke(
-    "tutor-student-access",
-    { body: { action, ...payload } },
-  );
+  const invoke = () =>
+    supabase.functions.invoke("tutor-student-access", {
+      body: { action, ...payload },
+      timeout: 20000,
+    });
+  let result = await invoke();
+  // Retry only operations that preserve identity on replay. Rotation and access
+  // changes require an explicit action if their response was lost.
+  const transient =
+    result.error?.name === "FunctionsFetchError" ||
+    [502, 503, 504].includes(result.error?.context?.status);
+  if (transient && ["login", "create", "show"].includes(action)) {
+    await new Promise((resolve) => setTimeout(resolve, 900));
+    result = await invoke();
+  }
+  const { data, error } = result;
   if (error) {
     let message = "Не удалось связаться с сервером. Повторите попытку.";
     if (error.context && typeof error.context.json === "function") {
