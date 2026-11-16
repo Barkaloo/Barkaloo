@@ -84,7 +84,7 @@ export default function Auth({
   return (
     <main className="auth-page">
       <section className="auth-story">
-        <a href="/" className="brand">
+        <a href="/tutor/" className="brand">
           <span className="brand-mark">
             b<span>.</span>
           </span>
@@ -112,7 +112,7 @@ export default function Auth({
           </div>
         </div>
         <div className="auth-story-footer">
-          Часть экосистемы Barkaloo<span>English · Fit · Tutor</span>
+          Barkaloo Tutor<span>Ваше пространство для обучения</span>
         </div>
       </section>
       <section className="auth-form-side">
@@ -134,7 +134,7 @@ export default function Auth({
                 ? "Введите постоянный код, который выдал ваш преподаватель."
                 : mode === "reset"
                   ? "Введите email вашего аккаунта."
-                  : "Войдите с вашим аккаунтом Barkaloo."}
+              : "Войдите с вашим аккаунтом Barkaloo Tutor."}
           </p>
           {!recovery && (
             <div
@@ -146,7 +146,7 @@ export default function Auth({
                 type="button"
                 className={student ? "active" : ""}
                 aria-pressed={student}
-                  disabled={busy}
+                disabled={busy}
                 onClick={() => change("student")}
               >
                 Я ученик
@@ -155,7 +155,7 @@ export default function Auth({
                 type="button"
                 className={!student ? "active" : ""}
                 aria-pressed={!student}
-                  disabled={busy}
+                disabled={busy}
                 onClick={() => change("teacher")}
               >
                 Преподаватель

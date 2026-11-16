@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { resolve } from "node:path";
 export default defineConfig(({ mode }) => {
-  Object.assign(process.env, loadEnv(mode, process.cwd(), "VITE_"));
+  Object.assign(process.env, loadEnv(mode, import.meta.dirname, "VITE_TUTOR_"));
   return {
     root: resolve(import.meta.dirname),
     base: "/tutor/",

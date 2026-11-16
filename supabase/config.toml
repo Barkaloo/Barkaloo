@@ -1,4 +1,4 @@
-project_id = "barkaloo"
+project_id = "barkaloo-tutor"
 
 [functions.tutor-student-access]
 # Login authenticates the permanent code itself. Teacher actions additionally

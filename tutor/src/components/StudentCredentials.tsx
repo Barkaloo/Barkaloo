@@ -48,6 +48,13 @@ function CodeDetails({ credential }: { credential: Credential }) {
   );
 }
 export function AddStudentDialog({ onClose }: { onClose: () => void }) {
+  return (
+    <Modal title="Добавить ученика" onClose={onClose}>
+      <AddStudentForm onClose={onClose} />
+    </Modal>
+  );
+}
+export function AddStudentForm({ onClose }: { onClose?: () => void }) {
   const { refresh, navigate } = useApp();
   const [requestId] = useState(() => crypto.randomUUID()),
     [nickname, setNickname] = useState(""),
@@ -71,17 +78,15 @@ export function AddStudentDialog({ onClose }: { onClose: () => void }) {
     }
   };
   return (
-    <Modal
-      title={credential ? "Ученик добавлен" : "Добавить ученика"}
-      onClose={onClose}
-    >
+    <>
       {credential ? (
         <>
+          <h2>Ученик добавлен</h2>
           <CodeDetails credential={credential} />
           <button
             className="text-btn"
             onClick={() => {
-              onClose();
+              onClose?.();
               navigate(`student/${credential.student_id}`);
             }}
           >
@@ -113,7 +118,7 @@ export function AddStudentDialog({ onClose }: { onClose: () => void }) {
         </Form>
       )}
       {error && <ErrorBox message={error} />}
-    </Modal>
+    </>
   );
 }
 export function StudentCodeDialog({

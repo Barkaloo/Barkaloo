@@ -15,14 +15,13 @@ import { dateTime, homeworkSummary } from "../lib/teaching";
 import type { Student } from "../types";
 import { Empty, ErrorBox, Field, Form, Modal } from "../components/ui";
 import {
-  AddStudentDialog,
+  AddStudentForm,
   StudentCodeDialog,
 } from "../components/StudentCredentials";
 export function Students() {
   const { data, teacher, navigate } = useApp();
   const [q, setQ] = useState(""),
-    [status, setStatus] = useState("active"),
-    [adding, setAdding] = useState(false);
+    [status, setStatus] = useState("all");
   if (!teacher) return <Empty title="Раздел доступен преподавателю" />;
   const rows = data.students.filter(
     (s) =>
@@ -37,7 +36,7 @@ export function Students() {
           <h1>Ученики</h1>
           <p>Материалы, домашние работы и результаты каждого ученика.</p>
         </div>
-        <button className="btn primary" onClick={() => setAdding(true)}>
+        <button className="btn primary" onClick={() => navigate("student-new")}>
           <UserPlus size={16} />
           Добавить ученика
         </button>
@@ -106,13 +105,30 @@ export function Students() {
               : "Добавьте первого ученика"
           }
           action="Добавить ученика"
-          onAction={() => setAdding(true)}
+          onAction={() => navigate("student-new")}
         >
           Добавьте ученика и передайте ему постоянный шестизначный код. При
           первом входе он выберет свой ник.
         </Empty>
       )}
-      {adding && <AddStudentDialog onClose={() => setAdding(false)} />}
+    </>
+  );
+}
+export function AddStudentPage() {
+  const { teacher } = useApp();
+  if (!teacher) return <Empty title="Раздел доступен преподавателю" />;
+  return (
+    <>
+      <div className="page-heading">
+        <div>
+          <span className="eyebrow">Новый ученик</span>
+          <h1>Добавить ученика</h1>
+          <p>Создайте аккаунт и передайте ученику постоянный код для входа.</p>
+        </div>
+      </div>
+      <section className="panel student-create-panel">
+        <AddStudentForm />
+      </section>
     </>
   );
 }

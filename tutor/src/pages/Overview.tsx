@@ -267,7 +267,7 @@ export function Dashboard() {
           </h2>
           <p>
             {teacher
-              ? "Создайте свою первую тему, соберите модуль и пройдите его глазами ученика."
+              ? "Добавляйте учеников, планируйте занятия и следите за их результатами."
               : continued
                 ? `Продолжите модуль «${continued.m!.title}» с места, где остановились.`
                 : "Открывайте темы, разбирайтесь в теории и закрепляйте её на практике."}
@@ -277,7 +277,7 @@ export function Dashboard() {
             onClick={() =>
               navigate(
                 teacher
-                  ? "catalog"
+                  ? "student-new"
                   : continued
                     ? `lesson/${continued.m!.id}`
                     : "catalog",
@@ -285,7 +285,7 @@ export function Dashboard() {
             }
           >
             {teacher
-              ? "Создать учебный материал"
+              ? "Добавить ученика"
               : continued
                 ? "Продолжить обучение"
                 : "Открыть каталог"}
@@ -311,7 +311,7 @@ export function Dashboard() {
         </div>
       </div>
       <Metrics />
-      <HomeworkHighlights />
+      {!teacher && <HomeworkHighlights />}
       <div className="dashboard-columns">
         <ActivityChart />
         <section className="panel recent-panel">
@@ -383,36 +383,42 @@ export function Dashboard() {
           ))}
         </section>
       )}
-      <div className="section-heading">
-        <div>
-          <span className="eyebrow">
-            {teacher ? "Ваша библиотека" : "Следующий шаг"}
-          </span>
-          <h2>{teacher ? "Учебные материалы" : "Доступные модули"}</h2>
-        </div>
-        <button className="text-btn" onClick={() => navigate("modules")}>
-          Все модули
-          <ArrowRight size={16} />
-        </button>
-      </div>
-      {data.modules.length ? (
-        <div className="module-grid">
-          {data.modules.slice(0, 3).map((m) => (
-            <ModuleCard module={m} key={m.id} />
-          ))}
-        </div>
-      ) : (
-        <Empty
-          title={
-            teacher ? "Здесь будет ваша библиотека" : "Библиотека пока пуста"
-          }
-          action={teacher ? "Создать первую тему" : "Перейти в каталог"}
-          onAction={() => navigate("catalog")}
-        >
-          {teacher
-            ? "Выберите раздел ЕГЭ и добавьте материалы, которые помогут разобраться в теме."
-            : "Как только преподаватель опубликует материалы, вы сможете начать обучение."}
-        </Empty>
+      {!teacher && (
+        <>
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">
+                {teacher ? "Ваша библиотека" : "Следующий шаг"}
+              </span>
+              <h2>{teacher ? "Учебные материалы" : "Доступные модули"}</h2>
+            </div>
+            <button className="text-btn" onClick={() => navigate("modules")}>
+              Все модули
+              <ArrowRight size={16} />
+            </button>
+          </div>
+          {data.modules.length ? (
+            <div className="module-grid">
+              {data.modules.slice(0, 3).map((m) => (
+                <ModuleCard module={m} key={m.id} />
+              ))}
+            </div>
+          ) : (
+            <Empty
+              title={
+                teacher
+                  ? "Здесь будет ваша библиотека"
+                  : "Библиотека пока пуста"
+              }
+              action={teacher ? "Создать первую тему" : "Перейти в каталог"}
+              onAction={() => navigate("catalog")}
+            >
+              {teacher
+                ? "Выберите раздел ЕГЭ и добавьте материалы, которые помогут разобраться в теме."
+                : "Как только преподаватель опубликует материалы, вы сможете начать обучение."}
+            </Empty>
+          )}
+        </>
       )}
       {review && (
         <ReviewModal attempt={review} onClose={() => setReview(null)} />

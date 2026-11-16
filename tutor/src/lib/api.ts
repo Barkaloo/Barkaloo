@@ -1,23 +1,28 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Data } from "../types";
-const url = import.meta.env.VITE_SUPABASE_URL;
-const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const url = import.meta.env.VITE_TUTOR_SUPABASE_URL;
+const key = import.meta.env.VITE_TUTOR_SUPABASE_PUBLISHABLE_KEY;
 export const configured = !!url && !!key && !url.includes("your-project");
 export const supabase: SupabaseClient =
-  import.meta.hot?.data.supabaseClient ??
+  (import.meta.hot && import.meta.hot.data.supabaseClientUrl === url
+    ? import.meta.hot.data.supabaseClient
+    : undefined) ??
   createClient(
     configured ? url : "https://unconfigured.supabase.co",
     configured ? key : "unconfigured",
     {
       auth: {
-        storageKey: "barkaloo-tutor-auth",
+        storageKey: `barkaloo-tutor-${configured ? new URL(url).hostname.split(".")[0] : "unconfigured"}-auth`,
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
       },
     },
   );
-if (import.meta.hot) import.meta.hot.data.supabaseClient = supabase;
+if (import.meta.hot) {
+  import.meta.hot.data.supabaseClient = supabase;
+  import.meta.hot.data.supabaseClientUrl = url;
+}
 export async function api<T = Record<string, unknown>>(
   action: string,
   payload: object = {},
