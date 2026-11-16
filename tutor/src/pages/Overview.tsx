@@ -16,7 +16,7 @@ import { type Attempt } from "../types";
 import { Empty, Modal, Field, Form, ErrorBox } from "../components/ui";
 import { ModuleCard } from "./Catalog";
 import HomeworkHighlights from "../components/HomeworkHighlights";
-import { studentName } from "../lib/teaching";
+import TeacherOverview from "../components/TeacherOverview";
 export function Metrics() {
   const { data, teacher } = useApp();
   const graded = data.attempts.filter((a) => a.status !== "pending"),
@@ -232,7 +232,7 @@ export function Dashboard() {
     ? ""
     : data.profile.display_name.split(" ")[0];
   return (
-    <>
+    <div className={teacher ? "teacher-dashboard" : undefined}>
       <div
         className={`page-heading ${teacher ? "teacher-dashboard-date" : ""}`}
       >
@@ -304,78 +304,63 @@ export function Dashboard() {
           <span className="art-plus">+</span>
         </div>
       </div>
-      <Metrics />
-      {!teacher && <HomeworkHighlights />}
-      <div className="dashboard-columns">
-        <ActivityChart />
-        <section className="panel recent-panel">
-          <div className="spread">
-            <h2>{teacher ? "Последние результаты" : "Последняя активность"}</h2>
-            <Clock3 size={18} />
-          </div>
-          {data.attempts.length ? (
-            <div className="recent-list">
-              {data.attempts.slice(0, 5).map((a) => (
-                <div key={a.id}>
-                  <span className={`result-dot ${a.status}`} />
-                  <div>
-                    <strong>{a.task_snapshot.title}</strong>
-                    <small>
-                      {formatDate(a.created_at)} ·{" "}
-                      {a.status === "correct"
-                        ? "Верно"
-                        : a.status === "wrong"
-                          ? "Ошибка"
-                          : "На проверке"}
-                    </small>
-                  </div>
-                  {!teacher && data.tasks.some((t) => t.id === a.task_id) && (
-                    <button
-                      className="icon-btn"
-                      aria-label="Открыть задание"
-                      onClick={() => navigate(`practice/${a.task_id}`)}
-                    >
-                      <ArrowUpRight size={16} />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="compact-empty">
-              <FileText size={26} />
-              <p>
-                {teacher
-                  ? "Результаты появятся, когда ученики начнут решать задания."
-                  : "Здесь появятся ваши первые решения."}
-              </p>
-            </div>
-          )}
-        </section>
-      </div>
-      {teacher && data.review_queue.length > 0 && (
-        <section className="panel review-queue">
-          <div className="spread">
-            <h2>Ответы для ручной проверки</h2>
-            <span className="badge amber">{data.review_queue.length}</span>
-          </div>
-          {data.review_queue.map((a) => (
-            <div className="review-row" key={a.id}>
-              <div>
-                <strong>{a.task_snapshot.title}</strong>
-                <p>
-                  {a.is_preview
-                    ? "Тестовая попытка предпросмотра"
-                    : studentName(data, a.student_id)}{" "}
-                  · {formatDate(a.created_at)}
-                </p>
+      {teacher ? (
+        <TeacherOverview onReview={setReview} />
+      ) : (
+        <>
+          <Metrics />
+          {!teacher && <HomeworkHighlights />}
+          <div className="dashboard-columns">
+            <ActivityChart />
+            <section className="panel recent-panel">
+              <div className="spread">
+                <h2>
+                  {teacher ? "Последние результаты" : "Последняя активность"}
+                </h2>
+                <Clock3 size={18} />
               </div>
-              <button className="btn small" onClick={() => setReview(a)}>
-                Проверить
-              </button>
-            </div>
-          ))}
-        </section>
+              {data.attempts.length ? (
+                <div className="recent-list">
+                  {data.attempts.slice(0, 5).map((a) => (
+                    <div key={a.id}>
+                      <span className={`result-dot ${a.status}`} />
+                      <div>
+                        <strong>{a.task_snapshot.title}</strong>
+                        <small>
+                          {formatDate(a.created_at)} ·{" "}
+                          {a.status === "correct"
+                            ? "Верно"
+                            : a.status === "wrong"
+                              ? "Ошибка"
+                              : "На проверке"}
+                        </small>
+                      </div>
+                      {!teacher &&
+                        data.tasks.some((t) => t.id === a.task_id) && (
+                          <button
+                            className="icon-btn"
+                            aria-label="Открыть задание"
+                            onClick={() => navigate(`practice/${a.task_id}`)}
+                          >
+                            <ArrowUpRight size={16} />
+                          </button>
+                        )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="compact-empty">
+                  <FileText size={26} />
+                  <p>
+                    {teacher
+                      ? "Результаты появятся, когда ученики начнут решать задания."
+                      : "Здесь появятся ваши первые решения."}
+                  </p>
+                </div>
+              )}
+            </section>
+          </div>
+        </>
       )}
       {!teacher && (
         <>
@@ -417,7 +402,7 @@ export function Dashboard() {
       {review && (
         <ReviewModal attempt={review} onClose={() => setReview(null)} />
       )}
-    </>
+    </div>
   );
 }
 export function ReviewModal({
