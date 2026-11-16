@@ -200,7 +200,7 @@ function HomeworkForm({
           action="Открыть учеников"
           onAction={() => navigate("students")}
         >
-          Создайте приглашение и передайте его ученику.
+          Добавьте ученика в кабинете и передайте ему код для входа.
         </Empty>
       ) : !data.assignable_tasks.length ? (
         <Empty

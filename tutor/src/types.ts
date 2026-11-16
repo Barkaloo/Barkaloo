@@ -108,6 +108,7 @@ export type Data = {
     user_id: string;
     display_name: string;
     theme: "system" | "light" | "dark";
+    onboarding_complete: boolean;
   };
   role: "teacher" | "student";
   sections: Section[];
@@ -140,6 +141,8 @@ export type Student = {
   status: "active" | "archived";
   notes: string;
   created_at: string;
+  login_method?: "code" | "email";
+  code_enabled?: boolean;
 };
 export type StudentInvite = {
   id: string;

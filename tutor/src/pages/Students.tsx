@@ -3,7 +3,6 @@ import {
   ArrowLeft,
   ArrowRight,
   UserPlus,
-  Copy,
   Search,
   Pencil,
   Plus,
@@ -13,13 +12,17 @@ import {
 import { useApp } from "../context";
 import { api, formatDate } from "../lib/api";
 import { dateTime, homeworkSummary } from "../lib/teaching";
-import type { Student, StudentInvite } from "../types";
+import type { Student } from "../types";
 import { Empty, ErrorBox, Field, Form, Modal } from "../components/ui";
+import {
+  AddStudentDialog,
+  StudentCodeDialog,
+} from "../components/StudentCredentials";
 export function Students() {
   const { data, teacher, navigate } = useApp();
   const [q, setQ] = useState(""),
     [status, setStatus] = useState("active"),
-    [invite, setInvite] = useState(false);
+    [adding, setAdding] = useState(false);
   if (!teacher) return <Empty title="Раздел доступен преподавателю" />;
   const rows = data.students.filter(
     (s) =>
@@ -34,9 +37,9 @@ export function Students() {
           <h1>Ученики</h1>
           <p>Материалы, домашние работы и результаты каждого ученика.</p>
         </div>
-        <button className="btn primary" onClick={() => setInvite(true)}>
+        <button className="btn primary" onClick={() => setAdding(true)}>
           <UserPlus size={16} />
-          Пригласить ученика
+          Добавить ученика
         </button>
       </div>
       <div className="filter-bar">
@@ -102,153 +105,22 @@ export function Students() {
               ? "Ученики не найдены"
               : "Добавьте первого ученика"
           }
-          action="Создать приглашение"
-          onAction={() => setInvite(true)}
+          action="Добавить ученика"
+          onAction={() => setAdding(true)}
         >
-          Создайте одноразовую ссылку и передайте её ученику. После входа он
-          сможет подключиться к вам.
+          Добавьте ученика и передайте ему постоянный шестизначный код. При
+          первом входе он выберет свой ник.
         </Empty>
       )}
-      {data.invites.length > 0 && (
-        <section className="panel invitation-list">
-          <h2>Приглашения</h2>
-          <p className="muted">
-            Ссылки действуют 7 дней и подходят для одного аккаунта.
-          </p>
-          {data.invites.slice(0, 15).map((i) => (
-            <InviteRow key={i.id} invite={i} />
-          ))}
-        </section>
-      )}
-      {invite && <InviteModal onClose={() => setInvite(false)} />}
+      {adding && <AddStudentDialog onClose={() => setAdding(false)} />}
     </>
-  );
-}
-function InviteRow({ invite: i }: { invite: StudentInvite }) {
-  const { refresh, notify } = useApp();
-  const [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
-  const expired = new Date(i.expires_at).getTime() < Date.now();
-  const revoke = async () => {
-    setBusy(true);
-    try {
-      await api("invite_revoke", { id: i.id });
-      await refresh();
-      notify("Приглашение отозвано");
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <div className="invitation-row">
-      <div>
-        <strong>{i.label || "Приглашение ученика"}</strong>
-        <small>
-          {i.used_by
-            ? "Использовано"
-            : i.revoked
-              ? "Отозвано"
-              : expired
-                ? "Срок истёк"
-                : `До ${dateTime(i.expires_at)}`}
-        </small>
-        {error && <ErrorBox message={error} />}
-      </div>
-      {!i.used_by && !i.revoked && !expired && (
-        <button className="btn small" disabled={busy} onClick={revoke}>
-          Отозвать
-        </button>
-      )}
-    </div>
-  );
-}
-function InviteModal({ onClose }: { onClose: () => void }) {
-  const { refresh, notify } = useApp();
-  const [label, setLabel] = useState(""),
-    [code, setCode] = useState(""),
-    [error, setError] = useState(""),
-    [busy, setBusy] = useState(false);
-  const create = async () => {
-    setBusy(true);
-    setError("");
-    try {
-      const result = await api<{ code: string }>("invite_create", { label });
-      setCode(result.code);
-      await refresh();
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
-  const link = `${location.origin}/tutor/#/join/${code}`;
-  const copy = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      notify("Скопировано");
-    } catch {
-      setError(
-        "Не удалось скопировать автоматически. Выделите и скопируйте текст вручную.",
-      );
-    }
-  };
-  return (
-    <Modal title="Пригласить ученика" onClose={onClose}>
-      {code ? (
-        <>
-          <p className="muted">
-            Передайте ссылку ученику. Он войдёт в свой аккаунт и подтвердит
-            подключение. Ссылка показывается один раз — сохраните её перед
-            закрытием.
-          </p>
-          <Field label="Ссылка для ученика">
-            <input readOnly value={link} onFocus={(e) => e.target.select()} />
-          </Field>
-          <button className="btn primary" onClick={() => copy(link)}>
-            <Copy size={15} />
-            Скопировать ссылку
-          </button>
-          <Field label="Код приглашения">
-            <input
-              className="mono"
-              readOnly
-              value={code}
-              onFocus={(e) => e.target.select()}
-            />
-          </Field>
-          <button className="text-btn" onClick={() => copy(code)}>
-            Скопировать код
-          </button>
-        </>
-      ) : (
-        <Form onSubmit={create}>
-          <p className="muted">
-            Приглашение действует 7 дней. Письма не отправляются автоматически.
-          </p>
-          <Field label="Подпись для себя">
-            <input
-              autoFocus
-              maxLength={100}
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              placeholder="Например, имя будущего ученика"
-            />
-          </Field>
-          <button className="btn primary" disabled={busy}>
-            {busy ? "Создание…" : "Создать ссылку"}
-          </button>
-        </Form>
-      )}
-      {error && <ErrorBox message={error} />}
-    </Modal>
   );
 }
 export function StudentPage({ id }: { id: string }) {
   const { data, teacher, navigate, refresh, notify } = useApp();
   const s = data.students.find((s) => s.student_id === id);
   const [editing, setEditing] = useState(false),
+    [codeOpen, setCodeOpen] = useState(false),
     [moduleId, setModuleId] = useState(""),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
@@ -313,10 +185,17 @@ export function StudentPage({ id }: { id: string }) {
             {s.status === "active" ? "Активен" : "В архиве"}
           </p>
         </div>
-        <button className="btn" onClick={() => setEditing(true)}>
-          <Pencil size={15} />
-          Редактировать
-        </button>
+        <div className="actions">
+          {s.login_method === "code" && (
+            <button className="btn primary" onClick={() => setCodeOpen(true)}>
+              Код для входа
+            </button>
+          )}
+          <button className="btn" onClick={() => setEditing(true)}>
+            <Pencil size={15} />
+            Редактировать
+          </button>
+        </div>
       </div>
       <div className="metrics-grid">
         <div className="metric panel">
@@ -537,6 +416,13 @@ export function StudentPage({ id }: { id: string }) {
         )}
       </section>
       {editing && <StudentEdit student={s} onClose={() => setEditing(false)} />}
+      {codeOpen && (
+        <StudentCodeDialog
+          studentId={id}
+          active={s.status === "active"}
+          onClose={() => setCodeOpen(false)}
+        />
+      )}
     </>
   );
 }
@@ -626,64 +512,24 @@ function StudentEdit({
     </Modal>
   );
 }
-export function Connect({ initialCode = "" }: { initialCode?: string }) {
-  const { data, preview, refresh, notify } = useApp();
-  const [code, setCode] = useState(initialCode),
-    [error, setError] = useState(""),
-    [busy, setBusy] = useState(false);
-  const join = async () => {
-    setBusy(true);
-    setError("");
-    try {
-      await api("student_join", { code: code.trim() });
-      await refresh();
-      setCode("");
-      notify("Вы подключились к преподавателю");
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
+export function Connect(_props: { initialCode?: string } = {}) {
+  const { data, preview } = useApp();
   return (
     <>
       <div className="page-heading">
         <div>
           <span className="eyebrow">Учитесь вместе</span>
           <h1>Мои преподаватели</h1>
-          <p>
-            Подключитесь по приглашению, чтобы получать персональные материалы и
-            домашние работы.
-          </p>
+          <p>Материалы и домашние работы от вашего преподавателя.</p>
         </div>
       </div>
-      <section className="panel connect-panel">
-        <h2>Принять приглашение</h2>
-        {preview ? (
-          <p className="inline-empty">
-            В режиме просмотра приглашения не принимаются. Ссылку использует
-            ученик в своём аккаунте.
-          </p>
-        ) : (
-          <Form onSubmit={join}>
-            <Field label="Код приглашения">
-              <input
-                required
-                className="mono"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                placeholder="Код из ссылки преподавателя"
-              />
-            </Field>
-            {error && <ErrorBox message={error} />}
-            <button className="btn primary" disabled={busy || !code.trim()}>
-              {busy ? "Подключение…" : "Подключиться к преподавателю"}
-            </button>
-          </Form>
-        )}
-      </section>
-      {data.teachers.length > 0 && (
-        <div className="student-grid teaching-section">
+      {preview ? (
+        <p className="panel muted">
+          В режиме просмотра показан ваш учебный интерфейс. Ученики входят в
+          свои аккаунты по постоянному коду.
+        </p>
+      ) : data.teachers.length ? (
+        <div className="student-grid">
           {data.teachers.map((t) => (
             <section className="panel" key={t.teacher_id}>
               <span className="avatar">{t.display_name[0].toUpperCase()}</span>
@@ -697,6 +543,10 @@ export function Connect({ initialCode = "" }: { initialCode?: string }) {
             </section>
           ))}
         </div>
+      ) : (
+        <Empty title="Преподаватель пока не подключён">
+          Для входа в учебный кабинет получите шестизначный код у преподавателя.
+        </Empty>
       )}
     </>
   );

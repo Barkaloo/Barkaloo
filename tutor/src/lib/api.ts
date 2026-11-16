@@ -1,20 +1,23 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Data } from "../types";
 const url = import.meta.env.VITE_SUPABASE_URL;
 const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 export const configured = !!url && !!key && !url.includes("your-project");
-export const supabase = createClient(
-  configured ? url : "https://unconfigured.supabase.co",
-  configured ? key : "unconfigured",
-  {
-    auth: {
-      storageKey: "barkaloo-tutor-auth",
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
+export const supabase: SupabaseClient =
+  import.meta.hot?.data.supabaseClient ??
+  createClient(
+    configured ? url : "https://unconfigured.supabase.co",
+    configured ? key : "unconfigured",
+    {
+      auth: {
+        storageKey: "barkaloo-tutor-auth",
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
     },
-  },
-);
+  );
+if (import.meta.hot) import.meta.hot.data.supabaseClient = supabase;
 export async function api<T = Record<string, unknown>>(
   action: string,
   payload: object = {},
@@ -47,6 +50,31 @@ export const loadData = async (preview: boolean) => {
     );
   return { ...data, student_progress: data.student_progress ?? [] };
 };
+export async function studentAccess<T>(
+  action: string,
+  payload: object = {},
+): Promise<T> {
+  const { data, error } = await supabase.functions.invoke(
+    "tutor-student-access",
+    { body: { action, ...payload } },
+  );
+  if (error) {
+    let message = "Не удалось связаться с сервером. Повторите попытку.";
+    if (error.context && typeof error.context.json === "function") {
+      const detail = await error.context.json().catch(() => null);
+      if (typeof detail?.error === "string") message = detail.error;
+      if (typeof detail?.retry_after === "number")
+        message += ` Повторить можно через ${Math.ceil(detail.retry_after / 60)} мин.`;
+    }
+    console.warn(
+      "Tutor access request failed",
+      error.name,
+      error.context?.status ?? "network",
+    );
+    throw new Error(message);
+  }
+  return data as T;
+}
 export async function uploadImage(moduleId: string, file: File) {
   if (file.size > 8 * 1024 * 1024)
     throw new Error("Изображение должно быть меньше 8 МБ");

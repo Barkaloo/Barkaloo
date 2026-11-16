@@ -479,3 +479,94 @@
     font-size: 12px;
   }
 }
+.auth-audience {
+  display: flex;
+  gap: 5px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin: 25px 0;
+}
+.auth-audience button {
+  flex: 1;
+  padding: 10px;
+  font-size: 12px;
+  border-radius: 7px;
+  color: var(--muted);
+}
+.auth-audience button.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.code-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.code-input-wrap > input {
+  flex: 1;
+  min-width: 0;
+}
+.student-code-input {
+  font-size: 26px !important;
+  letter-spacing: 0.35em;
+  text-align: center;
+  font-family: ui-monospace, monospace;
+}
+.credential-code {
+  border: 1px solid var(--line);
+  background: var(--accent-soft);
+  border-radius: 13px;
+  padding: 22px;
+  text-align: center;
+  margin: 20px 0;
+}
+.credential-code span {
+  font-size: 11px;
+  color: var(--muted);
+  display: block;
+}
+.credential-code strong {
+  font-family: ui-monospace, monospace;
+  font-size: 36px;
+  letter-spacing: 0.22em;
+  color: var(--accent);
+  display: block;
+  margin-top: 12px;
+}
+.credential-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 20px;
+}
+.code-access-state {
+  margin: 20px 0;
+}
+.code-access-state p {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 10px;
+}
+.student-setup {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.student-setup > section {
+  width: 100%;
+  max-width: 480px;
+  padding: 35px;
+}
+.student-setup h1 {
+  font-size: 28px;
+  margin: 15px 0;
+}
+.student-setup p {
+  line-height: 1.8;
+  margin-bottom: 25px;
+}
+.student-setup .text-btn {
+  margin-top: 20px;
+}

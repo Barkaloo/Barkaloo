@@ -34,6 +34,7 @@ import type { Data } from "./types";
 import { AppContext } from "./context";
 import { Busy, ErrorBox } from "./components/ui";
 import Auth from "./pages/Auth";
+import StudentSetup from "./pages/StudentSetup";
 import { Catalog, SectionPage, Modules } from "./pages/Catalog";
 import { Dashboard, Statistics } from "./pages/Overview";
 import Settings from "./pages/Settings";
@@ -247,6 +248,8 @@ export default function App() {
         )}
       </main>
     );
+  if (data.profile.onboarding_complete === false && !preview)
+    return <StudentSetup onDone={refresh} />;
   const teacher = data.role === "teacher" && !preview;
   const active = path.split("/")[0];
   const visibleNav = teacher

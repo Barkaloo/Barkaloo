@@ -28,7 +28,7 @@ export function Metrics() {
           label: "Активные ученики",
           value: data.students.filter((s) => s.status === "active").length,
           icon: BookOpen,
-          detail: "Подключены по приглашению",
+          detail: "Обучаются в вашем кабинете",
         },
         {
           label: "Домашние работы",
