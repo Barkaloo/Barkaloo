@@ -365,119 +365,208 @@ export default function App() {
               onClick={(e) => {
                 e.stopPropagation();
                 setSidebar(false);
-   …18371 tokens truncated…     nickname: s.nickname,
-      started_on: s.started_on,
-      status: s.status,
-      notes: s.notes,
-    }),
-    [error, setError] = useState(""),
-    [busy, setBusy] = useState(false);
-  const startedInput = useRef<HTMLInputElement>(null);
-  const save = async () => {
-    setBusy(true);
-    try {
-      await api("student_save", {
-        student_id: s.student_id,
-        ...form,
-        started_on: startedInput.current!.value,
-      });
-      await refresh();
-      notify("Карточка ученика сохранена");
-      onClose();
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <Modal title="Карточка ученика" onClose={onClose}>
-      <Form onSubmit={save}>
-        <Field label="Имя или псевдоним для журнала">
-          <input
-            maxLength={100}
-            value={form.nickname}
-            placeholder={s.display_name}
-            onChange={(e) => setForm({ ...form, nickname: e.target.value })}
-          />
-        </Field>
-        <Field label="Начало обучения">
-          <input
-            required
-            type="date"
-            ref={startedInput}
-            defaultValue={form.started_on}
-          />
-        </Field>
-        <Field label="Статус">
-          <select
-            value={form.status}
-            onChange={(e) =>
-              setForm({ ...form, status: e.target.value as Student["status"] })
-            }
-          >
-            <option value="active">Активен</option>
-            <option value="archived">В архиве</option>
-          </select>
-        </Field>
-        <p className="field-hint">
-          Архивирование закрывает личные назначения и домашние работы. История
-          результатов сохраняется. Доступ можно восстановить.
-        </p>
-        <Field label="Личные заметки преподавателя">
-          <textarea
-            rows={5}
-            maxLength={20000}
-            value={form.notes}
-            onChange={(e) => setForm({ ...form, notes: e.target.value })}
-          />
-        </Field>
-        {error && <ErrorBox message={error} />}
-        <div className="modal-actions">
-          <button className="btn primary" disabled={busy}>
-            {busy ? "Сохранение…" : "Сохранить"}
-          </button>
+              }}
+            >
+              <X size={18} />
+            </button>
+          </div>
+          <div className="sidebar-label">
+            {teacher ? "КАБИНЕТ ПРЕПОДАВАТЕЛЯ" : "ВАШЕ ОБУЧЕНИЕ"}
+          </div>
+          <nav aria-label="Основные разделы">
+            {visibleNav.map(({ path: p, title, icon: Icon }) => (
+              <button
+                className={
+                  active === p ||
+                  (p === "catalog" && active === "section") ||
+                  (p === "modules" && ["edit", "lesson"].includes(active)) ||
+                  (p === "students" && active === "student")
+                    ? "active"
+                    : ""
+                }
+                key={p}
+                aria-current={
+                  active === p || (p === "students" && active === "student")
+                    ? "page"
+                    : undefined
+                }
+                onClick={() => navigate(p)}
+              >
+                <Icon size={19} />
+                <span>{title}</span>
+                {p === "mistakes" &&
+                  data.attempts.some((a) => a.status === "wrong") && (
+                    <i className="nav-dot" />
+                  )}
+              </button>
+            ))}
+          </nav>
+          <div className="sidebar-bottom">
+            {!teacher && (
+              <button
+                className={
+                  active === "settings"
+                    ? "settings-link active"
+                    : "settings-link"
+                }
+                onClick={() => navigate("settings")}
+              >
+                <SettingsIcon size={18} />
+                Настройки
+              </button>
+            )}
+            <div className="sidebar-profile">
+              <span className="avatar">
+                {data.profile.display_name[0].toUpperCase()}
+              </span>
+              <div>
+                <strong>{data.profile.display_name}</strong>
+                <small>
+                  {teacher
+                    ? "Преподаватель"
+                    : preview
+                      ? "Режим ученика"
+                      : "Ученик"}
+                </small>
+              </div>
+              <button
+                className="icon-btn"
+                aria-label="Выйти из аккаунта"
+                title="Выйти"
+                onClick={signout}
+              >
+                <LogOut size={17} />
+              </button>
+            </div>
+          </div>
+        </aside>
+        <div className="app-body">
+          <header className="topbar">
+            <div className="topbar-left">
+              <button
+                className="icon-btn mobile-only"
+                aria-label="Открыть меню"
+                onClick={() => setSidebar(true)}
+              >
+                <Menu size={21} />
+              </button>
+              <PanelLeftClose size={17} className="desktop-only muted" />
+              <span>
+                Barkaloo <i>/</i> <strong>Tutor</strong>
+              </span>
+            </div>
+            <div className="topbar-right">
+              <ThemeSwitch
+                theme={data.profile.theme}
+                onChange={async (theme) => {
+                  try {
+                    await api("profile", {
+                      display_name: data.profile.display_name,
+                      theme,
+                    });
+                    await refresh();
+                  } catch (e) {
+                    notify((e as Error).message);
+                  }
+                }}
+              />
+              {teacher && (
+                <button
+                  className="icon-btn"
+                  aria-label="Настройки профиля"
+                  title="Настройки профиля"
+                  onClick={() => navigate("settings")}
+                >
+                  <SettingsIcon size={18} />
+                </button>
+              )}
+              <span className="course-badge">
+                <GraduationCap size={16} />
+                ЕГЭ · Информатика
+              </span>
+              {data.role === "teacher" && (
+                <button
+                  className={`mode-switch ${preview ? "on" : ""}`}
+                  onClick={mode}
+                >
+                  <Eye size={16} />
+                  <span>
+                    {preview ? "Вернуться к преподаванию" : "Режим ученика"}
+                  </span>
+                  <i />
+                </button>
+              )}
+            </div>
+          </header>
+          {preview && (
+            <div className="preview-banner">
+              <Eye size={16} />
+              <span>
+                Просмотр от лица ученика · только опубликованные материалы ·
+                тестовый прогресс сохраняется отдельно
+              </span>
+            </div>
+          )}
+          {offline && (
+            <div className="offline-banner" role="alert">
+              <WifiOff size={16} />
+              Нет подключения. Для сохранения материалов и ответов нужен
+              интернет.
+            </div>
+          )}
+          <main className="main-content">
+            <Suspense fallback={<Busy />}>{page()}</Suspense>
+          </main>
+          <footer className="app-footer">
+            <span>Barkaloo Tutor</span>
+            <span>Шаг за шагом, в своём ритме.</span>
+          </footer>
         </div>
-      </Form>
-    </Modal>
+        {toast && (
+          <div className="toast" role="status">
+            <CheckCircle2 size={18} />
+            {toast}
+            <button
+              className="icon-btn"
+              aria-label="Закрыть уведомление"
+              onClick={() => setToast("")}
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
+      </div>
+    </AppContext.Provider>
   );
 }
-export function Connect(_props: { initialCode?: string } = {}) {
-  const { data, preview } = useApp();
+
+function ThemeSwitch({
+  theme,
+  onChange,
+}: {
+  theme: string;
+  onChange: (theme: "light" | "dark") => Promise<void>;
+}) {
+  const [busy, setBusy] = useState(false);
+  const dark =
+    theme === "dark" ||
+    (theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
   return (
-    <>
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow">Учитесь вместе</span>
-          <h1>Мои преподаватели</h1>
-          <p>Материалы и домашние работы от вашего преподавателя.</p>
-        </div>
-      </div>
-      {preview ? (
-        <p className="panel muted">
-          В режиме просмотра показан ваш учебный интерфейс. Ученики входят в
-          свои аккаунты по постоянному коду.
-        </p>
-      ) : data.teachers.length ? (
-        <div className="student-grid">
-          {data.teachers.map((t) => (
-            <section className="panel" key={t.teacher_id}>
-              <span className="avatar">{t.display_name[0].toUpperCase()}</span>
-              <h3>{t.display_name}</h3>
-              <p className="muted">
-                {t.status === "active"
-                  ? "Обучение активно"
-                  : "Обучение архивировано преподавателем"}
-              </p>
-              <small className="muted">С {formatDate(t.started_on)}</small>
-            </section>
-          ))}
-        </div>
-      ) : (
-        <Empty title="Преподаватель пока не подключён">
-          Для входа в учебный кабинет получите шестизначный код у преподавателя.
-        </Empty>
-      )}
-    </>
+    <button
+      className="icon-btn theme-switch"
+      aria-label={dark ? "Включить светлую тему" : "Включить тёмную тему"}
+      title={dark ? "Светлая тема" : "Тёмная тема"}
+      disabled={busy}
+      onClick={async () => {
+        setBusy(true);
+        try {
+          await onChange(dark ? "light" : "dark");
+        } finally {
+          setBusy(false);
+        }
+      }}
+    >
+      {dark ? <Sun size={18} /> : <Moon size={18} />}
+    </button>
   );
 }
