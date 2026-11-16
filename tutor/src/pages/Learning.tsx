@@ -279,6 +279,11 @@ export function Mistakes() {
         wrong,
         resolved: last.status === "correct",
         task: data.tasks.find((t) => t.id === id),
+        homework: data.homeworks.find(
+          (h) =>
+            !h.canceled_at &&
+            h.items.some((i) => i.id === wrong.homework_item_id),
+        ),
       };
     })
     .filter(
@@ -351,10 +356,16 @@ export function Mistakes() {
                 <span className="muted">
                   Всего попыток: {row.history.length}
                 </span>
-                {row.task ? (
+                {row.task || row.homework ? (
                   <button
                     className="btn small"
-                    onClick={() => navigate(`practice/${row.id}`)}
+                    onClick={() =>
+                      navigate(
+                        row.homework
+                          ? `homework/${row.homework.id}`
+                          : `practice/${row.id}`,
+                      )
+                    }
                   >
                     {row.resolved ? "Повторить" : "Решить ещё раз"}
                     <ArrowRight size={14} />

@@ -39,7 +39,14 @@ export async function api<T = Record<string, unknown>>(
   }
   return data as T;
 }
-export const loadData = (preview: boolean) => api<Data>("data", { preview });
+export const loadData = async (preview: boolean) => {
+  const data = await api<Data>("data", { preview });
+  if (!Array.isArray(data.students) || !Array.isArray(data.homeworks))
+    throw new Error(
+      "Нужно применить миграцию второго этапа Tutor. Материалы и прогресс сохранены.",
+    );
+  return { ...data, student_progress: data.student_progress ?? [] };
+};
 export async function uploadImage(moduleId: string, file: File) {
   if (file.size > 8 * 1024 * 1024)
     throw new Error("Изображение должно быть меньше 8 МБ");

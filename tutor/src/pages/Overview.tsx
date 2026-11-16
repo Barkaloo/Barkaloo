@@ -15,6 +15,8 @@ import { api, formatDate, answerLabel } from "../lib/api";
 import { type Attempt } from "../types";
 import { Empty, Modal, Field, Form, ErrorBox } from "../components/ui";
 import { ModuleCard } from "./Catalog";
+import HomeworkHighlights from "../components/HomeworkHighlights";
+import { studentName } from "../lib/teaching";
 export function Metrics() {
   const { data, teacher } = useApp();
   const graded = data.attempts.filter((a) => a.status !== "pending"),
@@ -22,6 +24,18 @@ export function Metrics() {
   const complete = data.progress.filter((p) => p.completed_at).length;
   const cards = teacher
     ? [
+        {
+          label: "Активные ученики",
+          value: data.students.filter((s) => s.status === "active").length,
+          icon: BookOpen,
+          detail: "Подключены по приглашению",
+        },
+        {
+          label: "Домашние работы",
+          value: data.homeworks.filter((h) => !h.canceled_at).length,
+          icon: Target,
+          detail: "Назначены вашим ученикам",
+        },
         {
           label: "Учебные модули",
           value: data.modules.length,
@@ -88,7 +102,7 @@ export function Metrics() {
         },
       ];
   return (
-    <div className="metrics-grid">
+    <div className={`metrics-grid ${teacher ? "teacher-metrics" : ""}`}>
       {cards.map(({ label, value, icon: Icon, detail }) => (
         <div className="metric panel" key={label}>
           <div className="spread">
@@ -102,8 +116,9 @@ export function Metrics() {
     </div>
   );
 }
-export function ActivityChart() {
+export function ActivityChart({ attempts }: { attempts?: Attempt[] } = {}) {
   const { data } = useApp();
+  const activity = attempts ?? data.attempts;
   const days = Array.from({ length: 14 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - 13 + i);
@@ -114,7 +129,7 @@ export function ActivityChart() {
       correct: 0,
     };
   });
-  data.attempts.forEach((a) => {
+  activity.forEach((a) => {
     const day = days.find(
       (d) => d.key === new Date(a.created_at).toLocaleDateString("sv-SE"),
     );
@@ -138,7 +153,7 @@ export function ActivityChart() {
           Остальные
         </span>
       </div>
-      {data.attempts.length ? (
+      {activity.length ? (
         <>
           <div
             className="activity-chart"
@@ -296,6 +311,7 @@ export function Dashboard() {
         </div>
       </div>
       <Metrics />
+      <HomeworkHighlights />
       <div className="dashboard-columns">
         <ActivityChart />
         <section className="panel recent-panel">
@@ -356,7 +372,7 @@ export function Dashboard() {
                 <p>
                   {a.is_preview
                     ? "Тестовая попытка предпросмотра"
-                    : `Ученик ${a.student_id.slice(0, 8)}`}{" "}
+                    : studentName(data, a.student_id)}{" "}
                   · {formatDate(a.created_at)}
                 </p>
               </div>
@@ -404,7 +420,7 @@ export function Dashboard() {
     </>
   );
 }
-function ReviewModal({
+export function ReviewModal({
   attempt,
   onClose,
 }: {
@@ -440,7 +456,7 @@ function ReviewModal({
           {answerLabel(attempt.answer, attempt.task_snapshot)}
         </p>
         <Field label="Критерии">
-          <p>{task?.criteria || "Критерии не указаны"}</p>
+          <p>{attempt.criteria || task?.criteria || "Критерии не указаны"}</p>
         </Field>
         <Field label="Результат">
           <select value={status} onChange={(e) => setStatus(e.target.value)}>

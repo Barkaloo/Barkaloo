@@ -2511,11 +2511,13 @@ figcaption {
   }
   .sidebar {
     transform: translateX(-100%);
+    visibility: hidden;
     width: 260px;
     transition: transform 0.2s;
   }
   .sidebar.open {
     transform: translateX(0);
+    visibility: visible;
   }
   .sidebar .brand {
     justify-content: flex-start;

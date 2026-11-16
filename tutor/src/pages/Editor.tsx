@@ -19,6 +19,7 @@ import { Empty, ErrorBox, Field } from "../components/ui";
 import RichText from "../components/RichText";
 import TaskForm from "../components/TaskForm";
 import BlockView, { Formula } from "../components/BlockView";
+import ModuleAccess from "../components/ModuleAccess";
 export default function Editor({ id }: { id: string }) {
   const { data, teacher, refresh, notify, navigate, setUnsaved } = useApp();
   const module = data.modules.find((m) => m.id === id);
@@ -510,6 +511,7 @@ export default function Editor({ id }: { id: string }) {
           )}
         </div>
         <aside className="editor-sidebar">
+          <ModuleAccess moduleId={id} />
           <div className="panel">
             <span className="eyebrow">Добавить блок</span>
             <div className="block-palette">

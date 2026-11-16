@@ -50,6 +50,8 @@ export type Module = {
   published_version: number | null;
   published_at: string | null;
   updated_at?: string;
+  audience?: "all" | "assigned";
+  assigned?: boolean;
 };
 export type TaskType = "number" | "text" | "single" | "multiple" | "manual";
 export type Answer = string | string[];
@@ -91,8 +93,11 @@ export type Attempt = {
   created_at: string;
   is_preview: boolean;
   request_id: string;
+  homework_item_id?: string | null;
+  criteria?: string;
 };
 export type Progress = {
+  user_id?: string;
   module_id: string;
   last_block_id: string | null;
   completed_at: string | null;
@@ -112,6 +117,72 @@ export type Data = {
   attempts: Attempt[];
   progress: Progress[];
   review_queue: Attempt[];
+  students: Student[];
+  teachers: {
+    teacher_id: string;
+    display_name: string;
+    status: "active" | "archived";
+    started_on: string;
+  }[];
+  assignments: ModuleAssignment[];
+  invites: StudentInvite[];
+  homeworks: Homework[];
+  lessons: LessonRecord[];
+  student_progress: Progress[];
+  assignable_tasks: Task[];
+};
+export type Student = {
+  teacher_id: string;
+  student_id: string;
+  nickname: string;
+  display_name: string;
+  started_on: string;
+  status: "active" | "archived";
+  notes: string;
+  created_at: string;
+};
+export type StudentInvite = {
+  id: string;
+  label: string;
+  created_at: string;
+  expires_at: string;
+  revoked: boolean;
+  used_by: string | null;
+  used_at: string | null;
+};
+export type ModuleAssignment = {
+  module_id: string;
+  teacher_id: string;
+  student_id: string;
+  assigned_at: string;
+};
+export type HomeworkItem = {
+  id: string;
+  homework_id: string;
+  task_id: string;
+  position: number;
+  snapshot: Task;
+};
+export type Homework = {
+  id: string;
+  teacher_id: string;
+  student_id: string;
+  title: string;
+  comment: string;
+  due_at: string | null;
+  assigned_at: string;
+  canceled_at: string | null;
+  items: HomeworkItem[];
+};
+export type LessonRecord = {
+  id: string;
+  teacher_id: string;
+  student_id: string;
+  starts_at: string;
+  duration_minutes: number;
+  comment: string;
+  topic_ids: string[];
+  homework_ids: string[];
 };
 export const blockLabels: Record<BlockType, string> = {
   heading: "Заголовок",

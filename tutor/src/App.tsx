@@ -24,6 +24,10 @@ import {
   ArrowUpRight,
   CheckCircle2,
   WifiOff,
+  Users,
+  ClipboardList,
+  CalendarDays,
+  UserPlus,
 } from "lucide-react";
 import { loadData, supabase } from "./lib/api";
 import type { Data } from "./types";
@@ -34,6 +38,23 @@ import { Catalog, SectionPage, Modules } from "./pages/Catalog";
 import { Dashboard, Statistics } from "./pages/Overview";
 import Settings from "./pages/Settings";
 const Editor = lazy(() => import("./pages/Editor"));
+const Students = lazy(() =>
+  import("./pages/Students").then((m) => ({ default: m.Students })),
+);
+const StudentPage = lazy(() =>
+  import("./pages/Students").then((m) => ({ default: m.StudentPage })),
+);
+const Connect = lazy(() =>
+  import("./pages/Students").then((m) => ({ default: m.Connect })),
+);
+const HomeworkList = lazy(() =>
+  import("./pages/Homework").then((m) => ({ default: m.HomeworkList })),
+);
+const HomeworkPage = lazy(() =>
+  import("./pages/Homework").then((m) => ({ default: m.HomeworkPage })),
+);
+const Lessons = lazy(() => import("./pages/Lessons"));
+const TeacherStatistics = lazy(() => import("./pages/TeacherStatistics"));
 const Learning = lazy(() =>
   import("./pages/Learning").then((m) => ({ default: m.Lesson })),
 );
@@ -92,6 +113,15 @@ export default function App() {
     if (current === sequence.current) setData(next);
     return next;
   }, [preview]);
+  useEffect(() => {
+    if (!session) return;
+    const update = () => {
+      if (!unsaved.current && document.visibilityState === "visible")
+        void refresh().catch(() => {});
+    };
+    window.addEventListener("focus", update);
+    return () => window.removeEventListener("focus", update);
+  }, [session?.user.id, refresh]);
   useEffect(() => {
     let alive = true;
     supabase.auth.getSession().then(({ data }) => {
@@ -220,8 +250,21 @@ export default function App() {
   const teacher = data.role === "teacher" && !preview;
   const active = path.split("/")[0];
   const visibleNav = teacher
-    ? nav.filter((n) => n.path !== "practice" && n.path !== "mistakes")
-    : nav;
+    ? [
+        ...nav.filter(
+          (n) => !["practice", "mistakes", "stats"].includes(n.path),
+        ),
+        { path: "students", title: "Ученики", icon: Users },
+        { path: "homework", title: "Домашние задания", icon: ClipboardList },
+        { path: "lessons", title: "Журнал занятий", icon: CalendarDays },
+        nav.find((n) => n.path === "stats")!,
+      ]
+    : [
+        ...nav.filter((n) => n.path !== "stats"),
+        { path: "homework", title: "Домашние задания", icon: ClipboardList },
+        nav.find((n) => n.path === "stats")!,
+        { path: "connect", title: "Мои преподаватели", icon: UserPlus },
+      ];
   const mode = () => {
     if (!mayLeave()) return;
     unsaved.current = false;
@@ -256,7 +299,29 @@ export default function App() {
       case "mistakes":
         return <Mistakes />;
       case "stats":
-        return <Statistics />;
+        return teacher ? (
+          <TeacherStatistics key={id ?? "all"} initialStudent={id} />
+        ) : (
+          <Statistics />
+        );
+      case "students":
+        return <Students />;
+      case "student":
+        return <StudentPage key={id} id={id} />;
+      case "connect":
+        return <Connect />;
+      case "join":
+        return <Connect key={id} initialCode={id} />;
+      case "homework":
+        return id ? <HomeworkPage key={id} id={id} /> : <HomeworkList />;
+      case "homework-new":
+        return teacher ? (
+          <HomeworkList create studentId={id} />
+        ) : (
+          <HomeworkList />
+        );
+      case "lessons":
+        return <Lessons />;
       case "settings":
         return <Settings />;
       default:

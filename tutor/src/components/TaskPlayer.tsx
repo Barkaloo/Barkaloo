@@ -4,16 +4,32 @@ import { useApp } from "../context";
 import { answerLabel, api } from "../lib/api";
 import { taskLabels, type Task, type Answer, type Attempt } from "../types";
 import { ErrorBox } from "./ui";
-export default function TaskPlayer({ task }: { task: Task }) {
+export default function TaskPlayer({
+  task,
+  homeworkItemId,
+}: {
+  task: Task;
+  homeworkItemId?: string;
+}) {
   const { preview, refresh, data } = useApp();
   const [answer, setAnswer] = useState<Answer>(
       task.type === "multiple" ? [] : "",
     ),
-    [result, setResult] = useState<Attempt | null>(null);
+    [submittedResult, setResult] = useState<Attempt | null>(null);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const request = useRef(crypto.randomUUID());
-  const attempts = data.attempts.filter((a) => a.task_id === task.id);
+  const attempts = data.attempts.filter(
+    (a) =>
+      a.task_id === task.id &&
+      (homeworkItemId
+        ? a.homework_item_id === homeworkItemId
+        : !a.homework_item_id),
+  );
+  const result = submittedResult
+    ? (data.attempts.find((a) => a.id === submittedResult.id) ??
+      submittedResult)
+    : null;
   const send = async () => {
     setBusy(true);
     setError("");
@@ -24,6 +40,7 @@ export default function TaskPlayer({ task }: { task: Task }) {
         answer,
         preview,
         request_id: request.current,
+        homework_item_id: homeworkItemId,
       });
       setResult(attempt);
       await refresh();

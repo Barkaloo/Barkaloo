@@ -4,6 +4,7 @@
   "version": "1.1.0",
   "scripts": {
     "build": "node build.cjs && vite build --config tutor/vite.config.ts",
+    "build:tutor": "vite build --config tutor/vite.config.ts --outDir .output/tutor",
     "dev:tutor": "vite --config tutor/vite.config.ts",
     "check:tutor": "tsc -p tutor/tsconfig.json --noEmit",
     "test": "node --test *.test.cjs fitness/test/*.test.cjs",

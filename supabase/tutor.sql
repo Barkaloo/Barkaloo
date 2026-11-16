@@ -1,3 +1,6 @@
+-- Historical Stage 1 snapshot, retained for reference only.
+-- Current schema = all files in supabase/migrations/ in order (includes Stage 2).
+-- Do not execute this snapshot on a migrated database.
 -- Barkaloo Tutor MVP. Additive only: does not change app_state, Auth or existing policies.
 begin;
 create schema tutor_private;
