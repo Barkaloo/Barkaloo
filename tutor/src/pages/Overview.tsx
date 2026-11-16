@@ -233,19 +233,19 @@ export function Dashboard() {
     : data.profile.display_name.split(" ")[0];
   return (
     <>
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow">Ваше пространство роста</span>
-          <h1>
-            {name ? `С возвращением, ${name}` : "С возвращением"}
-            <span className="title-dot">.</span>
-          </h1>
-          <p>
-            {teacher
-              ? "Хороший урок начинается с вашей идеи."
-              : "Небольшой шаг сегодня — уверенность на экзамене."}
-          </p>
-        </div>
+      <div
+        className={`page-heading ${teacher ? "teacher-dashboard-date" : ""}`}
+      >
+        {!teacher && (
+          <div>
+            <span className="eyebrow">Ваше пространство роста</span>
+            <h1>
+              {name ? `С возвращением, ${name}` : "С возвращением"}
+              <span className="title-dot">.</span>
+            </h1>
+            <p>Небольшой шаг сегодня — уверенность на экзамене.</p>
+          </div>
+        )}
         <span className="today">
           {new Date().toLocaleDateString("ru-RU", {
             day: "numeric",
@@ -254,7 +254,9 @@ export function Dashboard() {
           })}
         </span>
       </div>
-      <div className="welcome-banner">
+      <div
+        className={`welcome-banner ${teacher ? "teacher-welcome-banner" : ""}`}
+      >
         <div>
           <span className="banner-label">
             <Sparkles size={14} />
@@ -265,32 +267,24 @@ export function Dashboard() {
               ? "Знания обретают структуру."
               : "Готовиться проще, когда есть путь."}
           </h2>
-          <p>
-            {teacher
-              ? "Добавляйте учеников, планируйте занятия и следите за их результатами."
-              : continued
-                ? `Продолжите модуль «${continued.m!.title}» с места, где остановились.`
-                : "Открывайте темы, разбирайтесь в теории и закрепляйте её на практике."}
-          </p>
-          <button
-            className="btn banner-button"
-            onClick={() =>
-              navigate(
-                teacher
-                  ? "student-new"
-                  : continued
-                    ? `lesson/${continued.m!.id}`
-                    : "catalog",
-              )
-            }
-          >
-            {teacher
-              ? "Добавить ученика"
-              : continued
-                ? "Продолжить обучение"
-                : "Открыть каталог"}
-            <ArrowRight size={17} />
-          </button>
+          {!teacher && (
+            <>
+              <p>
+                {continued
+                  ? `Продолжите модуль «${continued.m!.title}» с места, где остановились.`
+                  : "Открывайте темы, разбирайтесь в теории и закрепляйте её на практике."}
+              </p>
+              <button
+                className="btn banner-button"
+                onClick={() =>
+                  navigate(continued ? `lesson/${continued.m!.id}` : "catalog")
+                }
+              >
+                {continued ? "Продолжить обучение" : "Открыть каталог"}
+                <ArrowRight size={17} />
+              </button>
+            </>
+          )}
         </div>
         <div className="banner-art" aria-hidden="true">
           <div className="art-orbit" />

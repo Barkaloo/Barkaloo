@@ -2276,6 +2276,50 @@ figcaption {
 [data-theme="dark"] .banner-art {
   opacity: 0.6;
 }
+.teacher-dashboard-date {
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+.teacher-dashboard-date .today {
+  margin-top: 0;
+}
+[data-theme="dark"] .teacher-welcome-banner .banner-art {
+  opacity: 1;
+}
+[data-theme="dark"] .teacher-welcome-banner .art-orbit {
+  border-color: #414667;
+}
+[data-theme="dark"] .teacher-welcome-banner .art-orbit:after {
+  border-color: #2c344e;
+}
+[data-theme="dark"] .teacher-welcome-banner .art-card {
+  border-color: #535582;
+  box-shadow: 0 8px 20px #10142530;
+}
+[data-theme="dark"] .teacher-welcome-banner .art-back {
+  background: #303155;
+}
+[data-theme="dark"] .teacher-welcome-banner .art-back > span,
+[data-theme="dark"] .teacher-welcome-banner .art-plus {
+  color: #c4b5fd;
+}
+[data-theme="dark"] .teacher-welcome-banner .art-back > div {
+  background: #5a5790;
+}
+[data-theme="dark"] .teacher-welcome-banner .art-front {
+  background: #263b62;
+}
+[data-theme="dark"] .teacher-welcome-banner .art-front > span {
+  color: #a5c5ff;
+}
+[data-theme="dark"] .teacher-welcome-banner .art-front > i {
+  background: #426394;
+}
+[data-theme="dark"] .teacher-welcome-banner .art-front > b {
+  background: #a7b9ff;
+  border-color: #263b62;
+  color: #192343;
+}
 [data-theme="dark"] .auth-story {
   background: var(--surface);
   color: var(--text);
