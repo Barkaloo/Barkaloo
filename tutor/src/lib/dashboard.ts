@@ -11,6 +11,7 @@ export function getTeacherOverview(data: TeacherData, now = Date.now()) {
     .map((lesson) => ({ lesson, startsAt: Date.parse(lesson.starts_at) }))
     .filter(
       ({ lesson, startsAt }) =>
+        (lesson.status ?? "planned") === "planned" &&
         activeIds.has(lesson.student_id) &&
         startsAt + lesson.duration_minutes * 60000 > now,
     )

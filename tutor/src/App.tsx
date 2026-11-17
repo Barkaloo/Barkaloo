@@ -10,10 +10,6 @@ import type { Session } from "@supabase/supabase-js";
 import {
   LayoutDashboard,
   Library,
-  BookOpen,
-  Target,
-  RotateCcw,
-  ChartNoAxesCombined,
   Settings as SettingsIcon,
   Eye,
   Menu,
@@ -34,7 +30,7 @@ import { AppContext } from "./context";
 import { Busy, ErrorBox } from "./components/ui";
 import Auth from "./pages/Auth";
 import StudentSetup from "./pages/StudentSetup";
-import { Catalog, SectionPage, Modules } from "./pages/Catalog";
+import { Catalog, KegeCatalog, SectionPage, Modules } from "./pages/Catalog";
 import { Dashboard, Statistics } from "./pages/Overview";
 import Settings from "./pages/Settings";
 const Editor = lazy(() => import("./pages/Editor"));
@@ -69,11 +65,10 @@ const Mistakes = lazy(() =>
 );
 const nav = [
   { path: "dashboard", title: "Главная", icon: LayoutDashboard },
-  { path: "catalog", title: "Каталог ЕГЭ", icon: Library },
-  { path: "modules", title: "Учебные модули", icon: BookOpen },
-  { path: "practice", title: "Практика", icon: Target },
-  { path: "mistakes", title: "Работа над ошибками", icon: RotateCcw },
-  { path: "stats", title: "Статистика", icon: ChartNoAxesCombined },
+  { path: "lessons", title: "Журнал занятий", icon: CalendarDays },
+  { path: "homework", title: "Домашние задания", icon: ClipboardList },
+  { path: "catalog", title: "Каталог КЕГЭ", icon: Library },
+  { path: "connect", title: "Мой преподаватель", icon: UserPlus },
 ];
 const readPath = () =>
   location.hash.replace(/^#\/?/, "").split("?")[0] || "dashboard";
@@ -122,8 +117,16 @@ export default function App() {
       if (!unsaved.current && document.visibilityState === "visible")
         void refresh().catch(() => {});
     };
+    const poll = window.setInterval(() => {
+      if (navigator.onLine) update();
+    }, 15000);
     window.addEventListener("focus", update);
-    return () => window.removeEventListener("focus", update);
+    document.addEventListener("visibilitychange", update);
+    return () => {
+      window.clearInterval(poll);
+      window.removeEventListener("focus", update);
+      document.removeEventListener("visibilitychange", update);
+    };
   }, [session?.user.id, refresh]);
   useEffect(() => {
     let alive = true;
@@ -261,12 +264,7 @@ export default function App() {
         { path: "lessons", title: "Журнал занятий", icon: CalendarDays },
         { path: "student-new", title: "Добавить ученика", icon: UserPlus },
       ]
-    : [
-        ...nav.filter((n) => n.path !== "stats"),
-        { path: "homework", title: "Домашние задания", icon: ClipboardList },
-        nav.find((n) => n.path === "stats")!,
-        { path: "connect", title: "Мои преподаватели", icon: UserPlus },
-      ];
+    : nav;
   const mode = () => {
     if (!mayLeave()) return;
     unsaved.current = false;
@@ -282,12 +280,12 @@ export default function App() {
     if (error) notify(error.message);
   };
   const page = () => {
-    const [route, id] = path.split("/");
+    const [route, id, linkedLessonId] = path.split("/");
     switch (route) {
       case "dashboard":
         return <Dashboard />;
       case "catalog":
-        return <Catalog />;
+        return teacher ? <Catalog /> : <KegeCatalog />;
       case "section":
         return <SectionPage key={id} id={id} />;
       case "modules":
@@ -320,7 +318,7 @@ export default function App() {
         return id ? <HomeworkPage key={id} id={id} /> : <HomeworkList />;
       case "homework-new":
         return teacher ? (
-          <HomeworkList create studentId={id} />
+          <HomeworkList create studentId={id} lessonId={linkedLessonId} />
         ) : (
           <HomeworkList />
         );
@@ -373,7 +371,7 @@ export default function App() {
               <button
                 className={
                   active === p ||
-                  (p === "catalog" && active === "section") ||
+                  (p === "catalog" && ["section", "modules", "lesson", "practice", "mistakes"].includes(active)) ||
                   (p === "modules" && ["edit", "lesson"].includes(active)) ||
                   (p === "students" && active === "student")
                     ? "active"
@@ -381,7 +379,7 @@ export default function App() {
                 }
                 key={p}
                 aria-current={
-                  active === p || (p === "students" && active === "student")
+                  active === p || (p === "students" && active === "student") || (p === "catalog" && ["section", "modules", "lesson", "practice", "mistakes"].includes(active))
                     ? "page"
                     : undefined
                 }
@@ -397,19 +395,6 @@ export default function App() {
             ))}
           </nav>
           <div className="sidebar-bottom">
-            {!teacher && (
-              <button
-                className={
-                  active === "settings"
-                    ? "settings-link active"
-                    : "settings-link"
-                }
-                onClick={() => navigate("settings")}
-              >
-                <SettingsIcon size={18} />
-                Настройки
-              </button>
-            )}
             <div className="sidebar-profile">
               <span className="avatar">
                 {data.profile.display_name[0].toUpperCase()}
@@ -462,16 +447,14 @@ export default function App() {
                   }
                 }}
               />
-              {teacher && (
-                <button
-                  className="icon-btn"
-                  aria-label="Настройки профиля"
-                  title="Настройки профиля"
-                  onClick={() => navigate("settings")}
-                >
-                  <SettingsIcon size={18} />
-                </button>
-              )}
+              <button
+                className="icon-btn"
+                aria-label="Настройки профиля"
+                title="Настройки профиля"
+                onClick={() => navigate("settings")}
+              >
+                <SettingsIcon size={18} />
+              </button>
               {data.role === "teacher" && (
                 <button
                   className={`mode-switch ${preview ? "on" : ""}`}

@@ -128,7 +128,7 @@ export function Modules() {
     </>
   );
 }
-export function Catalog() {
+export function Catalog({ embedded = false }: { embedded?: boolean } = {}) {
   const { data, teacher, navigate } = useApp();
   const [q, setQ] = useState(""),
     [sectionEdit, setSectionEdit] = useState<Section | "new" | null>(null);
@@ -139,6 +139,7 @@ export function Catalog() {
   );
   return (
     <>
+      {!embedded && (
       <div className="page-heading">
         <div>
           <h1>Каталог ЕГЭ</h1>
@@ -150,6 +151,7 @@ export function Catalog() {
           </button>
         )}
       </div>
+      )}
       <label className="search catalog-search">
         <Search size={17} />
         <input
@@ -619,4 +621,16 @@ function NewModule({ topic, onClose }: { topic: Topic; onClose: () => void }) {
       </Form>
     </Modal>
   );
+}
+
+export function KegeCatalog() {
+  const [category, setCategory] = useState("tasks");
+  return <>
+    <div className="page-heading"><h1>Каталог КЕГЭ</h1></div>
+    <div className="tabs" role="group" aria-label="Категория каталога">
+      <button className={category === "tasks" ? "active" : ""} aria-pressed={category === "tasks"} onClick={() => setCategory("tasks")}>Задания №1–27</button>
+      <button className={category === "variants" ? "active" : ""} aria-pressed={category === "variants"} onClick={() => setCategory("variants")}>Полные варианты КЕГЭ</button>
+    </div>
+    {category === "tasks" ? <Catalog embedded /> : <Empty title="Вариантов пока нет">Реальные материалы будут добавлены позже.</Empty>}
+  </>;
 }

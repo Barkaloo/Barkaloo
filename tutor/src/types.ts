@@ -177,13 +177,15 @@ export type Homework = {
   canceled_at: string | null;
   items: HomeworkItem[];
 };
+export type LessonStatus = "planned" | "completed" | "canceled";
 export type LessonRecord = {
   id: string;
   teacher_id: string;
   student_id: string;
   starts_at: string;
   duration_minutes: number;
-  comment: string;
+  status: LessonStatus;
+  comment?: string;
   topic_ids: string[];
   homework_ids: string[];
 };

@@ -830,3 +830,38 @@
    padding: 0;
  }
 }
+.homework-metrics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+  padding: 0 0 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+.homework-metrics span { display: block; font-size: 12px; color: var(--muted); }
+.homework-metrics strong { display: block; font-size: 24px; font-weight: 600; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.homework-dates { display: grid; gap: 6px; margin: 14px 0; font-size: 12px; color: var(--muted); }
+.homework-dates > span { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.homework-lesson-context { font-size: 12px; color: var(--muted); }
+.homework-status.completed { background: var(--success-soft); color: var(--success); }
+.homework-status.pending { background: var(--accent-soft); color: var(--accent); }
+.homework-status.overdue { background: color-mix(in srgb, var(--amber) 12%, var(--surface)); color: var(--amber); }
+.homework-status.uncompleted, .homework-status.canceled { background: var(--soft); color: var(--muted); }
+.lesson-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; white-space: nowrap; }
+.lesson-status.planned { color: var(--accent); }
+.lesson-status.completed { color: var(--success); }
+.lesson-status.canceled { color: var(--muted); }
+.lesson-record > .spread { flex-wrap: wrap; align-items: flex-start; }
+.lesson-actions { gap: 16px; margin-top: 16px; }
+.lesson-homeworks { margin-top: 14px; border-top: 1px solid var(--line); }
+.lesson-homeworks .homework-highlight:last-child { padding-bottom: 0; }
+.compact-homeworks .homework-card { padding: 18px; }
+@media (max-width: 760px) {
+  .homework-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 12px; }
+  .homework-metrics strong { font-size: 22px; }
+  .homework-metrics span { font-size: 11px; }
+  .lesson-homeworks .homework-highlight { flex-direction: row; flex-wrap: wrap; }
+  .lesson-actions { gap: 12px; }
+}
+.compact-homeworks .homework-card { display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; }
+.compact-homeworks .homework-score { margin-top: auto; padding-top: 14px; }

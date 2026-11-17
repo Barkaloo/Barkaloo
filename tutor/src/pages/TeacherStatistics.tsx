@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useApp } from "../context";
 import ActivityChart from "../components/ActivityChart";
-import { studentName, homeworkSummary } from "../lib/teaching";
+import { studentName, homeworkState } from "../lib/teaching";
 import { Empty } from "../components/ui";
 export default function TeacherStatistics({
   initialStudent = "",
@@ -25,7 +25,7 @@ export default function TeacherStatistics({
     lessons = data.lessons.filter(
       (l) =>
         (!student || l.student_id === student) &&
-        new Date(l.starts_at).getTime() <= Date.now(),
+        l.status === "completed",
     );
   const errors = [
     ...new Set(
@@ -165,7 +165,7 @@ export default function TeacherStatistics({
         <h2>Результаты домашних работ</h2>
         {works.length ? (
           works.map((w) => {
-            const s = homeworkSummary(w, data.attempts);
+            const s = homeworkState(w, data.attempts);
             return (
               <button
                 className="homework-highlight"

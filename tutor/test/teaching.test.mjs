@@ -339,7 +339,35 @@ test("Teaching: invitations, private access, immutable homework, review, lessons
     repeatedRight.id,
   );
   await db.exec("commit");
+  const learnerLessons = (await data()).lessons;
+  assert.equal(learnerLessons.length, 1);
+  assert.equal(learnerLessons[0].status, "planned");
+  assert.equal(learnerLessons[0].comment, undefined);
+  assert.ok(learnerLessons[0].homework_ids.includes(work.id));
+  assert.equal(JSON.stringify(learnerLessons).includes("PRIVATE LESSON NOTE"), false);
+  await assert.rejects(api("lesson_save", { id: lesson.id, student_id: student, status: "completed" }), /недоступен/);
+  await as(stranger);
   assert.equal((await data()).lessons.length, 0);
+  await as(otherTeacher);
+  await assert.rejects(api("lesson_save", { id: lesson.id, student_id: student, status: "canceled" }), /недоступен/);
+  await as(owner);
+  const record = (await data()).lessons.find((l) => l.id === lesson.id);
+  await api("lesson_save", { ...record, status: "completed" });
+  assert.equal((await data()).lessons[0].status, "completed");
+  await api("publish", { module_id: module.id, revision: draft.revision });
+  const linked = await api("homework_create", { student_id: student, lesson_id: lesson.id, title: "Linked fixture", task_ids: [number.id] });
+  assert.ok((await data()).lessons[0].homework_ids.includes(linked.id));
+  await api("lesson_save", { ...record, homework_ids: [work.id, linked.id], status: "planned", starts_at: "2030-01-01T12:00:00Z" });
+  await as(student);
+  assert.equal((await data()).lessons[0].starts_at, "2030-01-01T12:00:00+00:00");
+  await as(owner);
+  const rescheduled = (await data()).lessons[0];
+  await api("lesson_save", { ...rescheduled, status: "canceled" });
+  await assert.rejects(api("homework_create", { student_id: student, lesson_id: lesson.id, title: "Invalid link", task_ids: [number.id] }), /доступное занятие/);
+  await api("unpublish", { module_id: module.id });
+  await as(student);
+  assert.equal((await data()).lessons[0].status, "canceled");
+  assert.equal((await data()).homeworks.find((h) => h.id === work.id).canceled_at, null);
   assert.equal((await db.query("select * from tutor_lessons")).rows.length, 0);
   await assert.rejects(
     api("attempt", {
@@ -367,6 +395,7 @@ test("Teaching: invitations, private access, immutable homework, review, lessons
   });
   await as(student);
   assert.equal((await data()).homeworks.length, 0);
+  assert.equal((await data()).lessons.length, 0);
   assert.equal((await data()).attempts.length, 5);
   await assert.rejects(send(ni, "42"), /недоступна/);
   await assert.rejects(
@@ -383,7 +412,7 @@ test("Teaching: invitations, private access, immutable homework, review, lessons
   });
   await api("homework_cancel", { id: work.id });
   await as(student);
-  assert.ok((await data()).homeworks[0].canceled_at);
+  assert.ok((await data()).homeworks.find((h) => h.id === work.id).canceled_at);
   await assert.rejects(send(ni, "42"), /недоступна/);
   await as(owner);
   await api("publish", { module_id: module.id, revision: draft.revision });

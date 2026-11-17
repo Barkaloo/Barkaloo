@@ -1,117 +1,82 @@
 import { useRef, useState } from "react";
-import { Plus, Pencil, CalendarDays } from "lucide-react";
+import { Plus, Pencil, CalendarDays, CheckCircle2, CircleX } from "lucide-react";
 import { useApp } from "../context";
 import { api } from "../lib/api";
-import { dateTime, localDateTime, studentName } from "../lib/teaching";
+import { dateTime, localDateTime, studentName, lessonLabels, homeworkState } from "../lib/teaching";
 import type { LessonRecord } from "../types";
 import { Empty, ErrorBox, Field, Form, Modal } from "../components/ui";
 export default function Lessons() {
-  const { data, teacher } = useApp();
+  const { data, teacher, preview, refresh, notify, navigate } = useApp();
   const [student, setStudent] = useState(""),
-    [modal, setModal] = useState<LessonRecord | "new" | null>(null);
-  if (!teacher) return <Empty title="Журнал доступен преподавателю" />;
-  const lessons = data.lessons.filter(
-    (l) => !student || l.student_id === student,
-  );
-  return (
-    <>
-      <div className="page-heading">
-        <div>
-          <h1>Журнал занятий</h1>
-        </div>
-        <button className="btn primary" onClick={() => setModal("new")}>
-          <Plus size={16} />
-          Добавить занятие
-        </button>
-      </div>
-      <div className="filter-bar">
-        <select
-          aria-label="Ученик в журнале занятий"
-          value={student}
-          onChange={(e) => setStudent(e.target.value)}
-        >
-          <option value="">Все ученики</option>
-          {data.students.map((s) => (
-            <option key={s.student_id} value={s.student_id}>
-              {s.nickname || s.display_name}
-            </option>
-          ))}
-        </select>
-      </div>
-      {lessons.length ? (
-        <div className="lesson-record-list">
-          {lessons.map((l) => (
-            <article className="panel lesson-record" key={l.id}>
-              <div className="spread">
-                <div className="actions">
-                  <CalendarDays size={19} />
-                  <h2>{dateTime(l.starts_at)}</h2>
-                </div>
-                <button
-                  className="icon-btn"
-                  aria-label="Редактировать занятие"
-                  disabled={
-                    !data.students.some(
-                      (s) =>
-                        s.student_id === l.student_id && s.status === "active",
-                    )
-                  }
-                  onClick={() => setModal(l)}
-                >
-                  <Pencil size={16} />
-                </button>
-              </div>
-              <div className="lesson-record-meta">
-                <strong>{studentName(data, l.student_id)}</strong>
-                <span>{l.duration_minutes} минут</span>
-                {new Date(l.starts_at).getTime() > Date.now() && (
-                  <span className="badge neutral">Запланировано</span>
-                )}
-              </div>
-              <div className="topic-tags">
-                {l.topic_ids.map((id) => (
-                  <span className="badge" key={id}>
-                    {data.topics.find((t) => t.id === id)?.title ??
-                      "Учебная тема"}
-                  </span>
-                ))}
-              </div>
-              {l.comment && <p className="private-note">{l.comment}</p>}
-              {l.homework_ids.length > 0 && (
-                <div className="lesson-record-homework">
-                  <strong>Домашние работы</strong>
-                  {l.homework_ids.map((id) => (
-                    <HomeworkLink key={id} id={id} />
-                  ))}
-                </div>
-              )}
-            </article>
-          ))}
-        </div>
-      ) : (
-        <Empty
-          title="Журнал пока пуст"
-        >
-          Добавьте проведённое или запланированное занятие.
-        </Empty>
-      )}
-      {modal && (
-        <LessonForm
-          record={modal === "new" ? undefined : modal}
-          initialStudent={student}
-          onClose={() => setModal(null)}
-        />
-      )}
-    </>
-  );
-}
-function HomeworkLink({ id }: { id: string }) {
-  const { data, navigate } = useApp();
-  return (
-    <button className="text-btn" onClick={() => navigate(`homework/${id}`)}>
-      {data.homeworks.find((h) => h.id === id)?.title ?? "Домашняя работа"}
-    </button>
-  );
+    [modal, setModal] = useState<LessonRecord | "new" | null>(null),
+    [error, setError] = useState(""),
+    [busy, setBusy] = useState("");
+  const lessons = data.lessons
+    .filter((l) => !teacher || !student || l.student_id === student)
+    .sort((a, b) => Date.parse(b.starts_at) - Date.parse(a.starts_at));
+  const changeStatus = async (lesson: LessonRecord, status: LessonRecord["status"]) => {
+    if (status === "canceled" && !window.confirm("Отменить занятие? Статусы домашних работ не изменятся.")) return;
+    setBusy(lesson.id);
+    setError("");
+    try {
+      await api("lesson_save", { ...lesson, status });
+      await refresh();
+      notify(status === "completed" ? "Занятие проведено" : "Занятие отменено");
+    } catch (e) { setError((e as Error).message); }
+    finally { setBusy(""); }
+  };
+  return <>
+    <div className="page-heading">
+      <h1>Журнал занятий</h1>
+      {teacher && <button className="btn primary" onClick={() => setModal("new")}><Plus size={16} />Добавить занятие</button>}
+    </div>
+    {teacher && <div className="filter-bar">
+      <select aria-label="Ученик в журнале занятий" value={student} onChange={(e) => setStudent(e.target.value)}>
+        <option value="">Все ученики</option>
+        {data.students.map((s) => <option key={s.student_id} value={s.student_id}>{s.nickname || s.display_name}</option>)}
+      </select>
+    </div>}
+    {error && <ErrorBox message={error} />}
+    {lessons.length ? <div className="lesson-record-list">
+      {lessons.map((l) => {
+        const status = l.status ?? "planned";
+        const StatusIcon = status === "completed" ? CheckCircle2 : status === "canceled" ? CircleX : CalendarDays;
+        const editable = teacher && data.students.some((s) => s.student_id === l.student_id && s.status === "active");
+        return <article className="panel lesson-record" key={l.id}>
+          <div className="spread">
+            <h2>{dateTime(l.starts_at)}</h2>
+            <div className="actions">
+              <span className={`lesson-status ${status}`}><StatusIcon size={15} />{lessonLabels[status]}</span>
+              {teacher && <button className="icon-btn" aria-label="Редактировать занятие" disabled={!editable || busy === l.id} onClick={() => setModal(l)}><Pencil size={16} /></button>}
+            </div>
+          </div>
+          <div className="lesson-record-meta">
+            <strong>{teacher ? studentName(data, l.student_id) : data.teachers.find((t) => t.teacher_id === l.teacher_id)?.display_name}</strong>
+            <span>{l.duration_minutes} мин.</span>
+          </div>
+          {l.topic_ids.length > 0 && <div className="topic-tags">{l.topic_ids.map((id) => <span className="badge" key={id}>{data.topics.find((t) => t.id === id)?.title ?? "Учебная тема"}</span>)}</div>}
+          {teacher && l.comment && <p className="private-note">{l.comment}</p>}
+          {l.homework_ids.length > 0 && <div className="lesson-homeworks">
+            {l.homework_ids.map((id) => {
+              const work = data.homeworks.find((h) => h.id === id);
+              if (!work) return null;
+              const result = homeworkState(work, data.attempts, preview);
+              return <button className="homework-highlight" key={id} onClick={() => navigate(`homework/${id}`)}>
+                <div><strong>{work.title}</strong><small>Срок: {dateTime(work.due_at)}</small></div>
+                <span className={`badge homework-status ${result.state}`}>{result.label}</span>
+              </button>;
+            })}
+          </div>}
+          {editable && <div className="actions lesson-actions">
+            {status === "planned" && <button className="btn small" disabled={busy === l.id} onClick={() => changeStatus(l, "completed")}><CheckCircle2 size={15} />Провести</button>}
+            {status !== "canceled" && <button className="text-btn" disabled={busy === l.id} onClick={() => changeStatus(l, "canceled")}>Отменить</button>}
+            {status !== "canceled" && <button className="text-btn" onClick={() => navigate(`homework-new/${l.student_id}/${l.id}`)}>Назначить домашнюю работу</button>}
+          </div>}
+        </article>;
+      })}
+    </div> : <Empty title="Занятий пока нет">{teacher ? "Добавьте проведённое или запланированное занятие." : "Здесь появятся занятия, которые добавит преподаватель."}</Empty>}
+    {modal && teacher && <LessonForm record={modal === "new" ? undefined : modal} initialStudent={student} onClose={() => setModal(null)} />}
+  </>;
 }
 function LessonForm({
   record,
@@ -127,6 +92,7 @@ function LessonForm({
       record?.student_id ?? initialStudent ?? "",
     ),
     [duration, setDuration] = useState(record?.duration_minutes ?? 60),
+    [status, setStatus] = useState(record?.status ?? "planned"),
     [comment, setComment] = useState(record?.comment ?? ""),
     [topics, setTopics] = useState<string[]>(record?.topic_ids ?? []),
     [works, setWorks] = useState<string[]>(record?.homework_ids ?? []),
@@ -141,6 +107,7 @@ function LessonForm({
         student_id: student,
         starts_at: new Date(startsInput.current!.value).toISOString(),
         duration_minutes: duration,
+        status,
         comment,
         topic_ids: topics,
         homework_ids: works,
@@ -210,6 +177,13 @@ function LessonForm({
               />
             </Field>
           </div>
+          <Field label="Статус занятия">
+            <select value={status} onChange={(e) => setStatus(e.target.value as typeof status)}>
+              <option value="planned">Запланировано</option>
+              <option value="completed">Проведено</option>
+              <option value="canceled">Отменено</option>
+            </select>
+          </Field>
           <fieldset className="choice-fieldset">
             <legend>Темы занятия</legend>
             {data.topics.length ? (

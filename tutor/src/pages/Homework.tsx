@@ -5,154 +5,79 @@ import {
   Plus,
   Search,
   CalendarClock,
-  CheckCircle2,
 } from "lucide-react";
 import { useApp } from "../context";
 import { api, answerLabel } from "../lib/api";
-import { dateTime, homeworkSummary, studentName } from "../lib/teaching";
+import { dateTime, homeworkState, studentName } from "../lib/teaching";
 import { taskLabels } from "../types";
 import { Empty, ErrorBox, Field, Form, Modal } from "../components/ui";
 import TaskPlayer from "../components/TaskPlayer";
 import ReviewModal from "../components/ReviewModal";
-export function HomeworkList({
-  create = false,
-  studentId,
-}: {
-  create?: boolean;
-  studentId?: string;
+export function HomeworkList({ create = false, studentId, lessonId }: {
+  create?: boolean; studentId?: string; lessonId?: string;
 }) {
   const { data, teacher, preview, navigate } = useApp();
-  const [student, setStudent] = useState(""),
-    [status, setStatus] = useState("active");
-  const works = data.homeworks.filter(
-    (h) =>
-      (!student || h.student_id === student) &&
-      (status === "all" || status === "canceled"
-        ? status === "all" || !!h.canceled_at
-        : status === "overdue"
-          ? homeworkSummary(h, data.attempts, preview).overdue
-          : !h.canceled_at),
-  );
-  return (
-    <>
-      <div className="page-heading">
-        <div>
-          <h1>Домашние задания</h1>
-        </div>
-        {teacher && (
-          <button
-            className="btn primary"
-            onClick={() => navigate("homework-new")}
-          >
-            <Plus size={16} />
-            Назначить работу
-          </button>
-        )}
-      </div>
-      <div className="filter-bar">
-        {teacher && (
-          <select
-            aria-label="Ученик для фильтра домашних работ"
-            value={student}
-            onChange={(e) => setStudent(e.target.value)}
-          >
-            <option value="">Все ученики</option>
-            {data.students.map((s) => (
-              <option key={s.student_id} value={s.student_id}>
-                {s.nickname || s.display_name}
-              </option>
-            ))}
-          </select>
-        )}
-        <select
-          aria-label="Статус домашних работ"
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-        >
-          <option value="active">Актуальные</option>
-          <option value="overdue">Срок прошёл</option>
-          <option value="canceled">Отменённые</option>
-          <option value="all">Все работы</option>
-        </select>
-      </div>
-      {works.length ? (
-        <div className="homework-grid">
-          {works.map((w) => {
-            const s = homeworkSummary(w, data.attempts, preview);
-            return (
-              <button
-                className="panel homework-card"
-                key={w.id}
-                onClick={() => navigate(`homework/${w.id}`)}
-              >
-                <div className="spread">
-                  <span
-                    className={`badge ${s.status === "checked" ? "green" : s.overdue ? "amber" : "neutral"}`}
-                  >
-                    {s.label}
-                  </span>
-                  <ArrowRight size={16} />
-                </div>
-                <h3>{w.title}</h3>
-                {teacher && <p>{studentName(data, w.student_id)}</p>}
-                <div className="deadline">
-                  <CalendarClock size={14} />
-                  {dateTime(w.due_at)}
-                  {s.overdue && (
-                    <span className="status pending">Срок прошёл</span>
-                  )}
-                </div>
-                <div className="progress-track">
-                  <i
-                    style={{
-                      width: `${s.total ? (s.answered / s.total) * 100 : 0}%`,
-                    }}
-                  />
-                </div>
-                <div className="spread homework-score">
-                  <span>
-                    Ответов {s.answered}/{s.total}
-                  </span>
-                  <span>
-                    Верных: {s.correct}
-                    {s.pending ? ` · На проверке: ${s.pending}` : ""}
-                  </span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      ) : (
-        <Empty
-          title={
-            data.homeworks.length
-              ? "В этой категории пока пусто"
-              : "Домашних работ пока нет"
-          }
-        >
-          {teacher
-            ? "Назначьте работу из опубликованных заданий."
-            : "Назначенные преподавателем работы появятся здесь."}
-        </Empty>
-      )}
-      {create && teacher && (
-        <HomeworkForm
-          initialStudent={studentId}
-          onClose={() => navigate("homework")}
-        />
-      )}
-    </>
-  );
+  const [student, setStudent] = useState(""), [status, setStatus] = useState("all");
+  const summaries = data.homeworks
+    .filter((h) => !teacher || !student || h.student_id === student)
+    .map((work) => ({ work, result: homeworkState(work, data.attempts, preview) }))
+    .sort((a, b) => Date.parse(b.work.assigned_at) - Date.parse(a.work.assigned_at));
+  const works = summaries.filter(({ result }) => status === "all" || result.state === status);
+  const counts = [
+    ["Всего", summaries.length],
+    ["Выполнено", summaries.filter(({ result }) => result.state === "completed").length],
+    ["Не выполнено", summaries.filter(({ result }) => result.state === "uncompleted").length],
+    ["Просрочено", summaries.filter(({ result }) => result.state === "overdue").length],
+    ["На проверке", summaries.filter(({ result }) => result.state === "pending").length],
+  ] as const;
+  return <>
+    <div className="page-heading">
+      <h1>Домашние задания</h1>
+      {teacher && <button className="btn primary" onClick={() => navigate("homework-new")}><Plus size={16} />Назначить работу</button>}
+    </div>
+    <div className="homework-metrics" aria-label="Статистика домашних работ">
+      {counts.map(([label, count]) => <div key={label}><span>{label}</span><strong>{count}</strong></div>)}
+    </div>
+    <div className="filter-bar">
+      {teacher && <select aria-label="Ученик для фильтра домашних работ" value={student} onChange={(e) => setStudent(e.target.value)}>
+        <option value="">Все ученики</option>{data.students.map((s) => <option key={s.student_id} value={s.student_id}>{s.nickname || s.display_name}</option>)}
+      </select>}
+      <select aria-label="Статус домашних работ" value={status} onChange={(e) => setStatus(e.target.value)}>
+        <option value="all">Все работы</option><option value="uncompleted">Не выполнены</option><option value="overdue">Просрочены</option>
+        <option value="pending">На проверке</option><option value="completed">Выполнены</option><option value="canceled">Отменены</option>
+      </select>
+    </div>
+    {works.length ? <div className="homework-grid compact-homeworks">
+      {works.map(({ work: w, result: r }) => {
+        const lessons = data.lessons.filter((l) => l.homework_ids.includes(w.id));
+        return <button className="panel homework-card" key={w.id} onClick={() => navigate(`homework/${w.id}`)}>
+          <div className="spread"><span className={`badge homework-status ${r.state}`}>{r.label}</span><ArrowRight size={16} /></div>
+          <h3>{w.title}</h3>
+          {teacher && <p>{studentName(data, w.student_id)}</p>}
+          <div className="homework-dates">
+            <span>Назначено: {dateTime(w.assigned_at)}</span>
+            <span><CalendarClock size={14} />Срок: {dateTime(w.due_at)}</span>
+          </div>
+          {lessons.length > 0 && <p className="homework-lesson-context">Занятие: {lessons.map((l) => dateTime(l.starts_at)).join(" · ")}</p>}
+          <div className="spread homework-score"><span>Заданий: {r.total}</span><span>Ответов: {r.answered}/{r.total} · Верных: {r.correct}</span></div>
+        </button>;
+      })}
+    </div> : <Empty title={summaries.length ? "Нет работ с этим статусом" : "Домашних работ пока нет"} />}
+    {create && teacher && <HomeworkForm key={`${studentId ?? ""}:${lessonId ?? ""}`} initialStudent={studentId} initialLesson={lessonId} onClose={() => navigate("homework")} />}
+  </>;
 }
 function HomeworkForm({
   initialStudent,
+  initialLesson,
   onClose,
 }: {
+  initialLesson?: string;
   initialStudent?: string;
   onClose: () => void;
 }) {
   const { data, refresh, navigate } = useApp();
   const [student, setStudent] = useState(initialStudent ?? ""),
+    [lesson, setLesson] = useState(initialLesson ?? ""),
     [title, setTitle] = useState(""),
     [comment, setComment] = useState(""),
     [chosen, setChosen] = useState<string[]>([]),
@@ -169,6 +94,7 @@ function HomeworkForm({
     try {
       const result = await api<{ id: string }>("homework_create", {
         student_id: student,
+        lesson_id: lesson || null,
         title,
         comment,
         due_at: dueInput.current?.value
@@ -209,7 +135,7 @@ function HomeworkForm({
               <select
                 required
                 value={student}
-                onChange={(e) => setStudent(e.target.value)}
+                onChange={(e) => { setStudent(e.target.value); setLesson(""); }}
               >
                 <option value="">Выберите ученика</option>
                 {data.students
@@ -230,6 +156,12 @@ function HomeworkForm({
               />
             </Field>
           </div>
+          <Field label="Связанное занятие">
+            <select value={lesson} onChange={(e) => setLesson(e.target.value)}>
+              <option value="">Без привязки к занятию</option>
+              {data.lessons.filter((l) => l.student_id === student && l.status !== "canceled").map((l) => <option key={l.id} value={l.id}>{dateTime(l.starts_at)}</option>)}
+            </select>
+          </Field>
           <div className="form-grid">
             <Field label="Срок сдачи" hint="Можно оставить без срока">
               <input type="datetime-local" ref={dueInput} />
@@ -325,7 +257,7 @@ export function HomeworkPage({ id }: { id: string }) {
         onAction={() => navigate("homework")}
       />
     );
-  const summary = homeworkSummary(work, data.attempts, preview);
+  const summary = homeworkState(work, data.attempts, preview);
   const cancel = async () => {
     if (
       !window.confirm(
@@ -370,8 +302,7 @@ export function HomeworkPage({ id }: { id: string }) {
       <div className="homework-banner panel">
         <div className="spread">
           <h2>{summary.label}</h2>
-          <span className="badge green">
-            <CheckCircle2 size={14} />
+          <span className={`badge homework-status ${summary.state}`}>
             Верных {summary.correct}/{summary.total}
           </span>
         </div>

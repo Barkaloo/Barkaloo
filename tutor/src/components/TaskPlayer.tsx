@@ -224,6 +224,9 @@ export default function TaskPlayer({
                     : "На проверке"}
               </span>
               {a.feedback.comment && <p>{a.feedback.comment}</p>}
+              {a.feedback.answer !== undefined && <p>Правильный ответ: {answerLabel(a.feedback.answer, a.task_snapshot)}</p>}
+              {a.feedback.solution && <p>Решение: {a.feedback.solution}</p>}
+              {a.feedback.common_mistakes && <p>{a.feedback.common_mistakes}</p>}
             </div>
           ))}
         </details>

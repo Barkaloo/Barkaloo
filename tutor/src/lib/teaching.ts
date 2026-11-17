@@ -89,3 +89,22 @@ export function localDateTime(value: string) {
     .slice(0, 16);
 }
 export const today = () => new Date().toLocaleDateString("sv-SE");
+
+export const lessonLabels = {
+  planned: "Запланировано",
+  completed: "Проведено",
+  canceled: "Отменено",
+} as const;
+
+export function homeworkState(work: Homework, attempts: Attempt[], preview = false) {
+  const result = homeworkSummary(work, attempts, preview);
+  const state = result.status === "canceled" ? "canceled"
+    : result.status === "checked" ? "completed"
+    : result.status === "pending" ? "pending"
+    : result.overdue ? "overdue" : "uncompleted";
+  const label = {
+    completed: "Выполнена", uncompleted: "Не выполнена", overdue: "Просрочена",
+    pending: "На проверке", canceled: "Отменена",
+  }[state];
+  return { ...result, state, label };
+}

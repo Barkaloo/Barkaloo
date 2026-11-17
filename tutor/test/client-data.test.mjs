@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { homeworkSummary } from "../src/lib/teaching.ts";
+import { homeworkSummary, homeworkState } from "../src/lib/teaching.ts";
 import { getTeacherOverview } from "../src/lib/dashboard.ts";
 
 const work = {
@@ -150,4 +150,21 @@ test("Homework retains PostgreSQL microsecond ordering for fast retries", () => 
       ["newer", "older"],
     );
   }
+});
+
+test("Homework state follows submission, grading and deadline independently of lesson state", () => {
+ const expired = {...work, due_at: "2000-01-01T00:00:00Z"};
+ const first = attempt("first", "item-1", "wrong", "2030-01-01T00:00:00Z");
+ const manual = attempt("manual", "item-2", "pending", "2030-01-01T00:00:00Z");
+ assert.equal(homeworkState(work, []).state, "uncompleted");
+ assert.equal(homeworkState(expired, [first]).state, "overdue");
+ assert.equal(homeworkState(expired, [first, manual]).state, "pending");
+ assert.equal(homeworkState(expired, [first, {...manual, status: "wrong"}]).state, "completed");
+ assert.equal(homeworkState({...expired, canceled_at: "2030-01-01"}, []).state, "canceled");
+});
+test("Canceled and completed lessons never enter the upcoming teacher schedule", () => {
+ const now=Date.parse("2030-01-01T00:00:00Z");
+ const base={student_id:"s",starts_at:"2030-01-02T00:00:00Z",duration_minutes:60};
+ const data={students:[{student_id:"s",status:"active"}],review_queue:[],lessons:[{...base,id:"p",status:"planned"},{...base,id:"c",status:"completed"},{...base,id:"x",status:"canceled"}]};
+ assert.deepEqual(getTeacherOverview(data,now).upcoming.map(l=>l.id),["p"]);
 });

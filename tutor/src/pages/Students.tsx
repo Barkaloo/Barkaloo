@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useApp } from "../context";
 import { api, formatDate } from "../lib/api";
-import { dateTime, homeworkSummary } from "../lib/teaching";
+import { dateTime, homeworkState } from "../lib/teaching";
 import type { Student } from "../types";
 import { Empty, ErrorBox, Field, Form, Modal } from "../components/ui";
 import {
@@ -229,11 +229,11 @@ export function StudentPage({ id }: { id: string }) {
           <strong>
             {
               lessons.filter(
-                (l) => new Date(l.starts_at).getTime() <= Date.now(),
+                (l) => l.status === "completed",
               ).length
             }
           </strong>
-          <small>Прошедшие даты</small>
+          <small>Проведённые занятия</small>
         </div>
       </div>
       {error && <ErrorBox message={error} />}
@@ -345,7 +345,7 @@ export function StudentPage({ id }: { id: string }) {
         </div>
         {works.length ? (
           works.map((w) => {
-            const result = homeworkSummary(w, data.attempts);
+            const result = homeworkState(w, data.attempts);
             return (
               <button
                 className="homework-highlight"
