@@ -1,4 +1,13 @@
 import type { Attempt, Data, Homework } from "../types";
+
+function newestAttemptFirst(a: Attempt, b: Attempt) {
+  const milliseconds = Date.parse(b.created_at) - Date.parse(a.created_at);
+  if (milliseconds) return milliseconds;
+  // PostgreSQL keeps microseconds that Date.parse truncates to milliseconds.
+  const fraction = (value: string) =>
+    (value.match(/\.(\d+)/)?.[1] ?? "").padEnd(9, "0").slice(3, 9);
+  return fraction(b.created_at).localeCompare(fraction(a.created_at));
+}
 export function studentName(data: Data, id: string) {
   const s = data.students.find((s) => s.student_id === id);
   return s?.nickname || s?.display_name || `Ученик ${id.slice(0, 8)}`;
@@ -9,14 +18,25 @@ export function homeworkSummary(
   preview = false,
 ) {
   const actor = preview ? work.teacher_id : work.student_id;
-  const latest = work.items.map((item) =>
-    attempts.find(
-      (a) =>
-        a.homework_item_id === item.id &&
-        a.is_preview === preview &&
-        a.student_id === actor,
-    ),
-  );
+  const itemIds = new Set(work.items.map((item) => item.id));
+  const attemptsByItem = new Map<string, Attempt[]>();
+  for (const attempt of attempts) {
+    if (
+      !attempt.homework_item_id ||
+      !itemIds.has(attempt.homework_item_id) ||
+      attempt.is_preview !== preview ||
+      attempt.student_id !== actor
+    )
+      continue;
+    const rows = attemptsByItem.get(attempt.homework_item_id) ?? [];
+    rows.push(attempt);
+    attemptsByItem.set(attempt.homework_item_id, rows);
+  }
+  // Sort new arrays only: the shared attempt history must remain untouched.
+  for (const rows of attemptsByItem.values()) {
+    rows.sort(newestAttemptFirst);
+  }
+  const latest = work.items.map((item) => attemptsByItem.get(item.id)?.[0]);
   const answered = latest.filter(Boolean).length,
     correct = latest.filter((a) => a?.status === "correct").length,
     pending = latest.filter((a) => a?.status === "pending").length;
@@ -49,6 +69,7 @@ export function homeworkSummary(
     label,
     overdue,
     total: work.items.length,
+    attemptsByItem,
   };
 }
 export const dateTime = (value?: string | null) =>

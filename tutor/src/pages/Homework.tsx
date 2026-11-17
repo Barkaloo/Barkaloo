@@ -13,7 +13,7 @@ import { dateTime, homeworkSummary, studentName } from "../lib/teaching";
 import { taskLabels } from "../types";
 import { Empty, ErrorBox, Field, Form, Modal } from "../components/ui";
 import TaskPlayer from "../components/TaskPlayer";
-import { ReviewModal } from "./Overview";
+import ReviewModal from "../components/ReviewModal";
 export function HomeworkList({
   create = false,
   studentId,
@@ -403,12 +403,7 @@ export function HomeworkPage({ id }: { id: string }) {
       </div>
       <div className="homework-contents">
         {work.items.map((item, index) => {
-          const attempts = data.attempts.filter(
-            (a) =>
-              a.homework_item_id === item.id &&
-              a.is_preview === preview &&
-              a.student_id === (preview ? work.teacher_id : work.student_id),
-          );
+          const attempts = summary.attemptsByItem.get(item.id) ?? [];
           const last = attempts[0];
           return (
             <section key={item.id}>

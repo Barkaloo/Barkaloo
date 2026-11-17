@@ -8,6 +8,7 @@ import {
 import { useApp } from "../context";
 import { dateTime, studentName } from "../lib/teaching";
 import type { Attempt } from "../types";
+import { getTeacherOverview } from "../lib/dashboard";
 
 export default function TeacherOverview({
   onReview,
@@ -15,31 +16,18 @@ export default function TeacherOverview({
   onReview: (attempt: Attempt) => void;
 }) {
   const { data, navigate } = useApp();
-  const now = Date.now();
-  const activeStudents = data.students.filter((s) => s.status === "active");
-  const activeIds = new Set(activeStudents.map((s) => s.student_id));
-  const upcoming = data.lessons
-    .filter(
-      (l) =>
-        activeIds.has(l.student_id) &&
-        new Date(l.starts_at).getTime() + l.duration_minutes * 60000 > now,
-    )
-    .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
-  const pending = data.review_queue.filter(
-    (a) => !a.is_preview && a.status === "pending",
-  );
+  const { activeStudentCount, upcoming, weekLessonCount, pending } =
+    getTeacherOverview(data);
   const cards = [
     {
       label: "Ваши ученики",
-      value: activeStudents.length,
+      value: activeStudentCount,
       detail: "Активных в вашем кабинете",
       icon: Users,
     },
     {
       label: "Занятия на неделю",
-      value: upcoming.filter(
-        (l) => new Date(l.starts_at).getTime() < now + 7 * 86400000,
-      ).length,
+      value: weekLessonCount,
       detail: "В ближайшие 7 дней",
       icon: CalendarDays,
     },

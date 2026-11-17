@@ -11,98 +11,59 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useApp } from "../context";
-import { api, formatDate, answerLabel } from "../lib/api";
+import { formatDate } from "../lib/api";
 import { type Attempt } from "../types";
-import { Empty, Modal, Field, Form, ErrorBox } from "../components/ui";
+import { Empty } from "../components/ui";
+import ActivityChart from "../components/ActivityChart";
+import ReviewModal from "../components/ReviewModal";
 import { ModuleCard } from "./Catalog";
 import HomeworkHighlights from "../components/HomeworkHighlights";
 import TeacherOverview from "../components/TeacherOverview";
-export function Metrics() {
-  const { data, teacher } = useApp();
+function StudentMetrics() {
+  const { data } = useApp();
   const graded = data.attempts.filter((a) => a.status !== "pending"),
     correct = graded.filter((a) => a.status === "correct");
   const complete = data.progress.filter((p) => p.completed_at).length;
-  const cards = teacher
-    ? [
-        {
-          label: "Активные ученики",
-          value: data.students.filter((s) => s.status === "active").length,
-          icon: BookOpen,
-          detail: "Обучаются в вашем кабинете",
-        },
-        {
-          label: "Домашние работы",
-          value: data.homeworks.filter((h) => !h.canceled_at).length,
-          icon: Target,
-          detail: "Назначены вашим ученикам",
-        },
-        {
-          label: "Учебные модули",
-          value: data.modules.length,
-          icon: BookOpen,
-          detail: `${data.modules.filter((m) => m.published_at).length} опубликовано`,
-        },
-        {
-          label: "Практические задания",
-          value: data.tasks.length,
-          icon: Target,
-          detail: "В ваших модулях",
-        },
-        {
-          label: "Ответы учеников",
-          value: data.attempts.length,
-          icon: CheckCircle2,
-          detail: "Без попыток предпросмотра",
-        },
-        {
-          label: "На проверке",
-          value: data.review_queue.filter((a) => !a.is_preview).length,
-          icon: Clock3,
-          detail: "Ожидают вашего решения",
-        },
-      ]
-    : [
-        {
-          label: "Изучено модулей",
-          value: complete,
-          icon: BookOpen,
-          detail: `Из ${data.modules.length} доступных`,
-        },
-        {
-          label: "Решено заданий",
-          value: new Set(correct.map((a) => a.task_id)).size,
-          icon: Target,
-          detail: "Уникальных верных решений",
-        },
-        {
-          label: "Правильных ответов",
-          value: graded.length
-            ? `${Math.round((correct.length / graded.length) * 100)}%`
-            : "—",
-          icon: CheckCircle2,
-          detail: graded.length
-            ? `${correct.length} из ${graded.length} попыток`
-            : "Пока нет проверенных попыток",
-        },
-        {
-          label: "Завершено тем",
-          value: data.topics.filter((t) => {
-            const modules = data.modules.filter((m) => m.topic_id === t.id);
-            return (
-              modules.length > 0 &&
-              modules.every((m) =>
-                data.progress.some(
-                  (p) => p.module_id === m.id && p.completed_at,
-                ),
-              )
-            );
-          }).length,
-          icon: TrendingUp,
-          detail: `Из ${data.topics.length} доступных`,
-        },
-      ];
+  const cards = [
+    {
+      label: "Изучено модулей",
+      value: complete,
+      icon: BookOpen,
+      detail: `Из ${data.modules.length} доступных`,
+    },
+    {
+      label: "Решено заданий",
+      value: new Set(correct.map((a) => a.task_id)).size,
+      icon: Target,
+      detail: "Уникальных верных решений",
+    },
+    {
+      label: "Правильных ответов",
+      value: graded.length
+        ? `${Math.round((correct.length / graded.length) * 100)}%`
+        : "—",
+      icon: CheckCircle2,
+      detail: graded.length
+        ? `${correct.length} из ${graded.length} попыток`
+        : "Пока нет проверенных попыток",
+    },
+    {
+      label: "Завершено тем",
+      value: data.topics.filter((t) => {
+        const modules = data.modules.filter((m) => m.topic_id === t.id);
+        return (
+          modules.length > 0 &&
+          modules.every((m) =>
+            data.progress.some((p) => p.module_id === m.id && p.completed_at),
+          )
+        );
+      }).length,
+      icon: TrendingUp,
+      detail: `Из ${data.topics.length} доступных`,
+    },
+  ];
   return (
-    <div className={`metrics-grid ${teacher ? "teacher-metrics" : ""}`}>
+    <div className="metrics-grid">
       {cards.map(({ label, value, icon: Icon, detail }) => (
         <div className="metric panel" key={label}>
           <div className="spread">
@@ -114,111 +75,6 @@ export function Metrics() {
         </div>
       ))}
     </div>
-  );
-}
-export function ActivityChart({ attempts }: { attempts?: Attempt[] } = {}) {
-  const { data } = useApp();
-  const activity = attempts ?? data.attempts;
-  const days = Array.from({ length: 14 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - 13 + i);
-    return {
-      key: d.toLocaleDateString("sv-SE"),
-      label: d.toLocaleDateString("ru-RU", { day: "numeric", month: "short" }),
-      count: 0,
-      correct: 0,
-    };
-  });
-  activity.forEach((a) => {
-    const day = days.find(
-      (d) => d.key === new Date(a.created_at).toLocaleDateString("sv-SE"),
-    );
-    if (day) {
-      day.count++;
-      if (a.status === "correct") day.correct++;
-    }
-  });
-  const max = Math.max(1, ...days.map((d) => d.count));
-  return (
-    <section className="panel activity-panel">
-      <div className="spread">
-        <div>
-          <h2>Ритм обучения</h2>
-          <p className="muted">Попытки решения за последние 14 дней</p>
-        </div>
-        <span className="chart-legend">
-          <i />
-          Верные
-          <span className="legend-total" />
-          Остальные
-        </span>
-      </div>
-      {activity.length ? (
-        <>
-          <div
-            className="activity-chart"
-            role="img"
-            aria-label="Количество попыток по дням"
-          >
-            <div className="chart-axis">
-              <span>{max}</span>
-              <span>{Math.round(max / 2)}</span>
-              <span>0</span>
-            </div>
-            <div className="chart-columns">
-              {days.map((d, i) => (
-                <div
-                  className="chart-column"
-                  key={d.key}
-                  title={`${d.label}: ${d.count} попыток, ${d.correct} верных`}
-                >
-                  <div className="chart-bar-area">
-                    <div
-                      className="chart-bar"
-                      style={{ height: `${(d.count / max) * 100}%` }}
-                    >
-                      <i
-                        style={{
-                          height: `${d.count ? (d.correct / d.count) * 100 : 0}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <small>{i % 3 === 0 || i === 13 ? d.label : ""}</small>
-                </div>
-              ))}
-            </div>
-          </div>
-          <details className="chart-data">
-            <summary>Данные графика</summary>
-            <table>
-              <thead>
-                <tr>
-                  <th>Дата</th>
-                  <th>Попытки</th>
-                  <th>Верные</th>
-                </tr>
-              </thead>
-              <tbody>
-                {days.map((d) => (
-                  <tr key={d.key}>
-                    <td>{d.label}</td>
-                    <td>{d.count}</td>
-                    <td>{d.correct}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </details>
-        </>
-      ) : (
-        <div className="chart-empty">
-          <TrendingUp size={30} />
-          <strong>У каждой привычки есть начало</strong>
-          <p>График появится после первого отправленного ответа.</p>
-        </div>
-      )}
-    </section>
   );
 }
 export function Dashboard() {
@@ -308,15 +164,13 @@ export function Dashboard() {
         <TeacherOverview onReview={setReview} />
       ) : (
         <>
-          <Metrics />
-          {!teacher && <HomeworkHighlights />}
+          <StudentMetrics />
+          <HomeworkHighlights />
           <div className="dashboard-columns">
             <ActivityChart />
             <section className="panel recent-panel">
               <div className="spread">
-                <h2>
-                  {teacher ? "Последние результаты" : "Последняя активность"}
-                </h2>
+                <h2>Последняя активность</h2>
                 <Clock3 size={18} />
               </div>
               {data.attempts.length ? (
@@ -335,27 +189,22 @@ export function Dashboard() {
                               : "На проверке"}
                         </small>
                       </div>
-                      {!teacher &&
-                        data.tasks.some((t) => t.id === a.task_id) && (
-                          <button
-                            className="icon-btn"
-                            aria-label="Открыть задание"
-                            onClick={() => navigate(`practice/${a.task_id}`)}
-                          >
-                            <ArrowUpRight size={16} />
-                          </button>
-                        )}
+                      {data.tasks.some((t) => t.id === a.task_id) && (
+                        <button
+                          className="icon-btn"
+                          aria-label="Открыть задание"
+                          onClick={() => navigate(`practice/${a.task_id}`)}
+                        >
+                          <ArrowUpRight size={16} />
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="compact-empty">
                   <FileText size={26} />
-                  <p>
-                    {teacher
-                      ? "Результаты появятся, когда ученики начнут решать задания."
-                      : "Здесь появятся ваши первые решения."}
-                  </p>
+                  <p>Здесь появятся ваши первые решения.</p>
                 </div>
               )}
             </section>
@@ -366,10 +215,8 @@ export function Dashboard() {
         <>
           <div className="section-heading">
             <div>
-              <span className="eyebrow">
-                {teacher ? "Ваша библиотека" : "Следующий шаг"}
-              </span>
-              <h2>{teacher ? "Учебные материалы" : "Доступные модули"}</h2>
+              <span className="eyebrow">Следующий шаг</span>
+              <h2>Доступные модули</h2>
             </div>
             <button className="text-btn" onClick={() => navigate("modules")}>
               Все модули
@@ -384,17 +231,12 @@ export function Dashboard() {
             </div>
           ) : (
             <Empty
-              title={
-                teacher
-                  ? "Здесь будет ваша библиотека"
-                  : "Библиотека пока пуста"
-              }
-              action={teacher ? "Создать первую тему" : "Перейти в каталог"}
+              title="Библиотека пока пуста"
+              action="Перейти в каталог"
               onAction={() => navigate("catalog")}
             >
-              {teacher
-                ? "Выберите раздел ЕГЭ и добавьте материалы, которые помогут разобраться в теме."
-                : "Как только преподаватель опубликует материалы, вы сможете начать обучение."}
+              Как только преподаватель опубликует материалы, вы сможете начать
+              обучение.
             </Empty>
           )}
         </>
@@ -403,67 +245,6 @@ export function Dashboard() {
         <ReviewModal attempt={review} onClose={() => setReview(null)} />
       )}
     </div>
-  );
-}
-export function ReviewModal({
-  attempt,
-  onClose,
-}: {
-  attempt: Attempt;
-  onClose: () => void;
-}) {
-  const { data, refresh, notify } = useApp();
-  const [status, setStatus] = useState("correct"),
-    [comment, setComment] = useState(""),
-    [error, setError] = useState(""),
-    [busy, setBusy] = useState(false);
-  const task = data.tasks.find((t) => t.id === attempt.task_id);
-  const save = async () => {
-    setBusy(true);
-    try {
-      await api("review", { attempt_id: attempt.id, status, comment });
-      await refresh();
-      notify("Результат проверки сохранён");
-      onClose();
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <Modal title="Проверка ответа" onClose={onClose}>
-      <Form onSubmit={save}>
-        <h3>{attempt.task_snapshot.title}</h3>
-        <p className="task-statement">{attempt.task_snapshot.statement}</p>
-        <span className="eyebrow">Ответ ученика</span>
-        <p className="student-answer">
-          {answerLabel(attempt.answer, attempt.task_snapshot)}
-        </p>
-        <Field label="Критерии">
-          <p>{attempt.criteria || task?.criteria || "Критерии не указаны"}</p>
-        </Field>
-        <Field label="Результат">
-          <select value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="correct">Верно</option>
-            <option value="wrong">Нужна доработка</option>
-          </select>
-        </Field>
-        <Field label="Комментарий ученику">
-          <textarea
-            rows={3}
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-          />
-        </Field>
-        {error && <ErrorBox message={error} />}
-        <div className="modal-actions">
-          <button className="btn primary" disabled={busy}>
-            {busy ? "Сохранение…" : "Сохранить результат"}
-          </button>
-        </div>
-      </Form>
-    </Modal>
   );
 }
 export function Statistics() {
@@ -494,7 +275,7 @@ export function Statistics() {
           </p>
         </div>
       </div>
-      <Metrics />
+      <StudentMetrics />
       <ActivityChart />
       <div className="dashboard-columns stats-lower">
         <section className="panel">

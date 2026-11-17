@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useApp } from "../context";
-import { ActivityChart } from "./Overview";
+import ActivityChart from "../components/ActivityChart";
 import { studentName, homeworkSummary } from "../lib/teaching";
 import { Empty } from "../components/ui";
 export default function TeacherStatistics({
