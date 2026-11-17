@@ -10,6 +10,7 @@ import type { Session } from "@supabase/supabase-js";
 import {
   LayoutDashboard,
   Library,
+  BookOpen,
   Settings as SettingsIcon,
   Eye,
   Menu,
@@ -52,6 +53,7 @@ const HomeworkList = lazy(() =>
 const HomeworkPage = lazy(() =>
   import("./pages/Homework").then((m) => ({ default: m.HomeworkPage })),
 );
+const Theory = lazy(() => import("./pages/Theory"));
 const Lessons = lazy(() => import("./pages/Lessons"));
 const TeacherStatistics = lazy(() => import("./pages/TeacherStatistics"));
 const Learning = lazy(() =>
@@ -67,6 +69,7 @@ const nav = [
   { path: "dashboard", title: "Главная", icon: LayoutDashboard },
   { path: "lessons", title: "Журнал занятий", icon: CalendarDays },
   { path: "homework", title: "Домашние задания", icon: ClipboardList },
+  { path: "theory", title: "Теоретический материал", icon: BookOpen },
   { path: "catalog", title: "Каталог КЕГЭ", icon: Library },
   { path: "connect", title: "Мой преподаватель", icon: UserPlus },
 ];
@@ -262,6 +265,7 @@ export default function App() {
         nav[0],
         { path: "students", title: "Ученики", icon: Users },
         { path: "lessons", title: "Журнал занятий", icon: CalendarDays },
+        ...nav.filter((n) => ["homework", "theory", "catalog"].includes(n.path)),
         { path: "student-new", title: "Добавить ученика", icon: UserPlus },
       ]
     : nav;
@@ -284,6 +288,8 @@ export default function App() {
     switch (route) {
       case "dashboard":
         return <Dashboard />;
+      case "theory":
+        return <Theory />;
       case "catalog":
         return teacher ? <Catalog /> : <KegeCatalog />;
       case "section":

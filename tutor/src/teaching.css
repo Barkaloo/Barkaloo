@@ -865,3 +865,11 @@
 }
 .compact-homeworks .homework-card { display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; }
 .compact-homeworks .homework-score { margin-top: auto; padding-top: 14px; }
+.theory-row { display: flex; gap: 16px; align-items: flex-start; padding: 20px 0; border-bottom: 1px solid var(--line); }
+.theory-list { border-top: 1px solid var(--line); }
+.theory-description { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.theory-description h2 { font-size: 15px; }
+.theory-description p { margin-top: 6px; font-size: 13px; color: var(--muted); white-space: pre-wrap; }
+.theory-description small { display: block; margin-top: 8px; color: var(--muted); font-size: 12px; }
+.modal audio { width: 100%; margin: 20px 0; }
+@media (max-width: 760px) { .theory-row { flex-wrap: wrap; gap: 12px; } .theory-description { flex-basis: calc(100% - 50px); } .theory-row > .actions { margin-left: 45px; } }
