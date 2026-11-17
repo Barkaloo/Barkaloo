@@ -26,11 +26,9 @@ export default function StudentSetup({
   return (
     <main className="student-setup">
       <section className="panel">
-        <span className="eyebrow">Добро пожаловать в Barkaloo Tutor</span>
         <h1>Как вас называть?</h1>
         <p className="muted">
-          Выберите имя или ник. Его увидит ваш преподаватель; изменить его можно
-          в настройках.
+          Преподаватель увидит это имя. Позже его можно изменить в настройках.
         </p>
         <Form onSubmit={save}>
           <Field label="Ваш ник">

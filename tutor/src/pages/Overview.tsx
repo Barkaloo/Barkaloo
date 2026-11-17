@@ -5,10 +5,7 @@ import {
   Target,
   CheckCircle2,
   TrendingUp,
-  Clock3,
-  FileText,
   ArrowUpRight,
-  Sparkles,
 } from "lucide-react";
 import { useApp } from "../context";
 import { formatDate } from "../lib/api";
@@ -84,82 +81,27 @@ export function Dashboard() {
     .map((p) => ({ p, m: data.modules.find((m) => m.id === p.module_id) }))
     .filter((x) => x.m && !x.p.completed_at)
     .sort((a, b) => b.p.updated_at.localeCompare(a.p.updated_at))[0];
-  const name = data.profile.display_name.includes("@")
-    ? ""
-    : data.profile.display_name.split(" ")[0];
   return (
     <div className={teacher ? "teacher-dashboard" : undefined}>
-      <div
-        className={`page-heading ${teacher ? "teacher-dashboard-date" : ""}`}
-      >
-        {!teacher && (
-          <div>
-            <span className="eyebrow">Ваше пространство роста</span>
-            <h1>
-              {name ? `С возвращением, ${name}` : "С возвращением"}
-              <span className="title-dot">.</span>
-            </h1>
-            <p>Небольшой шаг сегодня — уверенность на экзамене.</p>
-          </div>
-        )}
+      <div className="page-heading">
+        <h1>Главная</h1>
         <span className="today">
           {new Date().toLocaleDateString("ru-RU", {
-            day: "numeric",
-            month: "long",
-            weekday: "long",
+            day: "numeric", month: "long", weekday: "long",
           })}
         </span>
       </div>
-      <div
-        className={`welcome-banner ${teacher ? "teacher-welcome-banner" : ""}`}
-      >
-        <div>
-          <span className="banner-label">
-            <Sparkles size={14} />
-            BARKALOO TUTOR
-          </span>
-          <h2>
-            {teacher
-              ? "Знания обретают структуру."
-              : "Готовиться проще, когда есть путь."}
-          </h2>
-          {!teacher && (
-            <>
-              <p>
-                {continued
-                  ? `Продолжите модуль «${continued.m!.title}» с места, где остановились.`
-                  : "Открывайте темы, разбирайтесь в теории и закрепляйте её на практике."}
-              </p>
-              <button
-                className="btn banner-button"
-                onClick={() =>
-                  navigate(continued ? `lesson/${continued.m!.id}` : "catalog")
-                }
-              >
-                {continued ? "Продолжить обучение" : "Открыть каталог"}
-                <ArrowRight size={17} />
-              </button>
-            </>
-          )}
-        </div>
-        <div className="banner-art" aria-hidden="true">
-          <div className="art-orbit" />
-          <div className="art-card art-back">
-            <span>ЕГЭ</span>
-            <div />
-            <div />
+      {!teacher && (
+        <section className="continue-learning">
+          <div>
+            <span className="muted">{continued ? "Продолжить изучение" : "Учебные материалы"}</span>
+            <h2>{continued ? continued.m!.title : "Каталог ЕГЭ"}</h2>
           </div>
-          <div className="art-card art-front">
-            <span>&lt;/&gt;</span>
-            <i />
-            <i />
-            <b>
-              <CheckCircle2 size={22} />
-            </b>
-          </div>
-          <span className="art-plus">+</span>
-        </div>
-      </div>
+          <button className="btn primary" onClick={() => navigate(continued ? `lesson/${continued.m!.id}` : "catalog")}>
+            {continued ? "Продолжить" : "Открыть каталог"}<ArrowRight size={16} />
+          </button>
+        </section>
+      )}
       {teacher ? (
         <TeacherOverview onReview={setReview} />
       ) : (
@@ -171,7 +113,6 @@ export function Dashboard() {
             <section className="panel recent-panel">
               <div className="spread">
                 <h2>Последняя активность</h2>
-                <Clock3 size={18} />
               </div>
               {data.attempts.length ? (
                 <div className="recent-list">
@@ -203,8 +144,7 @@ export function Dashboard() {
                 </div>
               ) : (
                 <div className="compact-empty">
-                  <FileText size={26} />
-                  <p>Здесь появятся ваши первые решения.</p>
+                  <p>Попыток пока нет.</p>
                 </div>
               )}
             </section>
@@ -215,7 +155,6 @@ export function Dashboard() {
         <>
           <div className="section-heading">
             <div>
-              <span className="eyebrow">Следующий шаг</span>
               <h2>Доступные модули</h2>
             </div>
             <button className="text-btn" onClick={() => navigate("modules")}>
@@ -230,13 +169,8 @@ export function Dashboard() {
               ))}
             </div>
           ) : (
-            <Empty
-              title="Библиотека пока пуста"
-              action="Перейти в каталог"
-              onAction={() => navigate("catalog")}
-            >
-              Как только преподаватель опубликует материалы, вы сможете начать
-              обучение.
+            <Empty title="Модулей пока нет">
+              Материалы появятся после публикации преподавателем.
             </Empty>
           )}
         </>
@@ -248,7 +182,7 @@ export function Dashboard() {
   );
 }
 export function Statistics() {
-  const { data, teacher, navigate } = useApp();
+  const { data, navigate } = useApp();
   const problematic = data.topics
     .map((t) => {
       const attempts = data.attempts.filter(
@@ -266,13 +200,7 @@ export function Statistics() {
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">За цифрами — ваша работа</span>
           <h1>Статистика</h1>
-          <p>
-            {teacher
-              ? "Результаты учеников на основе сохранённых попыток."
-              : "Следите за прогрессом и выбирайте, что стоит повторить."}
-          </p>
         </div>
       </div>
       <StudentMetrics />
@@ -312,12 +240,6 @@ export function Statistics() {
               );
             })}
           </div>
-          {teacher && (
-            <p className="muted">
-              Завершение модулей учеников появится на этапе управления
-              учениками. Здесь отображается ваш личный прогресс.
-            </p>
-          )}
         </section>
         <section className="panel">
           <h2>Темы для повторения</h2>
@@ -338,10 +260,7 @@ export function Statistics() {
             ))
           ) : (
             <div className="compact-empty">
-              <CheckCircle2 size={27} />
-              <p>
-                Пока нет тем с ошибками. Статистика появится после практики.
-              </p>
+              <p>Тем с ошибками пока нет.</p>
             </div>
           )}
         </section>

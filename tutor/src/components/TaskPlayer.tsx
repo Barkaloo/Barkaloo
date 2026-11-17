@@ -161,9 +161,7 @@ export default function TaskPlayer({
             </button>
           )}
           <small className="muted">
-            {attempts.length
-              ? `Сохранено попыток: ${attempts.length}`
-              : "Каждая отправка сохраняется в истории"}
+            {attempts.length ? `Попыток: ${attempts.length}` : ""}
           </small>
         </div>
       </form>
@@ -181,14 +179,13 @@ export default function TaskPlayer({
               {result.status === "correct"
                 ? "Верно!"
                 : result.status === "wrong"
-                  ? "Пока не получилось"
+                  ? "Неверный ответ"
                   : "Ожидает проверки преподавателем"}
             </strong>
           </div>
           {result.status === "wrong" && (
             <p>
-              Попытка сохранена в журнале ошибок. Можно вернуться к теории и
-              попробовать снова.
+              Добавлено в работу над ошибками.
             </p>
           )}
           {result.feedback.answer !== undefined && (
@@ -209,9 +206,7 @@ export default function TaskPlayer({
               {result.feedback.common_mistakes}
             </p>
           )}
-          {!result.feedback.solution && result.status !== "pending" && (
-            <small>Решение отображается по настройкам преподавателя.</small>
-          )}
+
         </div>
       )}
       {attempts.length > 0 && (

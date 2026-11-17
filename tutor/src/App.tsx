@@ -16,8 +16,6 @@ import {
   ChartNoAxesCombined,
   Settings as SettingsIcon,
   Eye,
-  GraduationCap,
-  PanelLeftClose,
   Menu,
   X,
   LogOut,
@@ -370,9 +368,6 @@ export default function App() {
               <X size={18} />
             </button>
           </div>
-          <div className="sidebar-label">
-            {teacher ? "КАБИНЕТ ПРЕПОДАВАТЕЛЯ" : "ВАШЕ ОБУЧЕНИЕ"}
-          </div>
           <nav aria-label="Основные разделы">
             {visibleNav.map(({ path: p, title, icon: Icon }) => (
               <button
@@ -450,10 +445,7 @@ export default function App() {
               >
                 <Menu size={21} />
               </button>
-              <PanelLeftClose size={17} className="desktop-only muted" />
-              <span>
-                Barkaloo <i>/</i> <strong>Tutor</strong>
-              </span>
+              <span>{teacher ? "Кабинет преподавателя" : "ЕГЭ · Информатика"}</span>
             </div>
             <div className="topbar-right">
               <ThemeSwitch
@@ -480,18 +472,15 @@ export default function App() {
                   <SettingsIcon size={18} />
                 </button>
               )}
-              <span className="course-badge">
-                <GraduationCap size={16} />
-                ЕГЭ · Информатика
-              </span>
               {data.role === "teacher" && (
                 <button
                   className={`mode-switch ${preview ? "on" : ""}`}
+                  aria-pressed={preview}
                   onClick={mode}
                 >
                   <Eye size={16} />
                   <span>
-                    {preview ? "Вернуться к преподаванию" : "Режим ученика"}
+                    {preview ? "К преподаванию" : "Режим ученика"}
                   </span>
                   <i />
                 </button>
@@ -502,8 +491,7 @@ export default function App() {
             <div className="preview-banner">
               <Eye size={16} />
               <span>
-                Просмотр от лица ученика · только опубликованные материалы ·
-                тестовый прогресс сохраняется отдельно
+                Предпросмотр ученика · тестовый прогресс сохраняется отдельно
               </span>
             </div>
           )}
@@ -517,10 +505,6 @@ export default function App() {
           <main className="main-content">
             <Suspense fallback={<Busy />}>{page()}</Suspense>
           </main>
-          <footer className="app-footer">
-            <span>Barkaloo Tutor</span>
-            <span>Шаг за шагом, в своём ритме.</span>
-          </footer>
         </div>
         {toast && (
           <div className="toast" role="status">

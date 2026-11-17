@@ -37,13 +37,7 @@ export function HomeworkList({
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">Закрепляйте изученное</span>
           <h1>Домашние задания</h1>
-          <p>
-            {teacher
-              ? "Назначайте работы из опубликованных заданий и проверяйте результаты."
-              : "Ваши задания, сроки и результаты проверки в одном месте."}
-          </p>
         </div>
         {teacher && (
           <button
@@ -135,11 +129,9 @@ export function HomeworkList({
               ? "В этой категории пока пусто"
               : "Домашних работ пока нет"
           }
-          action={teacher ? "Назначить первую работу" : "Открыть каталог"}
-          onAction={() => navigate(teacher ? "homework-new" : "catalog")}
         >
           {teacher
-            ? "Выберите ученика, задания из своих опубликованных модулей и срок выполнения."
+            ? "Назначьте работу из опубликованных заданий."
             : "Назначенные преподавателем работы появятся здесь."}
         </Empty>
       )}
@@ -409,7 +401,7 @@ export function HomeworkPage({ id }: { id: string }) {
             <section key={item.id}>
               <div className="homework-item-heading">
                 <span>{index + 1}</span>
-                <strong>{item.snapshot.title}</strong>
+                <strong>{!teacher && !work.canceled_at ? `Задание ${index + 1}` : item.snapshot.title}</strong>
               </div>
               {!teacher && !work.canceled_at ? (
                 <TaskPlayer task={item.snapshot} homeworkItemId={item.id} />

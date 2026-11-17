@@ -3,7 +3,6 @@ import {
   CalendarDays,
   ClipboardCheck,
   ArrowUpRight,
-  Clock3,
 } from "lucide-react";
 import { useApp } from "../context";
 import { dateTime, studentName } from "../lib/teaching";
@@ -20,36 +19,32 @@ export default function TeacherOverview({
     getTeacherOverview(data);
   const cards = [
     {
-      label: "Ваши ученики",
+      label: "Активные ученики",
       value: activeStudentCount,
-      detail: "Активных в вашем кабинете",
       icon: Users,
     },
     {
       label: "Занятия на неделю",
       value: weekLessonCount,
-      detail: "В ближайшие 7 дней",
       icon: CalendarDays,
     },
     {
-      label: "Ожидают проверки",
+      label: "Ответы на проверке",
       value: pending.length,
-      detail: "Ответов с ручной проверкой",
       icon: ClipboardCheck,
     },
   ];
   return (
     <>
       <div className="teacher-summary">
-        {cards.map(({ label, value, detail, icon: Icon }) => (
-          <div className="panel teacher-summary-card" key={label}>
+        {cards.map(({ label, value, icon: Icon }) => (
+          <div className="teacher-summary-card" key={label}>
             <span className="teacher-summary-icon">
               <Icon size={20} />
             </span>
             <div>
               <span>{label}</span>
               <strong>{value}</strong>
-              <small>{detail}</small>
             </div>
           </div>
         ))}
@@ -58,11 +53,10 @@ export default function TeacherOverview({
         <section className="panel teacher-agenda">
           <div className="spread">
             <div>
-              <span className="eyebrow">Ваше расписание</span>
               <h2>Ближайшие занятия</h2>
             </div>
             <button className="text-btn" onClick={() => navigate("lessons")}>
-              Журнал занятий <ArrowUpRight size={15} />
+              В журнал <ArrowUpRight size={15} />
             </button>
           </div>
           {upcoming.length ? (
@@ -87,22 +81,15 @@ export default function TeacherOverview({
             </div>
           ) : (
             <div className="teacher-panel-empty">
-              <CalendarDays size={25} />
-              <h3>Расписание свободно</h3>
-              <p>
-                Запланированные занятия появятся здесь после добавления в
-                журнал.
-              </p>
+              <p>Нет запланированных занятий.</p>
             </div>
           )}
         </section>
         <section className="panel teacher-inbox">
           <div className="spread">
             <div>
-              <span className="eyebrow">Требует внимания</span>
               <h2>Проверка ответов</h2>
             </div>
-            <Clock3 size={19} />
           </div>
           {pending.length ? (
             <div className="teacher-inbox-list">
@@ -121,9 +108,7 @@ export default function TeacherOverview({
             </div>
           ) : (
             <div className="teacher-panel-empty">
-              <ClipboardCheck size={25} />
-              <h3>Нет ответов для проверки</h3>
-              <p>Здесь будут ответы учеников, которым нужна ваша оценка.</p>
+              <p>Нет ответов для проверки.</p>
             </div>
           )}
         </section>

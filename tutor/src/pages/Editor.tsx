@@ -9,7 +9,6 @@ import {
   Send,
   ImagePlus,
   Pencil,
-  Check,
   EyeOff,
 } from "lucide-react";
 import { useApp } from "../context";
@@ -103,7 +102,7 @@ export default function Editor({ id }: { id: string }) {
       notify(
         publish
           ? "Модуль опубликован. Он доступен в режиме ученика."
-          : "Черновик сохранён в Supabase",
+          : "Черновик сохранён",
       );
     } catch (e) {
       setError((e as Error).message);
@@ -141,8 +140,7 @@ export default function Editor({ id }: { id: string }) {
       </button>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">Конструктор модуля</span>
-          <h1>{title || "Новый модуль"}</h1>
+          <h1>Редактор модуля</h1>
           <p>
             {dirty
               ? "Есть несохранённые изменения"
@@ -196,9 +194,8 @@ export default function Editor({ id }: { id: string }) {
             </Field>
           </div>
           {blocks.length === 0 && (
-            <Empty title="С чего начнём?">
-              Добавьте блок теории, иллюстрацию или практическое задание.
-              Содержание создаёте вы.
+            <Empty title="В модуле пока нет блоков">
+              Выберите тип блока в панели редактора.
             </Empty>
           )}
           {blocks.map((b, index) => (
@@ -499,16 +496,7 @@ export default function Editor({ id }: { id: string }) {
               )}
             </section>
           ))}
-          {blocks.length > 0 && (
-            <button
-              className="btn save-bottom"
-              onClick={() => save()}
-              disabled={busy || !!uploading}
-            >
-              <Check size={16} />
-              Сохранить черновик
-            </button>
-          )}
+
         </div>
         <aside className="editor-sidebar">
           <ModuleAccess moduleId={id} />
@@ -524,10 +512,8 @@ export default function Editor({ id }: { id: string }) {
             </div>
           </div>
           <div className="editor-hint">
-            <strong>Вы управляете публикацией</strong>
             <p>
-              Сохранение меняет только черновик. Ученики увидят изменения после
-              публикации.
+              Сохранение обновляет черновик. Ученики увидят изменения после публикации.
             </p>
             {module.published_at && (
               <button

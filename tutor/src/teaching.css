@@ -15,7 +15,7 @@
   margin: 16px 0;
 }
 .field-hint {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   margin: 14px 0;
   line-height: 1.75;
@@ -45,7 +45,7 @@
   overflow-wrap: anywhere;
 }
 .student-card > p {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   margin-top: 7px;
 }
@@ -56,7 +56,7 @@
   border-top: 1px solid var(--line);
   padding-top: 15px;
   margin-top: 20px;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
 }
 .student-card-stats svg {
@@ -90,7 +90,7 @@
 .assigned-row small,
 .invitation-row small {
   display: block;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
   margin-top: 5px;
 }
@@ -109,7 +109,7 @@
   margin-top: 28px;
 }
 .invitation-list > .muted {
-  font-size: 11px;
+  font-size: 12px;
   margin: 6px 0 12px;
 }
 .connect-panel {
@@ -144,7 +144,7 @@
 .results-list small {
   display: block;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 12px;
   margin-top: 5px;
 }
 .homework-highlights {
@@ -181,7 +181,7 @@
 .homework-highlight small {
   display: block;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 12px;
   margin-top: 5px;
 }
 .homework-highlight .badge {
@@ -194,7 +194,7 @@
   margin: 18px 0 9px;
 }
 .homework-card > p {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
 }
 .deadline {
@@ -202,12 +202,12 @@
   gap: 7px;
   align-items: center;
   flex-wrap: wrap;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
   margin: 18px 0;
 }
 .homework-score {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
   margin-top: 14px;
 }
@@ -233,7 +233,7 @@
   place-items: center;
   background: var(--accent-soft);
   color: var(--accent);
-  font-size: 11px;
+  font-size: 12px;
 }
 .homework-banner > .muted {
   font-size: 12px;
@@ -276,11 +276,11 @@
 .task-picker small {
   display: block;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 12px;
   margin: 5px 0;
 }
 .task-picker p {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -326,7 +326,7 @@
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
-  font-size: 11px;
+  font-size: 12px;
 }
 .lesson-record-homework > strong {
   font-weight: 550;
@@ -355,30 +355,30 @@
   margin-top: 3px;
 }
 .choice-fieldset p {
-  font-size: 11px;
+  font-size: 12px;
 }
 .module-access {
   margin-bottom: 16px;
-  padding: 18px !important;
+  padding: 16px;
 }
 .module-access .eyebrow {
   display: flex;
   gap: 7px;
   align-items: center;
-  font-size: 9px;
+  font-size: 12px;
 }
 .module-access .field {
   margin: 12px 0;
 }
 .module-access select {
-  font-size: 11px;
+  font-size: 12px;
   padding: 8px;
 }
 .module-access p {
-  font-size: 10px;
+  font-size: 12px;
 }
 .module-access .text-btn {
-  font-size: 10px;
+  font-size: 12px;
   margin-top: 10px;
 }
 @media (max-width: 1200px) {
@@ -422,23 +422,23 @@
     font-size: 15px;
   }
   .homework-highlights > .spread > .text-btn {
-    font-size: 10px;
+    font-size: 12px;
   }
   .student-card-stats {
-    font-size: 10px;
+    font-size: 12px;
   }
   .lesson-record h2 {
     font-size: 15px;
   }
   .lesson-record-meta {
-    font-size: 11px;
+    font-size: 12px;
     gap: 10px;
   }
   .results-list strong {
-    font-size: 11px;
+    font-size: 12px;
   }
   .assigned-row strong {
-    font-size: 11px;
+    font-size: 12px;
   }
   .lesson-record-homework {
     align-items: flex-start;
@@ -467,7 +467,7 @@
     gap: 10px;
   }
   .invitation-row .btn {
-    font-size: 10px;
+    font-size: 12px;
   }
   .homework-item-heading {
     font-size: 12px;
@@ -508,7 +508,7 @@
   min-width: 0;
 }
 .student-code-input {
-  font-size: 26px !important;
+  font-size: 26px;
   letter-spacing: 0.35em;
   text-align: center;
   font-family: ui-monospace, monospace;
@@ -522,7 +522,7 @@
   margin: 20px 0;
 }
 .credential-code span {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   display: block;
 }
@@ -569,4 +569,264 @@
 }
 .student-setup .text-btn {
   margin-top: 20px;
+}
+
+/* Directory and journal are lists, with one divider per record. */
+.student-list {
+  border-top: 1px solid var(--line);
+}
+.student-list-head, .student-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 2fr) minmax(125px, 1.1fr) .65fr .65fr 90px 18px;
+  align-items: center;
+  gap: 20px;
+}
+.student-list-head {
+  padding: 12px 14px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.student-row {
+  width: 100%;
+  padding: 16px 14px;
+  border-top: 1px solid var(--line);
+  text-align: left;
+  font-size: 13px;
+}
+.student-row:hover {
+  background: var(--soft);
+}
+.student-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.student-identity strong {
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+.student-row > .badge {
+  justify-self: start;
+}
+.student-since, .student-count, .student-row-arrow {
+  color: var(--muted);
+}
+.student-count {
+  font-variant-numeric: tabular-nums;
+}
+.student-count-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+}
+.student-create-panel {
+  max-width: 520px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.student-create-panel form > p {
+  font-size: 13px;
+  margin-bottom: 24px;
+}
+.student-detail-grid, .teaching-section {
+  gap: 28px;
+}
+.student-detail-grid > .panel, .teaching-section {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+}
+.teaching-section {
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+  margin-top: 28px;
+}
+.private-note {
+  margin: 16px 0;
+}
+.field-hint {
+  font-size: 12px;
+  line-height: 1.65;
+}
+.homework-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.homework-card h3 {
+  margin: 14px 0 8px;
+}
+.homework-card .deadline {
+  margin: 12px 0;
+  font-size: 12px;
+}
+.homework-score {
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+.homework-highlights {
+  margin-bottom: 24px;
+}
+.homework-highlight {
+  padding: 14px 0;
+}
+.homework-highlight strong, .results-list strong, .assigned-row strong {
+  font-size: 13px;
+}
+.homework-highlight small, .results-list small, .assigned-row small {
+  font-size: 12px;
+}
+.homework-banner {
+  padding: 0 0 20px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+}
+.homework-item-heading > span {
+  display: none;
+}
+.lesson-record-list {
+  gap: 0;
+  border-top: 1px solid var(--line);
+}
+.lesson-record {
+  padding: 20px 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+}
+.lesson-record h2 {
+  font-size: 15px;
+}
+.lesson-record-meta {
+  margin: 12px 0;
+  font-size: 13px;
+}
+.lesson-record-homework {
+  margin-top: 12px;
+  padding-top: 12px;
+  font-size: 12px;
+}
+.lesson-record .private-note {
+  margin: 12px 0;
+}
+.choice-fieldset {
+  border-radius: var(--radius);
+}
+.auth-audience {
+  border: 0;
+  background: var(--soft);
+  border-radius: var(--radius);
+  margin: 24px 0;
+  padding: 4px;
+}
+.auth-audience button {
+  min-height: 36px;
+  font-size: 13px;
+  padding: 8px;
+}
+.auth-audience button.active {
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow: 0 1px 3px #0001;
+}
+.credential-input {
+  font-size: 26px;
+  letter-spacing: .2em;
+  text-align: center;
+}
+.student-setup > section {
+  border: 0;
+  background: transparent;
+  padding: 24px;
+}
+.student-setup h1 {
+  font-size: 24px;
+  margin-top: 0;
+}
+.module-access .eyebrow {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 13px;
+}
+.module-access select {
+  padding: 10px 12px;
+  font-size: 13px;
+}
+.module-access p, .module-access .text-btn {
+  font-size: 12px;
+}
+@media (max-width: 1100px) {
+ .student-list-head, .student-row {
+   grid-template-columns: minmax(130px, 2fr) 1fr .6fr .6fr 80px 16px;
+   gap: 12px;
+ }
+}
+@media (max-width: 760px) {
+ .student-list-head {
+   display: none;
+ }
+ .student-row {
+   grid-template-columns: minmax(0, 1fr) auto;
+   gap: 10px 16px;
+   padding: 16px 0;
+ }
+ .student-identity {
+   grid-column: 1;
+   grid-row: 1;
+ }
+ .student-row > .badge {
+   grid-column: 2;
+   grid-row: 1;
+   justify-self: end;
+ }
+ .student-since {
+   grid-column: 1 / -1;
+   font-size: 12px;
+ }
+ .student-count {
+   font-size: 12px;
+ }
+ .student-count-label {
+   position: static;
+   width: auto;
+   height: auto;
+   margin: 0;
+   overflow: visible;
+   clip: auto;
+   white-space: normal;
+ }
+ .student-row-arrow {
+   display: none;
+ }
+ .student-detail-grid {
+   gap: 24px;
+ }
+ .homework-grid {
+   grid-template-columns: 1fr;
+ }
+ .homework-highlight {
+   gap: 10px;
+ }
+ .teaching-section {
+   padding-top: 24px;
+ }
+ .module-access select {
+   font-size: 16px;
+ }
+ .auth-audience button {
+   min-height: 40px;
+ }
+ .student-setup > section {
+   padding: 0;
+ }
 }

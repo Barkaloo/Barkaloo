@@ -17,9 +17,7 @@ export default function Lessons() {
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">Последовательность и внимание</span>
           <h1>Журнал занятий</h1>
-          <p>Даты, пройденные темы, домашние работы и ваши наблюдения.</p>
         </div>
         <button className="btn primary" onClick={() => setModal("new")}>
           <Plus size={16} />
@@ -93,10 +91,8 @@ export default function Lessons() {
       ) : (
         <Empty
           title="Журнал пока пуст"
-          action="Добавить занятие"
-          onAction={() => setModal("new")}
         >
-          Запишите первое занятие или запланируйте следующее.
+          Добавьте проведённое или запланированное занятие.
         </Empty>
       )}
       {modal && (

@@ -32,9 +32,7 @@ export function Students() {
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">Ваша учебная команда</span>
           <h1>Ученики</h1>
-          <p>Материалы, домашние работы и результаты каждого ученика.</p>
         </div>
         <button className="btn primary" onClick={() => navigate("student-new")}>
           <UserPlus size={16} />
@@ -62,7 +60,10 @@ export function Students() {
         </select>
       </div>
       {rows.length ? (
-        <div className="student-grid">
+        <div className="student-list">
+          <div className="student-list-head" aria-hidden="true">
+            <span>Ученик</span><span>Начало обучения</span><span>Попытки</span><span>Работы</span><span>Статус</span><span />
+          </div>
           {rows.map((s) => {
             const attempts = data.attempts.filter(
               (a) => a.student_id === s.student_id && !a.is_preview,
@@ -72,27 +73,21 @@ export function Students() {
             );
             return (
               <button
-                className="panel student-card"
+                className="student-row"
                 key={s.student_id}
                 onClick={() => navigate(`student/${s.student_id}`)}
               >
-                <div className="spread">
-                  <span className="avatar">
-                    {(s.nickname || s.display_name)[0].toUpperCase()}
-                  </span>
-                  <span
-                    className={`badge ${s.status === "active" ? "green" : "neutral"}`}
-                  >
-                    {s.status === "active" ? "Активен" : "В архиве"}
-                  </span>
-                </div>
-                <h3>{s.nickname || s.display_name}</h3>
-                <p>Обучается с {formatDate(s.started_on)}</p>
-                <div className="student-card-stats">
-                  <span>{attempts.length} попыток</span>
-                  <span>{works.length} домашних работ</span>
-                  <ArrowRight size={16} />
-                </div>
+                <span className="student-identity">
+                  <span className="avatar">{(s.nickname || s.display_name)[0].toUpperCase()}</span>
+                  <strong>{s.nickname || s.display_name}</strong>
+                </span>
+                <span className="student-since"><span className="sr-only">Начало обучения: </span>{formatDate(s.started_on)}</span>
+                <span className="student-count"><span className="student-count-label">Попытки: </span>{attempts.length}</span>
+                <span className="student-count"><span className="student-count-label">Работы: </span>{works.length}</span>
+                <span className={`badge ${s.status === "active" ? "green" : "neutral"}`}>
+                  {s.status === "active" ? "Активен" : "В архиве"}
+                </span>
+                <ArrowRight size={16} className="student-row-arrow" />
               </button>
             );
           })}
@@ -102,13 +97,10 @@ export function Students() {
           title={
             data.students.length
               ? "Ученики не найдены"
-              : "Добавьте первого ученика"
+              : "Учеников пока нет"
           }
-          action="Добавить ученика"
-          onAction={() => navigate("student-new")}
         >
-          Добавьте ученика и передайте ему постоянный шестизначный код. При
-          первом входе он выберет свой ник.
+          {data.students.length ? "Измените поиск или фильтр." : undefined}
         </Empty>
       )}
     </>
@@ -121,9 +113,7 @@ export function AddStudentPage() {
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">Новый ученик</span>
           <h1>Добавить ученика</h1>
-          <p>Создайте аккаунт и передайте ученику постоянный код для входа.</p>
         </div>
       </div>
       <section className="panel student-create-panel">
@@ -194,7 +184,6 @@ export function StudentPage({ id }: { id: string }) {
       </button>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">Карточка ученика</span>
           <h1>{s.nickname || s.display_name}</h1>
           <p>
             Начало обучения: {formatDate(s.started_on)} ·{" "}
@@ -217,7 +206,7 @@ export function StudentPage({ id }: { id: string }) {
         <div className="metric panel">
           <span>Попытки</span>
           <strong>{attempts.length}</strong>
-          <small>В ваших модулях и домашних работах</small>
+
         </div>
         <div className="metric panel">
           <span>Правильных ответов</span>
@@ -336,9 +325,9 @@ export function StudentPage({ id }: { id: string }) {
           </div>
           <p className="private-note">
             {s.notes ||
-              "Личные наблюдения и планы занятий. Заметки видны только вам."}
+              "Заметок пока нет."}
           </p>
-          <small className="muted">Ученик не получает эти заметки.</small>
+          <small className="muted">Видны только вам</small>
         </section>
       </div>
       <section className="panel teaching-section">
@@ -408,7 +397,7 @@ export function StudentPage({ id }: { id: string }) {
           </div>
         ) : (
           <p className="inline-empty">
-            Результаты появятся после первых ответов ученика.
+            Ответов пока нет.
           </p>
         )}
       </section>
@@ -534,15 +523,12 @@ export function Connect(_props: { initialCode?: string } = {}) {
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">Учитесь вместе</span>
           <h1>Мои преподаватели</h1>
-          <p>Материалы и домашние работы от вашего преподавателя.</p>
         </div>
       </div>
       {preview ? (
         <p className="panel muted">
-          В режиме просмотра показан ваш учебный интерфейс. Ученики входят в
-          свои аккаунты по постоянному коду.
+          В предпросмотре нет привязанного преподавателя.
         </p>
       ) : data.teachers.length ? (
         <div className="student-grid">

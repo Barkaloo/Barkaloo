@@ -1,8 +1,6 @@
 import { useState } from "react";
 import {
   ArrowRight,
-  BookOpen,
-  ShieldCheck,
   ArrowLeft,
   Eye,
   EyeOff,
@@ -83,59 +81,19 @@ export default function Auth({
   };
   return (
     <main className="auth-page">
-      <section className="auth-story">
-        <a href="/tutor/" className="brand">
-          <span className="brand-mark">
-            b<span>.</span>
-          </span>
-          <div>
-            Barkaloo<span>Tutor</span>
-          </div>
-        </a>
-        <div className="auth-story-content">
-          <span className="eyebrow">ЕГЭ по информатике</span>
-          <h1>
-            Понимать.
-            <br />
-            Практиковаться.
-            <br />
-            <em>Двигаться вперёд.</em>
-          </h1>
-          <p>
-            Спокойное пространство для знаний.
-            <br />
-            Ваша теория, практика и прогресс — в одном месте.
-          </p>
-          <div className="auth-feature">
-            <BookOpen size={20} />
-            <span>От первой темы до уверенного решения</span>
-          </div>
-        </div>
-        <div className="auth-story-footer">
-          Barkaloo Tutor<span>Ваше пространство для обучения</span>
-        </div>
-      </section>
       <section className="auth-form-side">
         <div className="auth-card">
-          <span className="eyebrow">Barkaloo Tutor</span>
-          <h2>
+          <a href="/tutor/" className="auth-brand"><span className="brand-mark">b<span>.</span></span><strong>Barkaloo Tutor</strong></a>
+          <h1>
             {recovery
               ? "Новый пароль"
               : student
-                ? "Вход для ученика"
+                ? "Вход"
                 : mode === "reset"
                   ? "Восстановление доступа"
-                  : "Вход для преподавателя"}
-          </h2>
-          <p>
-            {recovery
-              ? "Задайте новый пароль вашего аккаунта."
-              : student
-                ? "Введите постоянный код, который выдал ваш преподаватель."
-                : mode === "reset"
-                  ? "Введите email вашего аккаунта."
-              : "Войдите с вашим аккаунтом Barkaloo Tutor."}
-          </p>
+                  : "Вход"}
+          </h1>
+          {(student || mode === "reset") && !recovery && <p>{student ? "Постоянный код от преподавателя" : "Письмо со ссылкой для смены пароля"}</p>}
           {!recovery && (
             <div
               className="auth-audience"
@@ -174,7 +132,6 @@ export default function Auth({
               {student ? (
                 <Field
                   label="Шестизначный код"
-                  hint="Один код для повторного входа и сохранённого прогресса"
                 >
                   <div className="code-input-wrap">
                     <input
@@ -273,7 +230,7 @@ export default function Auth({
           )}
           {student ? (
             <div className="auth-switch">
-              Нет кода? Попросите преподавателя добавить вас в кабинет.
+              Нет кода? Обратитесь к преподавателю.
             </div>
           ) : (
             mode === "reset" &&
@@ -292,14 +249,6 @@ export default function Auth({
               </div>
             )
           )}
-          <div className="auth-note">
-            <ShieldCheck size={16} />
-            <span>
-              {student
-                ? "Код остаётся вашим. Прогресс сохраняется между входами."
-                : "Доступ к материалам и результатам проверяется на сервере."}
-            </span>
-          </div>
         </div>
       </section>
     </main>

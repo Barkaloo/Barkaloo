@@ -47,12 +47,11 @@ export default function TeacherStatistics({
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">От наблюдений к решениям</span>
           <h1>Статистика учеников</h1>
           <p>
             {student
               ? studentName(data, student)
-              : "Результаты ваших модулей и домашних работ. Предпросмотр исключён."}
+              : "Без попыток предпросмотра"}
           </p>
         </div>
       </div>
@@ -157,7 +156,7 @@ export default function TeacherStatistics({
             ))
           ) : (
             <p className="inline-empty">
-              Ошибок пока нет. Данные появятся после первых решений.
+              Неверных ответов пока нет.
             </p>
           )}
         </section>

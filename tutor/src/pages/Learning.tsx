@@ -136,8 +136,7 @@ export function Lesson({ id }: { id: string }) {
               {progress?.completed_at ? "Модуль изучен" : "Материал изучен?"}
             </h3>
             <p>
-              Практические результаты сохраняются отдельно, после отправки
-              ответов.
+              Отметка об изучении не влияет на результаты заданий.
             </p>
           </div>
           <button
@@ -177,7 +176,7 @@ export function Lesson({ id }: { id: string }) {
                   "Практика")}
             </a>
           ))}
-        <p>Прогресс сохраняется в вашем аккаунте.</p>
+
       </aside>
     </div>
   );
@@ -207,9 +206,7 @@ export function Practice({ taskId }: { taskId?: string }) {
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">От теории к результату</span>
           <h1>Практика</h1>
-          <p>Решайте в своём темпе. Каждая попытка остаётся в истории.</p>
         </div>
       </div>
       <div className="filter-bar">
@@ -252,7 +249,7 @@ export function Practice({ taskId }: { taskId?: string }) {
             action="Открыть каталог"
             onAction={() => navigate("catalog")}
           >
-            Здесь появится практика из опубликованных учебных модулей.
+            Опубликованных заданий по выбранным фильтрам пока нет.
           </Empty>
         )}
       </div>
@@ -295,12 +292,7 @@ export function Mistakes() {
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">Ошибки — часть обучения</span>
           <h1>Работа над ошибками</h1>
-          <p>
-            Возвращайтесь к сложным заданиям и наблюдайте, как меняется
-            результат.
-          </p>
         </div>
       </div>
       <div className="tabs">
@@ -389,7 +381,7 @@ export function Mistakes() {
         >
           {taskIds.length
             ? "Статусы обновятся после повторного решения."
-            : "После неверного ответа здесь появится задание для повторения. История останется и после исправления."}
+            : "Здесь сохраняются задания с неверными ответами, включая исправленные."}
         </Empty>
       )}
     </>

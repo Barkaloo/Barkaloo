@@ -43,9 +43,7 @@ export default function Settings() {
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">По вашему вкусу</span>
           <h1>Настройки</h1>
-          <p>Комфортное пространство для долгих учебных занятий.</p>
         </div>
       </div>
       <div className="settings-layout">
@@ -56,7 +54,7 @@ export default function Settings() {
             void save();
           }}
         >
-          <h2>Профиль и оформление</h2>
+          <h2>Профиль</h2>
           <Field label="Имя или псевдоним">
             <input
               required
@@ -76,8 +74,7 @@ export default function Settings() {
             </select>
           </Field>
           <p className="muted">
-            Роль: {data.role === "teacher" ? "преподаватель" : "ученик"}. Права
-            доступа проверяет база данных.
+            Роль: {data.role === "teacher" ? "преподаватель" : "ученик"}
           </p>
           {error && <ErrorBox message={error} />}
           <button className="btn primary" disabled={busy}>
@@ -88,19 +85,13 @@ export default function Settings() {
         <section className="panel">
           <h2>Ваши данные</h2>
           <p className="muted">
-            Выгрузите доступные материалы, попытки и прогресс в JSON. Экспорт
-            содержит только данные, доступные вашему аккаунту в текущем режиме.
+            Материалы, попытки и прогресс текущего аккаунта в формате JSON.
           </p>
           <button className="btn" onClick={download}>
             <Download size={16} />
             Экспортировать данные
           </button>
-          <hr />
-          <h3>Безопасное сохранение</h3>
-          <p className="muted">
-            Материалы и результаты хранятся в Supabase. Для создания, проверки и
-            сохранения требуется интернет.
-          </p>
+
         </section>
       </div>
     </>

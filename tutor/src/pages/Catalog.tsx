@@ -5,9 +5,7 @@ import {
   ArrowLeft,
   Pencil,
   Search,
-  BookOpen,
   MoreHorizontal,
-  FileText,
   CheckCircle2,
 } from "lucide-react";
 import { useApp } from "../context";
@@ -15,7 +13,7 @@ import { api, formatDate } from "../lib/api";
 import type { Module, Section, Topic } from "../types";
 import { Empty, ErrorBox, Field, Form, Modal } from "../components/ui";
 
-export function ModuleCard({ module }: { module: Module }) {
+export function ModuleCard({ module, showContext = true }: { module: Module; showContext?: boolean }) {
   const { data, teacher, navigate } = useApp();
   const topic = data.topics.find((t) => t.id === module.topic_id),
     section = data.sections.find((s) => s.id === topic?.section_id),
@@ -29,9 +27,6 @@ export function ModuleCard({ module }: { module: Module }) {
       onClick={() => navigate(`${teacher ? "edit" : "lesson"}/${module.id}`)}
     >
       <div className="spread">
-        <span className="module-icon">
-          <FileText size={21} />
-        </span>
         <span
           className={`badge ${teacher ? (module.published_at ? "green" : "neutral") : progress?.completed_at ? "green" : "neutral"}`}
         >
@@ -48,13 +43,13 @@ export function ModuleCard({ module }: { module: Module }) {
                 : "Не начат"}
         </span>
       </div>
-      <small className="eyebrow">{section?.title}</small>
-      <h3>{module.title}</h3>
-      <p>{module.description || topic?.title}</p>
+      <div className="module-description">
+        {showContext && <small className="muted">{section?.title} · {topic?.title}</small>}
+        <h3>{module.title}</h3>
+        {module.description && <p>{module.description}</p>}
+      </div>
       <div className="module-footer">
-        <span>
-          {count} заданий · {module.blocks.length} блоков
-        </span>
+        <span>Заданий: {count}</span>
         <ArrowUpRight size={18} />
       </div>
     </button>
@@ -74,13 +69,7 @@ export function Modules() {
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">Ваше учебное пространство</span>
           <h1>Учебные модули</h1>
-          <p>
-            {teacher
-              ? "Создавайте материалы и публикуйте их, когда будете готовы."
-              : "Теория и практика, собранные в последовательные уроки."}
-          </p>
         </div>
         {teacher && (
           <button className="btn primary" onClick={() => navigate("catalog")}>
@@ -128,10 +117,8 @@ export function Modules() {
           title={
             data.modules.length
               ? "Ничего не найдено"
-              : "Первый модуль начинается с темы"
+              : "Модулей пока нет"
           }
-          action={teacher ? "Перейти в каталог" : "Открыть каталог"}
-          onAction={() => navigate("catalog")}
         >
           {teacher
             ? "Выберите номер задания ЕГЭ, создайте тему и добавьте свой материал."
@@ -154,12 +141,7 @@ export function Catalog() {
     <>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">ЕГЭ по информатике</span>
-          <h1>Каталог заданий</h1>
-          <p>
-            {data.sections.filter((s) => s.active).length} разделов. Стройте
-            подготовку шаг за шагом.
-          </p>
+          <h1>Каталог ЕГЭ</h1>
         </div>
         {teacher && (
           <button className="btn" onClick={() => setSectionEdit("new")}>
@@ -167,21 +149,6 @@ export function Catalog() {
             Добавить раздел
           </button>
         )}
-      </div>
-      <div className="catalog-intro">
-        <BookOpen size={22} />
-        <div>
-          <strong>
-            {teacher
-              ? "Место для вашей методики"
-              : "Всё для последовательной подготовки"}
-          </strong>
-          <p>
-            {teacher
-              ? "Добавляйте темы, объединяйте теорию и практику. Пока материал не опубликован, он виден только вам."
-              : "Выберите раздел и продолжите изучение доступных тем."}
-          </p>
-        </div>
       </div>
       <label className="search catalog-search">
         <Search size={17} />
@@ -204,9 +171,7 @@ export function Catalog() {
           return (
             <article className="section-card" key={s.id}>
               <div className="spread">
-                <span className="section-number">
-                  {String(s.number).padStart(2, "0")}
-                </span>
+                {s.title.trim() !== `Задание №${s.number}` && <span className="section-number">№{s.number}</span>}
                 {teacher ? (
                   <button
                     className="icon-btn"
@@ -224,15 +189,15 @@ export function Catalog() {
                 onClick={() => navigate(`section/${s.id}`)}
               >
                 <h3>{s.title}</h3>
-                <p>{s.description || "Темы и учебные материалы"}</p>
+                {s.description && <p>{s.description}</p>}
                 <div className="spread">
                   <span>
-                    {topics.length} тем · {modules.length} модулей
+                    Тем: {topics.length} · Модулей: {modules.length}
                   </span>
                   <ArrowUpRight size={18} />
                 </div>
               </button>
-              {!teacher && modules.length > 0 && (
+              {!teacher && complete > 0 && modules.length > 0 && (
                 <div className="progress-track">
                   <i
                     style={{ width: `${(100 * complete) / modules.length}%` }}
@@ -390,13 +355,9 @@ export function SectionPage({ id }: { id: string }) {
       </button>
       <div className="page-heading">
         <div>
-          <span className="eyebrow">
-            ЕГЭ по информатике · раздел {section.number}
-          </span>
+          {section.title.trim() !== `Задание №${section.number}` && <span className="eyebrow">Задание №{section.number}</span>}
           <h1>{section.title}</h1>
-          <p>
-            {section.description || "Теория, примеры и практика в одном месте."}
-          </p>
+          {section.description && <p>{section.description}</p>}
         </div>
         {teacher && (
           <button className="btn primary" onClick={() => setTopicEdit("new")}>
@@ -443,9 +404,7 @@ export function SectionPage({ id }: { id: string }) {
                         </span>
                       )}
                     </div>
-                    <p className="muted">
-                      {t.description || "Описание темы пока не добавлено"}
-                    </p>
+                    {t.description && <p className="muted">{t.description}</p>}
                   </div>
                   {teacher && (
                     <button
@@ -468,7 +427,7 @@ export function SectionPage({ id }: { id: string }) {
                           ),
                       ).length
                     }{" "}
-                    практических заданий
+                    заданий для практики
                   </span>
                   {!teacher && (
                     <>
@@ -486,7 +445,7 @@ export function SectionPage({ id }: { id: string }) {
                 {modules.length ? (
                   <div className="topic-modules">
                     {modules.map((m) => (
-                      <ModuleCard key={m.id} module={m} />
+                      <ModuleCard key={m.id} module={m} showContext={false} />
                     ))}
                   </div>
                 ) : (
@@ -511,12 +470,10 @@ export function SectionPage({ id }: { id: string }) {
         </div>
       ) : (
         <Empty
-          title={teacher ? "Создайте первую тему" : "Темы скоро появятся"}
-          action={teacher ? "Создать тему" : undefined}
-          onAction={() => setTopicEdit("new")}
+          title="Тем пока нет"
         >
           {teacher
-            ? "Дайте теме своё название. Затем добавьте модуль с теорией и заданиями."
+            ? "Создайте тему, чтобы добавить учебный модуль."
             : "Здесь будут доступны опубликованные материалы преподавателя."}
         </Empty>
       )}

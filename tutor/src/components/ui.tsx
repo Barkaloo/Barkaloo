@@ -9,7 +9,6 @@ import {
   X,
   ArrowRight,
   LoaderCircle,
-  BookOpen,
   AlertCircle,
 } from "lucide-react";
 export function Empty({
@@ -25,11 +24,8 @@ export function Empty({
 }) {
   return (
     <div className="empty">
-      <span className="empty-icon">
-        <BookOpen size={25} />
-      </span>
       <h3>{title}</h3>
-      <p>{children}</p>
+      {children && <p>{children}</p>}
       {action && (
         <button className="btn primary" onClick={onAction}>
           {action}
@@ -76,6 +72,7 @@ export function Modal({
     <dialog
       ref={ref}
       className={`modal ${wide ? "wide" : ""}`}
+      aria-label={title}
       onCancel={(e) => {
         e.preventDefault();
         onClose();
@@ -139,8 +136,7 @@ export class ErrorBoundary extends Component<
       <main className="fatal">
         <h1>Не удалось открыть страницу</h1>
         <p>
-          Обновите страницу. Сохранённые в Supabase материалы останутся на
-          месте.
+          Обновите страницу. Сохранённые материалы останутся на месте.
         </p>
         <button className="btn primary" onClick={() => location.reload()}>
           Обновить

@@ -1,4 +1,3 @@
-import { TrendingUp } from "lucide-react";
 import { useApp } from "../context";
 import type { Attempt } from "../types";
 export default function ActivityChart({
@@ -30,8 +29,7 @@ export default function ActivityChart({
     <section className="panel activity-panel">
       <div className="spread">
         <div>
-          <h2>Ритм обучения</h2>
-          <p className="muted">Попытки решения за последние 14 дней</p>
+          <h2>Попытки за 14 дней</h2>
         </div>
         <span className="chart-legend">
           <i />
@@ -100,9 +98,7 @@ export default function ActivityChart({
         </>
       ) : (
         <div className="chart-empty">
-          <TrendingUp size={30} />
-          <strong>У каждой привычки есть начало</strong>
-          <p>График появится после первого отправленного ответа.</p>
+          <p>За этот период попыток нет.</p>
         </div>
       )}
     </section>

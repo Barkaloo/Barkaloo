@@ -22,13 +22,9 @@ function CodeDetails({ credential }: { credential: Credential }) {
   };
   return (
     <>
-      <div className="credential-code">
-        <span>Постоянный код для входа</span>
-        <strong>{credential.code}</strong>
-      </div>
       <Field label="Код ученика">
         <input
-          className="mono"
+          className="mono credential-input"
           readOnly
           value={credential.code}
           onFocus={(e) => e.target.select()}
@@ -39,9 +35,7 @@ function CodeDetails({ credential }: { credential: Credential }) {
         Скопировать код
       </button>
       <p className="field-hint">
-        Передайте ученику код и адрес {location.origin}/tutor/. Код подходит для
-        повторного входа на любом устройстве. Он открывает доступ к аккаунту
-        ученика.
+        Передайте ученику код и адрес {location.origin}/tutor/. Код постоянный и открывает доступ к аккаунту.
       </p>
       {error && <ErrorBox message={error} />}
     </>
@@ -96,8 +90,7 @@ export function AddStudentForm({ onClose }: { onClose?: () => void }) {
       ) : (
         <Form onSubmit={create}>
           <p className="muted">
-            Создайте аккаунт с постоянным шестизначным кодом. При первом входе
-            ученик выберет себе ник и оформление.
+            Ученик получит постоянный код для входа и выберет ник при первом посещении.
           </p>
           <Field
             label="Имя для вашего журнала"
