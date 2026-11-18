@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { configured, studentAccess, supabase } from "../lib/api";
 import { Field, ErrorBox } from "../components/ui";
+import BrandMark from "../components/BrandMark";
 const translate = (message: string) =>
   message.includes("Invalid login credentials")
     ? "Неверный email или пароль."
@@ -80,10 +81,11 @@ export default function Auth({
     setMessage("");
   };
   return (
-    <main className="auth-page">
+    <main className="auth-page auth-entry">
+      <div className="auth-layout">
       <section className="auth-form-side">
         <div className="auth-card">
-          <a href="/tutor/" className="auth-brand"><span className="brand-mark">b<span>.</span></span><strong>Barkaloo Tutor</strong></a>
+          <a href="/tutor/" className="auth-brand"><BrandMark /><strong>Barkaloo Tutor</strong></a>
           <h1>
             {recovery
               ? "Новый пароль"
@@ -251,6 +253,16 @@ export default function Auth({
           )}
         </div>
       </section>
+      <aside className="auth-art" aria-hidden="true">
+        <div className="auth-art-grid" />
+        <div className="auth-orbit auth-orbit-outer"><i /><i /></div>
+        <div className="auth-orbit auth-orbit-inner"><i /></div>
+        <div className="auth-art-symbol"><BrandMark /></div>
+        <span className="auth-art-token auth-token-top">01</span>
+        <span className="auth-art-token auth-token-bottom">27</span>
+        <span className="auth-art-caption">ИНФОРМАТИКА / КЕГЭ</span>
+      </aside>
+      </div>
     </main>
   );
 }

@@ -7,6 +7,7 @@ import {
   Suspense,
 } from "react";
 import type { Session } from "@supabase/supabase-js";
+import BrandMark from "./components/BrandMark";
 import {
   LayoutDashboard,
   Library,
@@ -226,9 +227,7 @@ export default function App() {
   if (loading || !data)
     return (
       <main className="initial-loading">
-        <span className="brand-mark">
-          b<span>.</span>
-        </span>
+        <BrandMark />
         {error ? (
           <>
             <ErrorBox message={error} />
@@ -354,9 +353,7 @@ export default function App() {
               className="brand-home"
               onClick={() => navigate("dashboard")}
             >
-              <span className="brand-mark">
-                b<span>.</span>
-              </span>
+              <BrandMark />
               <div>
                 Barkaloo<span>Tutor</span>
               </div>
