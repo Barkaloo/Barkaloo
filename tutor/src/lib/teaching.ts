@@ -1,6 +1,6 @@
 import type { Attempt, Data, Homework } from "../types";
 
-function newestAttemptFirst(a: Attempt, b: Attempt) {
+function newestAttemptFirst(a: { created_at: string }, b: { created_at: string }) {
   const milliseconds = Date.parse(b.created_at) - Date.parse(a.created_at);
   if (milliseconds) return milliseconds;
   // PostgreSQL keeps microseconds that Date.parse truncates to milliseconds.
@@ -40,13 +40,25 @@ export function homeworkSummary(
   const answered = latest.filter(Boolean).length,
     correct = latest.filter((a) => a?.status === "correct").length,
     pending = latest.filter((a) => a?.status === "pending").length;
+  const submission = (work.submissions ?? [])
+    .filter((s) => s.student_id === actor && s.is_preview === preview)
+    .slice().sort((a, b) => newestAttemptFirst({ created_at: a.submitted_at }, { created_at: b.submitted_at }) || b.id.localeCompare(a.id))[0];
+  const totalRequired = work.items.length + (work.requires_submission ? 1 : 0);
+  const answeredRequired = answered + (work.requires_submission && submission ? 1 : 0);
+  const acceptedRequired = correct + (work.requires_submission && submission?.status === "accepted" ? 1 : 0);
+  const pendingRequired = pending + (work.requires_submission && submission?.status === "pending" ? 1 : 0);
+  const needsRevision = latest.some((a) => a?.status === "wrong") ||
+    (!!work.requires_submission && submission?.status === "returned");
+  const completed = acceptedRequired === totalRequired;
   const status = work.canceled_at
     ? "canceled"
-    : answered === 0
+    : completed
+      ? "checked"
+    : answeredRequired === 0
       ? "not_started"
-      : answered < work.items.length
+      : answeredRequired < totalRequired || needsRevision
         ? "in_progress"
-        : pending
+        : pendingRequired
           ? "pending"
           : "checked";
   const label = {
@@ -58,7 +70,7 @@ export function homeworkSummary(
   }[status];
   const overdue =
     !work.canceled_at &&
-    answered < work.items.length &&
+    !completed &&
     !!work.due_at &&
     new Date(work.due_at).getTime() < Date.now();
   return {
@@ -70,6 +82,12 @@ export function homeworkSummary(
     overdue,
     total: work.items.length,
     attemptsByItem,
+    submission,
+    totalRequired,
+    answeredRequired,
+    acceptedRequired,
+    pendingRequired,
+    needsRevision,
   };
 }
 export const dateTime = (value?: string | null) =>

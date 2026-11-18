@@ -119,6 +119,7 @@ export type Data = {
   progress: Progress[];
   review_queue: Attempt[];
   students: Student[];
+  student_notes: StudentNote[];
   teachers: {
     teacher_id: string;
     display_name: string;
@@ -153,6 +154,15 @@ export type StudentInvite = {
   used_by: string | null;
   used_at: string | null;
 };
+export type StudentNote = {
+  id: string;
+  teacher_id: string;
+  student_id: string;
+  body: string;
+  noted_on: string;
+  created_at: string;
+  updated_at: string;
+};
 export type ModuleAssignment = {
   module_id: string;
   teacher_id: string;
@@ -176,6 +186,28 @@ export type Homework = {
   assigned_at: string;
   canceled_at: string | null;
   items: HomeworkItem[];
+  requires_submission?: boolean;
+  resources?: HomeworkResource[];
+  submissions?: HomeworkSubmission[];
+};
+export type HomeworkResource = {
+  id?: string;
+  kind: "link" | "file";
+  url?: string | null;
+  path?: string | null;
+  filename?: string | null;
+  mime_type?: string | null;
+};
+export type HomeworkSubmission = {
+  id: string;
+  homework_id: string;
+  student_id: string;
+  is_preview: boolean;
+  answer: string;
+  status: "pending" | "accepted" | "returned";
+  feedback: string;
+  submitted_at: string;
+  reviewed_at: string | null;
 };
 export type LessonStatus = "planned" | "completed" | "canceled";
 export type LessonRecord = {

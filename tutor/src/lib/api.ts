@@ -59,7 +59,7 @@ export const loadData = async (preview: boolean) => {
     throw new Error(
       "Нужно применить миграцию второго этапа Tutor. Материалы и прогресс сохранены.",
     );
-  return { ...data, student_progress: data.student_progress ?? [] };
+  return { ...data, student_notes: data.student_notes ?? [], student_progress: data.student_progress ?? [] };
 };
 export async function studentAccess<T>(
   action: string,

@@ -265,7 +265,6 @@ export default function App() {
         { path: "students", title: "Ученики", icon: Users },
         { path: "lessons", title: "Журнал занятий", icon: CalendarDays },
         ...nav.filter((n) => ["homework", "theory", "catalog"].includes(n.path)),
-        { path: "student-new", title: "Добавить ученика", icon: UserPlus },
       ]
     : nav;
   const mode = () => {
@@ -328,7 +327,7 @@ export default function App() {
           <HomeworkList />
         );
       case "lessons":
-        return <Lessons />;
+        return <Lessons key={id ?? "all"} initialStudent={id} />;
       case "settings":
         return <Settings />;
       default:

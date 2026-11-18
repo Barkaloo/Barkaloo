@@ -158,8 +158,8 @@ test("Homework state follows submission, grading and deadline independently of l
  const manual = attempt("manual", "item-2", "pending", "2030-01-01T00:00:00Z");
  assert.equal(homeworkState(work, []).state, "uncompleted");
  assert.equal(homeworkState(expired, [first]).state, "overdue");
- assert.equal(homeworkState(expired, [first, manual]).state, "pending");
- assert.equal(homeworkState(expired, [first, {...manual, status: "wrong"}]).state, "completed");
+ assert.equal(homeworkState(expired, [first, manual]).state, "overdue");
+ assert.equal(homeworkState(expired, [first, {...manual, status: "wrong"}]).state, "overdue");
  assert.equal(homeworkState({...expired, canceled_at: "2030-01-01"}, []).state, "canceled");
 });
 test("Canceled and completed lessons never enter the upcoming teacher schedule", () => {

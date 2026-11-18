@@ -6,18 +6,18 @@ import {
   Search,
   Pencil,
   Plus,
-  X,
-  GraduationCap,
 } from "lucide-react";
 import { useApp } from "../context";
 import { api, formatDate } from "../lib/api";
-import { dateTime, homeworkState } from "../lib/teaching";
+import { dateTime, homeworkState, lessonLabels } from "../lib/teaching";
 import type { Student } from "../types";
 import { Empty, ErrorBox, Field, Form, Modal } from "../components/ui";
 import {
   AddStudentForm,
   StudentCodeDialog,
 } from "../components/StudentCredentials";
+import StudentNotes from "../components/StudentNotes";
+import HomeworkForm from "../components/HomeworkForm";
 export function Students() {
   const { data, teacher, navigate } = useApp();
   const [q, setQ] = useState(""),
@@ -55,22 +55,19 @@ export function Students() {
           onChange={(e) => setStatus(e.target.value)}
         >
           <option value="active">Активные</option>
-          <option value="archived">Архивные</option>
+          <option value="archived">Доступ приостановлен</option>
           <option value="all">Все ученики</option>
         </select>
       </div>
       {rows.length ? (
         <div className="student-list">
           <div className="student-list-head" aria-hidden="true">
-            <span>Ученик</span><span>Начало обучения</span><span>Попытки</span><span>Работы</span><span>Статус</span><span />
+            <span>Ученик</span><span>Дата добавления</span><span>Проведено занятий</span><span>Статус</span><span />
           </div>
           {rows.map((s) => {
-            const attempts = data.attempts.filter(
-              (a) => a.student_id === s.student_id && !a.is_preview,
-            );
-            const works = data.homeworks.filter(
-              (h) => h.student_id === s.student_id && !h.canceled_at,
-            );
+            const completed = data.lessons.filter(
+              (lesson) => lesson.student_id === s.student_id && lesson.status === "completed",
+            ).length;
             return (
               <button
                 className="student-row"
@@ -81,11 +78,10 @@ export function Students() {
                   <span className="avatar">{(s.nickname || s.display_name)[0].toUpperCase()}</span>
                   <strong>{s.nickname || s.display_name}</strong>
                 </span>
-                <span className="student-since"><span className="sr-only">Начало обучения: </span>{formatDate(s.started_on)}</span>
-                <span className="student-count"><span className="student-count-label">Попытки: </span>{attempts.length}</span>
-                <span className="student-count"><span className="student-count-label">Работы: </span>{works.length}</span>
+                <span className="student-since"><span className="sr-only">Добавлен: </span>{formatDate(s.created_at)}</span>
+                <span className="student-count"><span className="student-count-label">Проведено занятий: </span>{completed}</span>
                 <span className={`badge ${s.status === "active" ? "green" : "neutral"}`}>
-                  {s.status === "active" ? "Активен" : "В архиве"}
+                  {s.status === "active" ? "Активен" : "Доступ приостановлен"}
                 </span>
                 <ArrowRight size={16} className="student-row-arrow" />
               </button>
@@ -123,13 +119,11 @@ export function AddStudentPage() {
   );
 }
 export function StudentPage({ id }: { id: string }) {
-  const { data, teacher, navigate, refresh, notify } = useApp();
+  const { data, teacher, navigate } = useApp();
   const s = data.students.find((s) => s.student_id === id);
   const [editing, setEditing] = useState(false),
     [codeOpen, setCodeOpen] = useState(false),
-    [moduleId, setModuleId] = useState(""),
-    [error, setError] = useState(""),
-    [busy, setBusy] = useState(false);
+    [homeworkOpen, setHomeworkOpen] = useState(false);
   if (!teacher || !s)
     return (
       <Empty
@@ -143,39 +137,9 @@ export function StudentPage({ id }: { id: string }) {
     ),
     graded = attempts.filter((a) => a.status !== "pending"),
     correct = graded.filter((a) => a.status === "correct");
-  const assignments = data.assignments.filter((a) => a.student_id === id),
-    works = data.homeworks.filter((h) => h.student_id === id),
-    lessons = data.lessons.filter((l) => l.student_id === id),
+  const works = data.homeworks.filter((h) => h.student_id === id).slice().sort((a, b) => b.assigned_at.localeCompare(a.assigned_at)),
+    lessons = data.lessons.filter((l) => l.student_id === id).slice().sort((a, b) => Date.parse(b.starts_at) - Date.parse(a.starts_at)),
     progress = data.student_progress.filter((p) => p.user_id === id);
-  const assign = async () => {
-    if (!moduleId) return;
-    setBusy(true);
-    setError("");
-    try {
-      await api("module_assign", { student_id: id, module_id: moduleId });
-      await refresh();
-      setModuleId("");
-      notify("Модуль назначен ученику");
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
-  const revoke = async (mid: string) => {
-    setBusy(true);
-    try {
-      await api("module_revoke", { student_id: id, module_id: mid });
-      await refresh();
-      notify(
-        "Назначение отозвано. Открытые для всех модули остаются доступны.",
-      );
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
   return (
     <>
       <button className="back-link" onClick={() => navigate("students")}>
@@ -187,7 +151,7 @@ export function StudentPage({ id }: { id: string }) {
           <h1>{s.nickname || s.display_name}</h1>
           <p>
             Начало обучения: {formatDate(s.started_on)} ·{" "}
-            {s.status === "active" ? "Активен" : "В архиве"}
+            {s.status === "active" ? "Активен" : "Доступ приостановлен"}
           </p>
         </div>
         <div className="actions">
@@ -225,7 +189,7 @@ export function StudentPage({ id }: { id: string }) {
           <small>Отмечены учеником как изученные</small>
         </div>
         <div className="metric panel">
-          <span>Занятий в журнале</span>
+          <span>Проведено занятий</span>
           <strong>
             {
               lessons.filter(
@@ -233,115 +197,20 @@ export function StudentPage({ id }: { id: string }) {
               ).length
             }
           </strong>
-          <small>Проведённые занятия</small>
+
         </div>
       </div>
-      {error && <ErrorBox message={error} />}
       <div className="student-detail-grid">
-        <section className="panel">
-          <div className="spread">
-            <h2>Назначенные модули</h2>
-            <GraduationCap size={18} />
-          </div>
-          {assignments.length ? (
-            assignments.map((a) => {
-              const m = data.modules.find((m) => m.id === a.module_id);
-              const p = progress.find((p) => p.module_id === a.module_id);
-              return (
-                <div className="assigned-row" key={a.module_id}>
-                  <div>
-                    <strong>{m?.title ?? "Модуль"}</strong>
-                    <small>
-                      {!m?.published_at
-                        ? "Снят с публикации"
-                        : p?.completed_at
-                          ? "Изучен"
-                          : p
-                            ? "В процессе"
-                            : "Не начат"}{" "}
-                      ·{" "}
-                      {m?.audience === "assigned"
-                        ? "Личный доступ"
-                        : "Доступен всем"}
-                    </small>
-                  </div>
-                  <button
-                    className="icon-btn"
-                    aria-label={`Отозвать назначение ${m?.title ?? ""}`}
-                    disabled={busy}
-                    onClick={() => revoke(a.module_id)}
-                  >
-                    <X size={15} />
-                  </button>
-                </div>
-              );
-            })
-          ) : (
-            <p className="inline-empty">Назначений пока нет.</p>
-          )}
-          {s.status === "active" && (
-            <Form onSubmit={assign}>
-              <Field label="Опубликованный модуль">
-                <select
-                  required
-                  value={moduleId}
-                  onChange={(e) => setModuleId(e.target.value)}
-                >
-                  <option value="">Выберите модуль</option>
-                  {data.modules
-                    .filter(
-                      (m) =>
-                        m.published_at &&
-                        !assignments.some((a) => a.module_id === m.id),
-                    )
-                    .map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.title}
-                      </option>
-                    ))}
-                </select>
-              </Field>
-              <button className="btn small" disabled={busy || !moduleId}>
-                <Plus size={15} />
-                Назначить
-              </button>
-            </Form>
-          )}
-          <p className="field-hint">
-            Чтобы закрыть модуль от остальных учеников, выберите в конструкторе
-            доступ «Только назначенные».
-          </p>
-        </section>
-        <section className="panel">
-          <div className="spread">
-            <h2>Заметки преподавателя</h2>
-            <button
-              className="icon-btn"
-              aria-label="Редактировать заметки"
-              onClick={() => setEditing(true)}
-            >
-              <Pencil size={15} />
-            </button>
-          </div>
-          <p className="private-note">
-            {s.notes ||
-              "Заметок пока нет."}
-          </p>
-          <small className="muted">Видны только вам</small>
-        </section>
+        <div className="student-homework-action">
+          <button className="btn primary" disabled={s.status !== "active"} onClick={() => setHomeworkOpen(true)}>
+            <Plus size={16} />Назначить домашнее задание
+          </button>
+        </div>
+        <StudentNotes studentId={id} />
       </div>
       <section className="panel teaching-section">
         <div className="spread">
           <h2>Домашние задания</h2>
-          {s.status === "active" && (
-            <button
-              className="btn small"
-              onClick={() => navigate(`homework-new/${id}`)}
-            >
-              <Plus size={14} />
-              Назначить работу
-            </button>
-          )}
         </div>
         {works.length ? (
           works.map((w) => {
@@ -354,10 +223,10 @@ export function StudentPage({ id }: { id: string }) {
               >
                 <div>
                   <strong>{w.title}</strong>
-                  <small>{dateTime(w.due_at)}</small>
+                  <small>Назначено: {dateTime(w.assigned_at)} · Срок: {dateTime(w.due_at)}</small>
                 </div>
-                <span className="badge neutral">
-                  {result.label} · {result.correct}/{result.total}
+                <span className={`badge homework-status ${result.state}`}>
+                  {result.label}
                 </span>
               </button>
             );
@@ -404,7 +273,7 @@ export function StudentPage({ id }: { id: string }) {
       <section className="panel teaching-section">
         <div className="spread">
           <h2>Занятия</h2>
-          <button className="text-btn" onClick={() => navigate("lessons")}>
+          <button className="text-btn" onClick={() => navigate(`lessons/${id}`)}>
             Открыть журнал
             <ArrowRight size={15} />
           </button>
@@ -413,13 +282,14 @@ export function StudentPage({ id }: { id: string }) {
           lessons.slice(0, 5).map((l) => (
             <div className="assigned-row" key={l.id}>
               <strong>{dateTime(l.starts_at)}</strong>
-              <span>{l.duration_minutes} мин</span>
+              <span className="student-lesson-summary"><span>{l.duration_minutes} мин</span><span className={`badge lesson-status ${l.status}`}>{lessonLabels[l.status]}</span></span>
             </div>
           ))
         ) : (
           <p className="inline-empty">Занятия ещё не добавлены.</p>
         )}
       </section>
+      {homeworkOpen && <HomeworkForm initialStudent={id} onClose={() => setHomeworkOpen(false)} />}
       {editing && <StudentEdit student={s} onClose={() => setEditing(false)} />}
       {codeOpen && (
         <StudentCodeDialog
@@ -492,21 +362,13 @@ function StudentEdit({
             }
           >
             <option value="active">Активен</option>
-            <option value="archived">В архиве</option>
+            <option value="archived">Доступ приостановлен</option>
           </select>
         </Field>
         <p className="field-hint">
-          Архивирование закрывает личные назначения и домашние работы. История
+          Приостановка доступа закрывает личные назначения и домашние работы. История
           результатов сохраняется. Доступ можно восстановить.
         </p>
-        <Field label="Личные заметки преподавателя">
-          <textarea
-            rows={5}
-            maxLength={20000}
-            value={form.notes}
-            onChange={(e) => setForm({ ...form, notes: e.target.value })}
-          />
-        </Field>
         {error && <ErrorBox message={error} />}
         <div className="modal-actions">
           <button className="btn primary" disabled={busy}>

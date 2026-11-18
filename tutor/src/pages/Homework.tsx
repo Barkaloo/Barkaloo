@@ -1,18 +1,20 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
   Plus,
-  Search,
   CalendarClock,
 } from "lucide-react";
 import { useApp } from "../context";
 import { api, answerLabel } from "../lib/api";
 import { dateTime, homeworkState, studentName } from "../lib/teaching";
 import { taskLabels } from "../types";
-import { Empty, ErrorBox, Field, Form, Modal } from "../components/ui";
+import { Empty, ErrorBox } from "../components/ui";
 import TaskPlayer from "../components/TaskPlayer";
 import ReviewModal from "../components/ReviewModal";
+import HomeworkForm from "../components/HomeworkForm";
+import HomeworkMaterials from "../components/HomeworkMaterials";
+import HomeworkResponse from "../components/HomeworkResponse";
 export function HomeworkList({ create = false, studentId, lessonId }: {
   create?: boolean; studentId?: string; lessonId?: string;
 }) {
@@ -59,189 +61,12 @@ export function HomeworkList({ create = false, studentId, lessonId }: {
             <span><CalendarClock size={14} />Срок: {dateTime(w.due_at)}</span>
           </div>
           {lessons.length > 0 && <p className="homework-lesson-context">Занятие: {lessons.map((l) => dateTime(l.starts_at)).join(" · ")}</p>}
-          <div className="spread homework-score"><span>Заданий: {r.total}</span><span>Ответов: {r.answered}/{r.total} · Верных: {r.correct}</span></div>
+          <div className="spread homework-score">{r.totalRequired ? <><span>Заданий: {r.total}{w.requires_submission ? " + ответ преподавателю" : ""}</span><span>Выполнено: {r.acceptedRequired}/{r.totalRequired}</span></> : <span>Материалы для изучения</span>}</div>
         </button>;
       })}
     </div> : <Empty title={summaries.length ? "Нет работ с этим статусом" : "Домашних работ пока нет"} />}
     {create && teacher && <HomeworkForm key={`${studentId ?? ""}:${lessonId ?? ""}`} initialStudent={studentId} initialLesson={lessonId} onClose={() => navigate("homework")} />}
   </>;
-}
-function HomeworkForm({
-  initialStudent,
-  initialLesson,
-  onClose,
-}: {
-  initialLesson?: string;
-  initialStudent?: string;
-  onClose: () => void;
-}) {
-  const { data, refresh, navigate } = useApp();
-  const [student, setStudent] = useState(initialStudent ?? ""),
-    [lesson, setLesson] = useState(initialLesson ?? ""),
-    [title, setTitle] = useState(""),
-    [comment, setComment] = useState(""),
-    [chosen, setChosen] = useState<string[]>([]),
-    [query, setQuery] = useState(""),
-    [error, setError] = useState(""),
-    [busy, setBusy] = useState(false);
-  const dueInput = useRef<HTMLInputElement>(null);
-  const tasks = data.assignable_tasks.filter((t) =>
-    `${t.title} ${t.statement}`.toLowerCase().includes(query.toLowerCase()),
-  );
-  const save = async () => {
-    setBusy(true);
-    setError("");
-    try {
-      const result = await api<{ id: string }>("homework_create", {
-        student_id: student,
-        lesson_id: lesson || null,
-        title,
-        comment,
-        due_at: dueInput.current?.value
-          ? new Date(dueInput.current.value).toISOString()
-          : null,
-        task_ids: chosen,
-      });
-      await refresh();
-      navigate(`homework/${result.id}`);
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <Modal title="Назначить домашнюю работу" onClose={onClose} wide>
-      {!data.students.some((s) => s.status === "active") ? (
-        <Empty
-          title="Сначала подключите ученика"
-          action="Открыть учеников"
-          onAction={() => navigate("students")}
-        >
-          Добавьте ученика в кабинете и передайте ему код для входа.
-        </Empty>
-      ) : !data.assignable_tasks.length ? (
-        <Empty
-          title="Нет опубликованных заданий"
-          action="Открыть каталог"
-          onAction={() => navigate("catalog")}
-        >
-          Создайте модуль с практическими блоками и опубликуйте его.
-        </Empty>
-      ) : (
-        <Form onSubmit={save}>
-          <div className="form-grid">
-            <Field label="Ученик">
-              <select
-                required
-                value={student}
-                onChange={(e) => { setStudent(e.target.value); setLesson(""); }}
-              >
-                <option value="">Выберите ученика</option>
-                {data.students
-                  .filter((s) => s.status === "active")
-                  .map((s) => (
-                    <option key={s.student_id} value={s.student_id}>
-                      {s.nickname || s.display_name}
-                    </option>
-                  ))}
-              </select>
-            </Field>
-            <Field label="Название работы">
-              <input
-                required
-                maxLength={200}
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </Field>
-          </div>
-          <Field label="Связанное занятие">
-            <select value={lesson} onChange={(e) => setLesson(e.target.value)}>
-              <option value="">Без привязки к занятию</option>
-              {data.lessons.filter((l) => l.student_id === student && l.status !== "canceled").map((l) => <option key={l.id} value={l.id}>{dateTime(l.starts_at)}</option>)}
-            </select>
-          </Field>
-          <div className="form-grid">
-            <Field label="Срок сдачи" hint="Можно оставить без срока">
-              <input type="datetime-local" ref={dueInput} />
-            </Field>
-            <Field label="Комментарий ученику">
-              <textarea
-                rows={2}
-                maxLength={20000}
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-              />
-            </Field>
-          </div>
-          <div className="spread">
-            <h3>Задания</h3>
-            <span className="badge">Выбрано {chosen.length}/100</span>
-          </div>
-          <label className="search teaching-search">
-            <Search size={16} />
-            <input
-              aria-label="Поиск задания для домашней работы"
-              placeholder="Название или условие…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </label>
-          <div className="task-picker">
-            {tasks.map((t) => (
-              <label key={t.id}>
-                <input
-                  type="checkbox"
-                  checked={chosen.includes(t.id)}
-                  disabled={!chosen.includes(t.id) && chosen.length >= 100}
-                  onChange={(e) =>
-                    setChosen((ids) =>
-                      e.target.checked
-                        ? [...ids, t.id]
-                        : ids.filter((id) => id !== t.id),
-                    )
-                  }
-                />
-                <span>
-                  <strong>{t.title}</strong>
-                  <small>
-                    {data.modules.find((m) => m.id === t.module_id)?.title} ·{" "}
-                    {taskLabels[t.type]}
-                  </small>
-                  <p>{t.statement}</p>
-                </span>
-              </label>
-            ))}
-            {!tasks.length && (
-              <p className="inline-empty">Задания не найдены.</p>
-            )}
-          </div>
-          <p className="field-hint">
-            В работу попадёт опубликованная версия заданий. Последующие
-            изменения модулей не поменяют условия и проверку этой работы.
-          </p>
-          {error && <ErrorBox message={error} />}
-          <div className="modal-actions">
-            <button
-              className="btn"
-              type="button"
-              disabled={busy}
-              onClick={onClose}
-            >
-              Отмена
-            </button>
-            <button
-              className="btn primary"
-              disabled={busy || !student || !chosen.length}
-            >
-              {busy ? "Назначение…" : "Назначить работу"}
-            </button>
-          </div>
-        </Form>
-      )}
-    </Modal>
-  );
 }
 export function HomeworkPage({ id }: { id: string }) {
   const { data, teacher, preview, navigate, refresh, notify } = useApp();
@@ -302,17 +127,18 @@ export function HomeworkPage({ id }: { id: string }) {
       <div className="homework-banner panel">
         <div className="spread">
           <h2>{summary.label}</h2>
-          <span className={`badge homework-status ${summary.state}`}>
-            Верных {summary.correct}/{summary.total}
-          </span>
+          {summary.totalRequired > 0 && <span className={`badge homework-status ${summary.state}`}>
+            Выполнено {summary.acceptedRequired}/{summary.totalRequired}
+          </span>}
         </div>
-        <p className="muted">
+        {summary.total > 0 && <p className="muted">
           Ответов {summary.answered}/{summary.total}
           {summary.pending
             ? ` · Ожидают ручной проверки: ${summary.pending}`
             : ""}
-        </p>
+        </p>}
         {work.comment && <p className="private-note">{work.comment}</p>}
+        {!!work.resources?.length && <HomeworkMaterials resources={work.resources} />}
         {summary.overdue && (
           <p className="status pending">
             Срок прошёл. Ответы по-прежнему можно отправить.
@@ -401,6 +227,7 @@ export function HomeworkPage({ id }: { id: string }) {
           );
         })}
       </div>
+      {work.requires_submission && <HomeworkResponse work={work} />}
       {review && (
         <ReviewModal attempt={review} onClose={() => setReview(null)} />
       )}

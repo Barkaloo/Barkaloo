@@ -577,7 +577,7 @@
 }
 .student-list-head, .student-row {
   display: grid;
-  grid-template-columns: minmax(160px, 2fr) minmax(125px, 1.1fr) .65fr .65fr 90px 18px;
+  grid-template-columns: minmax(140px, 1.7fr) minmax(100px, 1fr) minmax(110px, .9fr) minmax(150px, 1fr) 18px;
   align-items: center;
   gap: 20px;
 }
@@ -767,7 +767,7 @@
 }
 @media (max-width: 1100px) {
  .student-list-head, .student-row {
-   grid-template-columns: minmax(130px, 2fr) 1fr .6fr .6fr 80px 16px;
+   grid-template-columns: minmax(0, 1.7fr) minmax(90px, 1fr) minmax(90px, .9fr) minmax(140px, 1fr) 16px;
    gap: 12px;
  }
 }
@@ -873,3 +873,43 @@
 .theory-description small { display: block; margin-top: 8px; color: var(--muted); font-size: 12px; }
 .modal audio { width: 100%; margin: 20px 0; }
 @media (max-width: 760px) { .theory-row { flex-wrap: wrap; gap: 12px; } .theory-description { flex-basis: calc(100% - 50px); } .theory-row > .actions { margin-left: 45px; } }
+
+/* Student management and mixed-content homework use the shared surfaces. */
+.student-homework-action { display: flex; align-items: flex-start; padding-top: 4px; }
+.student-homework-action .btn { white-space: normal; text-align: left; }
+.student-note-list { margin-top: 12px; }
+.student-note-entry { padding: 12px 0; border-bottom: 1px solid var(--line); }
+.student-note-entry:last-child { border-bottom: 0; padding-bottom: 0; }
+.student-note-entry time { font-size: 12px; color: var(--muted); }
+.student-note-entry .actions { gap: 2px; }
+.student-note-entry .private-note { margin: 6px 0 0; max-height: 240px; overflow: auto; }
+.student-lesson-summary { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+.homework-form-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
+.homework-link-input { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 12px; }
+.homework-link-input .field { flex: 1; margin: 0; min-width: 0; }
+.homework-file-picker { position: relative; overflow: hidden; cursor: pointer; }
+.homework-file-picker input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+.homework-file-picker:focus-within { outline: 2px solid var(--accent); outline-offset: 3px; }
+.homework-upload-list { padding: 0; margin: 12px 0; list-style: none; }
+.homework-upload-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: 13px; }
+.homework-upload-list li > span { overflow-wrap: anywhere; min-width: 0; }
+.homework-task-picker { margin: 24px 0; border-block: 1px solid var(--line); padding: 14px 0; }
+.homework-task-picker > summary { cursor: pointer; font-weight: 550; font-size: 14px; }
+.homework-task-picker > summary .badge { margin-left: 8px; }
+.homework-task-picker .task-picker { max-height: 260px; }
+.homework-manual-toggle { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; margin: 20px 0; cursor: pointer; }
+.homework-manual-toggle input { flex-shrink: 0; margin-top: 2px; }
+.homework-materials { display: grid; gap: 8px; margin-top: 18px; }
+.homework-resource { display: flex; align-items: center; gap: 10px; width: fit-content; max-width: 100%; padding: 8px 0; font-size: 14px; text-align: left; color: var(--accent); }
+.homework-resource > span { min-width: 0; overflow-wrap: anywhere; }
+.homework-resource svg { flex-shrink: 0; }
+.homework-resource:hover > span { text-decoration: underline; }
+.homework-submission { margin: 16px 0; }
+.homework-feedback { border-left: 2px solid var(--line); padding-left: 12px; }
+.homework-response .actions { flex-wrap: wrap; }
+@media (max-width: 760px) {
+ .student-lesson-summary { gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+ .student-row > .badge { white-space: normal; max-width: 45vw; }
+ .student-row .student-since { display: block; }
+ .homework-response .actions .btn { flex: 1 1 180px; }
+}

@@ -5,9 +5,9 @@ import { api } from "../lib/api";
 import { dateTime, localDateTime, studentName, lessonLabels, homeworkState } from "../lib/teaching";
 import type { LessonRecord } from "../types";
 import { Empty, ErrorBox, Field, Form, Modal } from "../components/ui";
-export default function Lessons() {
+export default function Lessons({ initialStudent = "" }: { initialStudent?: string }) {
   const { data, teacher, preview, refresh, notify, navigate } = useApp();
-  const [student, setStudent] = useState(""),
+  const [student, setStudent] = useState(initialStudent),
     [modal, setModal] = useState<LessonRecord | "new" | null>(null),
     [error, setError] = useState(""),
     [busy, setBusy] = useState("");
