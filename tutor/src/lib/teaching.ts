@@ -118,8 +118,8 @@ export function homeworkState(work: Homework, attempts: Attempt[], preview = fal
   const result = homeworkSummary(work, attempts, preview);
   const state = result.status === "canceled" ? "canceled"
     : result.status === "checked" ? "completed"
-    : result.status === "pending" ? "pending"
-    : result.overdue ? "overdue" : "uncompleted";
+    : result.overdue ? "overdue"
+    : result.status === "pending" ? "pending" : "uncompleted";
   const label = {
     completed: "Выполнена", uncompleted: "Не выполнена", overdue: "Просрочена",
     pending: "На проверке", canceled: "Отменена",

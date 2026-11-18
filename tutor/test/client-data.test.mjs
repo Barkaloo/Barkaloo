@@ -168,3 +168,11 @@ test("Canceled and completed lessons never enter the upcoming teacher schedule",
  const data={students:[{student_id:"s",status:"active"}],review_queue:[],lessons:[{...base,id:"p",status:"planned"},{...base,id:"c",status:"completed"},{...base,id:"x",status:"canceled"}]};
  assert.deepEqual(getTeacherOverview(data,now).upcoming.map(l=>l.id),["p"]);
 });
+test("An unfinished overdue work retains pending answers for the teacher", () => {
+ const rows = [attempt("auto", "item-1", "correct", "2030-01-01T00:00:00Z"), attempt("manual", "item-2", "pending", "2030-01-01T00:00:00Z")];
+ const result = homeworkState({...work, due_at: "2000-01-01T00:00:00Z"}, rows);
+ assert.equal(result.state, "overdue");
+ assert.equal(result.pending, 1);
+ assert.equal(result.correct, 1);
+ assert.equal(result.attemptsByItem.get("item-2")[0].status, "pending");
+});
