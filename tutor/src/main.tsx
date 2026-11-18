@@ -5,6 +5,7 @@ import { ErrorBoundary } from "./components/ui";
 import "katex/dist/katex.min.css";
 import "./styles.css";
 import "./teaching.css";
+import "./decorations.css";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ErrorBoundary>
