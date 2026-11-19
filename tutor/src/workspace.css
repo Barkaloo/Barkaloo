@@ -1,0 +1,159 @@
+/* Shared workspace scale and contrast; keep page-specific layouts intact. */
+:root {
+  --bg: #edf1ef;
+  --surface: #ffffff;
+  --soft: #e8eeea;
+  --text: #19271f;
+  --muted: #506158;
+  --line: #cad5ce;
+  --accent: #276448;
+  --accent-hover: #1c5037;
+  --accent-soft: #dcebe1;
+  --control-line: #a6b7ac;
+  --workspace-shadow: 0 2px 8px #20352805;
+}
+
+:root[data-theme="dark"] {
+  --bg: #08090b;
+  --surface: #141619;
+  --soft: #21252a;
+  --text: #f4f5f7;
+  --muted: #b0b7c0;
+  --line: #383e46;
+  --control-line: #535c68;
+  --workspace-shadow: 0 2px 8px #00000018;
+}
+
+body {
+  font-size: 16px;
+  font-weight: 450;
+}
+
+.main-content {
+  max-width: 1440px;
+  padding: 28px 24px 48px;
+}
+
+.topbar {
+  padding-inline: 24px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.sidebar nav button, .settings-link, .btn, .field > span {
+  font-size: 14px;
+}
+
+.btn, .field > span { font-weight: 600; }
+.btn.small { font-size: 13px; }
+
+input, select, textarea, .rich-editor {
+  border-color: var(--control-line);
+}
+
+input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
+
+.icon-btn { color: var(--muted); }
+.topbar-left, .today, .page-heading p, .field > small, .field-hint {
+  font-size: 13px;
+}
+
+/* Anchor grouped content with one surface, rather than a card per row. */
+.teacher-summary, .metrics-grid, .homework-metrics,
+.student-list, .lesson-record-list, .theory-list, .bank-numbers,
+.bank-task-list, .bank-variants {
+  border: 1px solid var(--line);
+  border-image: none;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--workspace-shadow);
+}
+
+.teacher-summary, .metrics-grid, .homework-metrics {
+  padding-inline: 20px;
+}
+
+.teacher-summary-card { padding-top: 18px; padding-bottom: 18px; }
+.homework-metrics { padding-block: 16px; }
+.homework-metrics span { font-size: 13px; }
+.teacher-summary-card > div > span, .metric > span, .metric > small {
+  font-size: 13px;
+}
+
+.teacher-workspace > .panel, .dashboard-columns > .panel {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  background-image: none;
+  box-shadow: var(--workspace-shadow);
+}
+
+.teacher-agenda-list strong, .teacher-inbox-list strong { font-size: 14px; }
+.teacher-agenda-list small, .teacher-inbox-list :is(p, small) { font-size: 13px; }
+
+.student-list-head {
+  background: var(--soft);
+  border-radius: calc(var(--radius) - 1px) calc(var(--radius) - 1px) 0 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.student-row { font-size: 14px; }
+.student-row:last-child { border-radius: 0 0 var(--radius) var(--radius); }
+
+.lesson-record-list, .theory-list, .bank-numbers,
+.bank-task-list, .bank-variants { padding-inline: 20px; }
+.lesson-record:last-child, .theory-row:last-child { border-bottom: 0; }
+.bank-task-entry:last-child, .bank-variant-row:last-child { border-bottom: 0; }
+.bank-numbers > button { padding-inline: 4px; }
+.bank-numbers > button:hover { background: var(--accent-soft); }
+.bank-numbers > button span { font-size: 13px; }
+
+.homework-card, .homework-banner {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  background-image: none;
+  border-radius: var(--radius);
+  box-shadow: var(--workspace-shadow);
+}
+.homework-banner { padding: 20px; }
+.homework-card .deadline, .homework-score, .lesson-record-homework {
+  font-size: 13px;
+}
+
+.student-create-panel {
+  max-width: 600px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: var(--radius);
+}
+
+.settings-layout { max-width: 1100px; }
+.settings-layout > .panel {
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+/* Reading areas stay comfortable even on a wide monitor. */
+.lesson-layout { max-width: 1200px; grid-template-columns: minmax(0, 1fr) 220px; }
+.bank-task-entry { padding-block: 28px; }
+.bank-task-meta { font-size: 13px; }
+.bank-player .rich-content { font-size: 16px; line-height: 1.75; }
+
+@media (max-width: 900px) {
+  .lesson-layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 760px) {
+  .main-content { padding: 20px 18px 36px; }
+  .topbar { padding-inline: 14px; }
+  .teacher-summary, .metrics-grid, .homework-metrics,
+  .lesson-record-list, .theory-list, .bank-numbers,
+  .bank-task-list, .bank-variants { padding-inline: 14px; }
+  .teacher-summary-card, .teacher-summary-card + .teacher-summary-card {
+    padding-block: 14px;
+  }
+  .student-row { padding: 16px 14px; }
+  .homework-banner, .student-create-panel, .settings-layout > .panel { padding: 18px; }
+}
