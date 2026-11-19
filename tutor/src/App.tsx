@@ -113,7 +113,11 @@ export default function App() {
   const refresh = useCallback(async () => {
     const current = ++sequence.current;
     const next = await loadData(preview);
-    if (current === sequence.current) setData(next);
+    if (current === sequence.current) {
+      setData(next);
+      setError("");
+      setLoading(false);
+    }
     return next;
   }, [preview]);
   useEffect(() => {
@@ -126,10 +130,12 @@ export default function App() {
       if (navigator.onLine) update();
     }, 15000);
     window.addEventListener("focus", update);
+    window.addEventListener("online", update);
     document.addEventListener("visibilitychange", update);
     return () => {
       window.clearInterval(poll);
       window.removeEventListener("focus", update);
+      window.removeEventListener("online", update);
       document.removeEventListener("visibilitychange", update);
     };
   }, [session?.user.id, refresh]);

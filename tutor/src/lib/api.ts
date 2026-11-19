@@ -32,19 +32,22 @@ if (import.meta.hot) {
 export async function api<T = Record<string, unknown>>(
   action: string,
   payload: object = {},
+  signal?: AbortSignal,
 ): Promise<T> {
-  const { data, error } = await supabase.rpc("tutor_api", {
+  const request = supabase.rpc("tutor_api", {
     p_action: action,
     p: payload,
   });
+  const { data, error } = await (signal ? request.abortSignal(signal) : request);
+  if (signal?.aborted)
+    throw new Error("Сервер долго не отвечает. Проверьте подключение и повторите попытку.");
   if (error) {
     if (error.code === "PGRST202")
       throw new Error(
         "База Tutor ещё не настроена. Примените миграцию из папки supabase/migrations.",
       );
     if (
-      error.message === "Failed to fetch" ||
-      error.message.includes("fetch failed")
+      /failed to fetch|fetch failed|networkerror|load failed/i.test(error.message)
     )
       throw new Error(
         "Нет связи с сервером. Проверьте подключение и повторите действие.",
@@ -54,7 +57,11 @@ export async function api<T = Record<string, unknown>>(
   return data as T;
 }
 export const loadData = async (preview: boolean) => {
-  const data = await api<Data>("data", { preview });
+  // Stop waiting for a stalled read and let the cabinet reconnect.
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), 12_000);
+  const data = await api<Data>("data", { preview }, controller.signal)
+    .finally(() => window.clearTimeout(timer));
   if (!Array.isArray(data.students) || !Array.isArray(data.homeworks))
     throw new Error(
       "Нужно применить миграцию второго этапа Tutor. Материалы и прогресс сохранены.",
