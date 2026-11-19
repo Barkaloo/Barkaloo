@@ -30,8 +30,40 @@ export default function BankCatalog({route=''}:{route?:string}){
 }
 function BankTaskForm({number,task,moduleId,onClose,onSaved,lockNumber=false}:{lockNumber?:boolean;number:number;task?:Editable;moduleId:string;onClose:()=>void;onSaved:(id:string)=>void|Promise<void>}){
  const [n,setN]=useState(number),[statement,setStatement]=useState<JSONContent>(task?.statement_doc??emptyDoc),[solution,setSolution]=useState<JSONContent>(task?.solution_doc??emptyDoc),[answer,setAnswer]=useState(task?.answer??''),[type,setType]=useState(task?.type??'text'),[ignore,setIgnore]=useState(task?.ignore_case??false),[spaces,setSpaces]=useState(task?.collapse_spaces??false),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ const [solutionOpen,setSolutionOpen]=useState(task?.has_solution??false);
  const save=async()=>{setBusy(true);setError('');try{const r=await api<{id:string}>('bank_save',{id:task?.id,module_id:moduleId,number:n,type,statement:docText(statement)||'Задание с изображением',statement_doc:statement,solution_doc:solution,has_solution:hasDoc(solution),answer,ignore_case:ignore,collapse_spaces:spaces});await onSaved(r.id);}catch(e){setError((e as Error).message);}finally{setBusy(false);}};
- return <Modal title={task?'Редактировать задание':'Добавить задание'} onClose={()=>{if(!busy)onClose();}} wide><Form onSubmit={save}><div className="form-grid"><Field label="Номер ЕГЭ"><select disabled={lockNumber} value={n} onChange={e=>setN(Number(e.target.value))}>{Array.from({length:27},(_,i)=><option key={i+1}>{i+1}</option>)}</select></Field><Field label="Формат ответа"><select value={type} onChange={e=>setType(e.target.value as Task['type'])}><option value="text">Текстовый</option><option value="number">Числовой</option></select></Field></div><h3>Условие</h3><BankRichText value={statement} onChange={setStatement} moduleId={moduleId}/><Field label="Правильный ответ"><input required value={answer} onChange={e=>setAnswer(e.target.value)}/></Field>{type==='text'&&<div className="actions"><label><input type="checkbox" checked={ignore} onChange={e=>setIgnore(e.target.checked)}/> Не учитывать регистр</label><label><input type="checkbox" checked={spaces} onChange={e=>setSpaces(e.target.checked)}/> Нормализовать пробелы</label></div>}<h3>Решение · необязательно</h3><BankRichText label="Решение" value={solution} onChange={setSolution} moduleId={moduleId}/>{error&&<ErrorBox message={error}/>}<div className="modal-actions"><button type="button" className="btn" disabled={busy} onClick={onClose}>Отмена</button><button className="btn primary" disabled={busy||!hasDoc(statement)}>{busy?'Сохранение…':'Сохранить'}</button></div></Form></Modal>;
+ return (
+  <Modal title={task?'Редактировать задание':'Добавить задание'} className="bank-task-modal" onClose={()=>{if(!busy)onClose();}} wide>
+   <Form onSubmit={save}>
+    <div className="bank-task-fields">
+     <div className="bank-task-settings">
+      <Field label="Номер ЕГЭ"><select disabled={lockNumber} value={n} onChange={e=>setN(Number(e.target.value))}>{Array.from({length:27},(_,i)=><option key={i+1}>{i+1}</option>)}</select></Field>
+      <Field label="Формат ответа"><select value={type} onChange={e=>setType(e.target.value as Task['type'])}><option value="text">Текстовый</option><option value="number">Числовой</option></select></Field>
+     </div>
+     <section className="bank-form-section">
+      <div className="bank-section-heading"><h3>Условие</h3><span>Скриншот можно вставить через Ctrl+V</span></div>
+      <BankRichText value={statement} onChange={setStatement} moduleId={moduleId}/>
+     </section>
+     <section className="bank-form-section bank-answer-section">
+      <Field label="Правильный ответ"><input required placeholder={type==='number'?'Например, 42':'Введите точный ответ'} value={answer} onChange={e=>setAnswer(e.target.value)}/></Field>
+      {type==='text'&&<div className="bank-answer-options">
+       <label><input type="checkbox" checked={ignore} onChange={e=>setIgnore(e.target.checked)}/><span>Не учитывать регистр</span></label>
+       <label><input type="checkbox" checked={spaces} onChange={e=>setSpaces(e.target.checked)}/><span>Нормализовать пробелы</span></label>
+      </div>}
+     </section>
+     <details className="bank-solution-section" open={solutionOpen} onToggle={e=>setSolutionOpen(e.currentTarget.open)}>
+      <summary className="bank-section-heading"><strong>{solutionOpen?"Решение":"Добавить решение"}</strong><span>Необязательно <span className="bank-disclosure-arrow">⌄</span></span></summary>
+      <BankRichText label="Решение" value={solution} onChange={setSolution} moduleId={moduleId}/>
+     </details>
+     {error&&<ErrorBox message={error}/>}
+    </div>
+    <div className="modal-actions bank-task-footer">
+     <button type="button" className="btn" disabled={busy} onClick={onClose}>Отмена</button>
+     <button className="btn primary" disabled={busy||!hasDoc(statement)}>{busy?'Сохранение…':'Сохранить задание'}</button>
+    </div>
+   </Form>
+  </Modal>
+ );
 }
 function BankPlayer({task,run}:{task:Task;run?:Run}){
  const {preview,refresh}=useApp();const [answer,setAnswer]=useState(''),[verdict,setVerdict]=useState(''),[reveal,setReveal]=useState<{answer?:string;solution_doc?:JSONContent}|null>(null),[showAnswer,setShowAnswer]=useState(false),[showSolution,setShowSolution]=useState(false),[error,setError]=useState(''),[busy,setBusy]=useState(false);const request=useRef(crypto.randomUUID());

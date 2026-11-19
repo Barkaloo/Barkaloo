@@ -7,6 +7,7 @@ import "./styles.css";
 import "./teaching.css";
 import "./decorations.css";
 import "./auth.css";
+import "./bank-editor.css";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ErrorBoundary>
