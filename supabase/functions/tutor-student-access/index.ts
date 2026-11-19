@@ -9,6 +9,7 @@ import {
 const origins = new Set([
   "https://barkaloo-tutor.vercel.app",
   "https://barkaloo-tutor-ruddy.vercel.app",
+  "https://barkaloo88.sourcecraft.site",
   "http://127.0.0.1:5173",
   "http://localhost:5173",
 ]);
