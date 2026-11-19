@@ -10,13 +10,14 @@ test('Student workspace: mixed homework, private dated notes, isolated files and
  const source = await readFile(new URL('./teaching.test.mjs', import.meta.url), 'utf8');
  await db.exec(source.slice(source.indexOf('await db.exec(`') + 15, source.indexOf('`);', source.indexOf('await db.exec(`'))));
  const migrations = (await readdir('supabase/migrations')).filter(f => f.endsWith('.sql')).sort();
- for (const file of migrations.slice(0, -1)) await db.exec(await readFile('supabase/migrations/' + file, 'utf8'));
+ const boundary = migrations.findIndex(f=>f.includes("tutor_student_homework_workspace"));
+ for (const file of migrations.slice(0, boundary)) await db.exec(await readFile('supabase/migrations/' + file, 'utf8'));
  const owner = randomUUID(), pupil = randomUUID(), stranger = randomUUID(), otherTeacher = randomUUID();
  for (const id of [owner, pupil, stranger, otherTeacher]) await db.query('insert into auth.users values($1,$2)', [id, id + '@test.invalid']);
  await db.query("insert into tutor_roles values($1,'teacher'),($2,'teacher')", [owner, otherTeacher]);
  await db.query('insert into tutor_student_links(teacher_id,student_id) values($1,$2)', [owner, pupil]);
  await db.query("insert into tutor_student_notes values($1,$2,'Legacy private note')", [owner, pupil]);
- await db.exec(await readFile('supabase/migrations/' + migrations.at(-1), 'utf8'));
+ for(const file of migrations.slice(boundary)) await db.exec(await readFile('supabase/migrations/' + file, 'utf8'));
  const as = async (id) => { await db.exec('reset role'); await db.query("select set_config('request.jwt.claim.sub',$1,false)", [id]); await db.exec('set role authenticated'); };
  const api = async (action, p = {}) => (await db.query('select tutor_api($1,$2::jsonb) data', [action, JSON.stringify(p)])).rows[0].data;
  const data = () => api('data');

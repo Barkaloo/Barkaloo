@@ -56,6 +56,10 @@ export type Module = {
 export type TaskType = "number" | "text" | "single" | "multiple" | "manual";
 export type Answer = string | string[];
 export type Task = {
+  statement_doc?: JSONContent;
+  bank_number?: number;
+  bank_serial?: number;
+  has_solution?: boolean;
   id: string;
   module_id: string;
   type: TaskType;

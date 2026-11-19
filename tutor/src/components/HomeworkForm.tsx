@@ -83,7 +83,7 @@ export default function HomeworkForm({ initialStudent, initialLesson, onClose }:
           <label className="search teaching-search"><Search size={16} /><input aria-label="Поиск задания для домашней работы" placeholder="Название или условие…" value={query} onChange={(e) => setQuery(e.target.value)} /></label>
           <div className="task-picker">{tasks.map((t) => <label key={t.id}>
             <input type="checkbox" checked={chosen.includes(t.id)} disabled={!chosen.includes(t.id) && chosen.length >= 100} onChange={(e) => setChosen((ids) => e.target.checked ? [...ids, t.id] : ids.filter((id) => id !== t.id))} />
-            <span><strong>{t.title}</strong><small>{data.modules.find((m) => m.id === t.module_id)?.title} · {taskLabels[t.type]}</small><p>{t.statement}</p></span>
+            <span><strong>{t.bank_serial ? "№"+t.bank_serial+" · " : ""}{t.title}</strong><small>{data.modules.find((m) => m.id === t.module_id)?.title} · {taskLabels[t.type]}</small><p>{t.statement}</p></span>
           </label>)}{!tasks.length && <p className="inline-empty">Задания не найдены.</p>}</div>
         </> : <p className="inline-empty">В банке пока нет опубликованных заданий.</p>}
       </details>

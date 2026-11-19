@@ -4,6 +4,7 @@ import { useApp } from "../context";
 import { answerLabel, api } from "../lib/api";
 import { taskLabels, type Task, type Answer, type Attempt } from "../types";
 import { ErrorBox } from "./ui";
+import BankRichText from "./BankRichText";
 export default function TaskPlayer({
   task,
   homeworkItemId,
@@ -66,7 +67,7 @@ export default function TaskPlayer({
         {task.prototype && <span>{task.prototype}</span>}
       </div>
       <h3>{task.title}</h3>
-      <p className="task-statement">{task.statement}</p>
+      {task.statement_doc ? <BankRichText readOnly value={task.statement_doc}/> : <p className="task-statement">{task.statement}</p>}
       <form
         onSubmit={(e) => {
           e.preventDefault();

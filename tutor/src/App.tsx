@@ -6,6 +6,7 @@ import {
   lazy,
   Suspense,
 } from "react";
+const BankCatalog = lazy(() => import("./pages/BankCatalog"));
 import type { Session } from "@supabase/supabase-js";
 import BrandMark from "./components/BrandMark";
 import {
@@ -32,7 +33,7 @@ import { AppContext } from "./context";
 import { Busy, ErrorBox } from "./components/ui";
 import Auth from "./pages/Auth";
 import StudentSetup from "./pages/StudentSetup";
-import { Catalog, KegeCatalog, SectionPage, Modules } from "./pages/Catalog";
+import { SectionPage, Modules } from "./pages/Catalog";
 import { Dashboard, Statistics } from "./pages/Overview";
 import Settings from "./pages/Settings";
 const Editor = lazy(() => import("./pages/Editor"));
@@ -289,7 +290,7 @@ export default function App() {
       case "theory":
         return <Theory />;
       case "catalog":
-        return teacher ? <Catalog /> : <KegeCatalog />;
+        return <div className="bank-catalog"><BankCatalog key={id} route={id}/></div>;
       case "section":
         return <SectionPage key={id} id={id} />;
       case "modules":
