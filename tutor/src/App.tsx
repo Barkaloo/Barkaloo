@@ -331,6 +331,8 @@ export default function App() {
       case "join":
         return <Connect key={id} initialCode={id} />;
       case "homework":
+        if (id === "student" && teacher && linkedLessonId)
+          return <HomeworkList key={linkedLessonId} initialStudent={linkedLessonId} />;
         return id ? <HomeworkPage key={id} id={id} /> : <HomeworkList />;
       case "homework-new":
         return teacher ? (

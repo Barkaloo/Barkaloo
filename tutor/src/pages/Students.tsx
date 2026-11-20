@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { useApp } from "../context";
 import { api, formatDate } from "../lib/api";
-import { dateTime, homeworkState, lessonLabels } from "../lib/teaching";
 import type { Student } from "../types";
 import { Empty, ErrorBox, Field, Form, Modal } from "../components/ui";
 import {
@@ -137,8 +136,7 @@ export function StudentPage({ id }: { id: string }) {
     ),
     graded = attempts.filter((a) => a.status !== "pending"),
     correct = graded.filter((a) => a.status === "correct");
-  const works = data.homeworks.filter((h) => h.student_id === id).slice().sort((a, b) => b.assigned_at.localeCompare(a.assigned_at)),
-    lessons = data.lessons.filter((l) => l.student_id === id).slice().sort((a, b) => Date.parse(b.starts_at) - Date.parse(a.starts_at)),
+  const lessons = data.lessons.filter((l) => l.student_id === id),
     progress = data.student_progress.filter((p) => p.user_id === id);
   return (
     <>
@@ -208,87 +206,11 @@ export function StudentPage({ id }: { id: string }) {
         </div>
         <StudentNotes studentId={id} />
       </div>
-      <section className="panel teaching-section">
-        <div className="spread">
-          <h2>Домашние задания</h2>
-        </div>
-        {works.length ? (
-          works.map((w) => {
-            const result = homeworkState(w, data.attempts);
-            return (
-              <button
-                className="homework-highlight"
-                key={w.id}
-                onClick={() => navigate(`homework/${w.id}`)}
-              >
-                <div>
-                  <strong>{w.title}</strong>
-                  <small>Назначено: {dateTime(w.assigned_at)} · Срок: {dateTime(w.due_at)}</small>
-                </div>
-                <span className={`badge homework-status ${result.state}`}>
-                  {result.label}
-                </span>
-              </button>
-            );
-          })
-        ) : (
-          <p className="inline-empty">Домашних заданий пока нет.</p>
-        )}
-      </section>
-      <section className="panel teaching-section">
-        <div className="spread">
-          <h2>История результатов</h2>
-          <button className="text-btn" onClick={() => navigate(`stats/${id}`)}>
-            Подробная статистика
-            <ArrowRight size={15} />
-          </button>
-        </div>
-        {attempts.length ? (
-          <div className="results-list">
-            {attempts.slice(0, 12).map((a) => (
-              <div key={a.id}>
-                <span>
-                  <strong>{a.task_snapshot.title}</strong>
-                  <small>
-                    {dateTime(a.created_at)}
-                    {a.homework_item_id ? " · Домашняя работа" : ""}
-                  </small>
-                </span>
-                <span className={`status ${a.status}`}>
-                  {a.status === "correct"
-                    ? "Верно"
-                    : a.status === "wrong"
-                      ? "Ошибка"
-                      : "На проверке"}
-                </span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="inline-empty">
-            Ответов пока нет.
-          </p>
-        )}
-      </section>
-      <section className="panel teaching-section">
-        <div className="spread">
-          <h2>Занятия</h2>
-          <button className="text-btn" onClick={() => navigate(`lessons/${id}`)}>
-            Открыть журнал
-            <ArrowRight size={15} />
-          </button>
-        </div>
-        {lessons.length ? (
-          lessons.slice(0, 5).map((l) => (
-            <div className="assigned-row" key={l.id}>
-              <strong>{dateTime(l.starts_at)}</strong>
-              <span className="student-lesson-summary"><span>{l.duration_minutes} мин</span><span className={`badge lesson-status ${l.status}`}>{lessonLabels[l.status]}</span></span>
-            </div>
-          ))
-        ) : (
-          <p className="inline-empty">Занятия ещё не добавлены.</p>
-        )}
-      </section>
+      <div className="actions student-detail-links">
+        <button className="btn" onClick={() => navigate(`lessons/${id}`)}>Журнал занятий <ArrowRight size={15} /></button>
+        <button className="btn" onClick={() => navigate(`homework/student/${id}`)}>Домашние задания <ArrowRight size={15} /></button>
+        <button className="btn" onClick={() => navigate(`stats/${id}`)}>Последние результаты <ArrowRight size={15} /></button>
+      </div>
       {homeworkOpen && <HomeworkForm initialStudent={id} onClose={() => setHomeworkOpen(false)} />}
       {editing && <StudentEdit student={s} onClose={() => setEditing(false)} />}
       {codeOpen && (

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useApp } from "../context";
 import ActivityChart from "../components/ActivityChart";
-import { studentName, homeworkState } from "../lib/teaching";
+import { dateTime, studentName, homeworkState } from "../lib/teaching";
 import { Empty } from "../components/ui";
 export default function TeacherStatistics({
   initialStudent = "",
@@ -161,6 +161,37 @@ export default function TeacherStatistics({
           )}
         </section>
       </div>
+      {student && (
+        <section className="panel teaching-section">
+          <h2>Последние результаты</h2>
+          {attempts.length ? (
+            <div className="results-list">
+              {attempts.slice(0, 12).map((a) => (
+                <div key={a.id}>
+                  <span>
+                    <strong>{a.task_snapshot.title}</strong>
+                    <small>
+                      {dateTime(a.created_at)}
+                      {a.homework_item_id ? " · Домашняя работа" : ""}
+                    </small>
+                  </span>
+                  <span className={`status ${a.status}`}>
+                    {a.status === "correct"
+                      ? "Верно"
+                      : a.status === "wrong"
+                        ? "Ошибка"
+                        : "На проверке"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="inline-empty">
+              Ответов пока нет.
+            </p>
+          )}
+        </section>
+      )}
       <section className="panel teaching-section">
         <h2>Результаты домашних работ</h2>
         {works.length ? (

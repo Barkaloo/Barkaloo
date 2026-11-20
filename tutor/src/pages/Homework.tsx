@@ -15,11 +15,11 @@ import ReviewModal from "../components/ReviewModal";
 import HomeworkForm from "../components/HomeworkForm";
 import HomeworkMaterials from "../components/HomeworkMaterials";
 import HomeworkResponse from "../components/HomeworkResponse";
-export function HomeworkList({ create = false, studentId, lessonId }: {
-  create?: boolean; studentId?: string; lessonId?: string;
+export function HomeworkList({ create = false, studentId, lessonId, initialStudent = "" }: {
+  create?: boolean; studentId?: string; lessonId?: string; initialStudent?: string;
 }) {
   const { data, teacher, preview, navigate } = useApp();
-  const [student, setStudent] = useState(""), [status, setStatus] = useState("all");
+  const [student, setStudent] = useState(initialStudent), [status, setStatus] = useState("all");
   const summaries = data.homeworks
     .filter((h) => !teacher || !student || h.student_id === student)
     .map((work) => ({ work, result: homeworkState(work, data.attempts, preview) }))

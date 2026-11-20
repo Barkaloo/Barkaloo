@@ -1,19 +1,20 @@
 import { useRef, useState } from "react";
-import { Plus, Pencil, CalendarDays, CheckCircle2, CircleX } from "lucide-react";
+import { Plus, Pencil, CalendarDays, CheckCircle2 } from "lucide-react";
 import { useApp } from "../context";
 import { api } from "../lib/api";
 import { dateTime, localDateTime, studentName, lessonLabels, homeworkState } from "../lib/teaching";
 import type { LessonRecord } from "../types";
 import { Empty, ErrorBox, Field, Form, Modal } from "../components/ui";
+import LessonCalendar from "../components/LessonCalendar";
+import { getLessonMonth, localLessonMonth } from "../lib/lesson-calendar";
 export default function Lessons({ initialStudent = "" }: { initialStudent?: string }) {
   const { data, teacher, preview, refresh, notify, navigate } = useApp();
   const [student, setStudent] = useState(initialStudent),
+    [month, setMonth] = useState(() => localLessonMonth(new Date())),
     [modal, setModal] = useState<LessonRecord | "new" | null>(null),
     [error, setError] = useState(""),
     [busy, setBusy] = useState("");
-  const lessons = data.lessons
-    .filter((l) => !teacher || !student || l.student_id === student)
-    .sort((a, b) => Date.parse(b.starts_at) - Date.parse(a.starts_at));
+  const { lessons, days, years } = getLessonMonth(data.lessons, month, teacher ? student : "");
   const changeStatus = async (lesson: LessonRecord, status: LessonRecord["status"]) => {
     if (status === "canceled" && !window.confirm("Отменить занятие? Статусы домашних работ не изменятся.")) return;
     setBusy(lesson.id);
@@ -36,11 +37,12 @@ export default function Lessons({ initialStudent = "" }: { initialStudent?: stri
         {data.students.map((s) => <option key={s.student_id} value={s.student_id}>{s.nickname || s.display_name}</option>)}
       </select>
     </div>}
+    <LessonCalendar selected={month} days={days} years={years} onChange={setMonth} />
     {error && <ErrorBox message={error} />}
     {lessons.length ? <div className="lesson-record-list">
       {lessons.map((l) => {
         const status = l.status ?? "planned";
-        const StatusIcon = status === "completed" ? CheckCircle2 : status === "canceled" ? CircleX : CalendarDays;
+        const StatusIcon = status === "completed" ? CheckCircle2 : CalendarDays;
         const editable = teacher && data.students.some((s) => s.student_id === l.student_id && s.status === "active");
         return <article className="panel lesson-record" key={l.id}>
           <div className="spread">
@@ -69,23 +71,25 @@ export default function Lessons({ initialStudent = "" }: { initialStudent?: stri
           </div>}
           {editable && <div className="actions lesson-actions">
             {status === "planned" && <button className="btn small" disabled={busy === l.id} onClick={() => changeStatus(l, "completed")}><CheckCircle2 size={15} />Провести</button>}
-            {status !== "canceled" && <button className="text-btn" disabled={busy === l.id} onClick={() => changeStatus(l, "canceled")}>Отменить</button>}
-            {status !== "canceled" && <button className="text-btn" onClick={() => navigate(`homework-new/${l.student_id}/${l.id}`)}>Назначить домашнюю работу</button>}
+            <button className="text-btn" disabled={busy === l.id} onClick={() => changeStatus(l, "canceled")}>Отменить</button>
+            <button className="text-btn" onClick={() => navigate(`homework-new/${l.student_id}/${l.id}`)}>Назначить домашнюю работу</button>
           </div>}
         </article>;
       })}
-    </div> : <Empty title="Занятий пока нет">{teacher ? "Добавьте проведённое или запланированное занятие." : "Здесь появятся занятия, которые добавит преподаватель."}</Empty>}
-    {modal && teacher && <LessonForm record={modal === "new" ? undefined : modal} initialStudent={student} onClose={() => setModal(null)} />}
+    </div> : <Empty title="В этом месяце нет занятий" />}
+    {modal && teacher && <LessonForm record={modal === "new" ? undefined : modal} initialStudent={student} onClose={() => setModal(null)} onSaved={(date) => { if (date) setMonth(localLessonMonth(date)); setModal(null); }} />}
   </>;
 }
 function LessonForm({
   record,
   initialStudent,
   onClose,
+  onSaved,
 }: {
   record?: LessonRecord;
   initialStudent?: string;
   onClose: () => void;
+  onSaved: (date?: Date) => void;
 }) {
   const { data, refresh, notify, navigate } = useApp();
   const [student, setStudent] = useState(
@@ -102,10 +106,11 @@ function LessonForm({
   const save = async () => {
     setBusy(true);
     try {
+      const date = new Date(startsInput.current!.value);
       await api("lesson_save", {
         id: record?.id,
         student_id: student,
-        starts_at: new Date(startsInput.current!.value).toISOString(),
+        starts_at: date.toISOString(),
         duration_minutes: duration,
         status,
         comment,
@@ -114,7 +119,7 @@ function LessonForm({
       });
       await refresh();
       notify("Занятие сохранено");
-      onClose();
+      onSaved(status === "canceled" ? undefined : date);
     } catch (e) {
       setError((e as Error).message);
     } finally {

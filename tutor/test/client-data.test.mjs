@@ -2,6 +2,31 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { homeworkSummary, homeworkState } from "../src/lib/teaching.ts";
 import { getTeacherOverview } from "../src/lib/dashboard.ts";
+import { getLessonMonth } from "../src/lib/lesson-calendar.ts";
+
+test("Lesson calendar and list share local month, student filter and cancellation rules", () => {
+  const lesson = (id, student_id, month, day, hour, status = "planned") => ({
+    id, student_id, status, starts_at: new Date(2026, month, day, hour).toISOString(),
+  });
+  const lessons = [
+    lesson("last", "a", 10, 30, 23, "completed"),
+    lesson("first-late", "b", 10, 1, 18),
+    lesson("outside", "a", 11, 1, 0),
+    lesson("canceled", "a", 10, 3, 10, "canceled"),
+    lesson("first-early", "a", 10, 1, 0),
+  ];
+  const month = { year: 2026, month: 10 };
+  const all = getLessonMonth(lessons, month);
+  assert.deepEqual(all.lessons.map((row) => row.id), ["first-early", "first-late", "last"]);
+  assert.equal(all.days.get(1), 2);
+  assert.equal(all.days.get(30), 1);
+  assert.equal(all.days.has(3), false);
+  const selected = getLessonMonth(lessons, month, "a");
+  assert.deepEqual(selected.lessons.map((row) => row.id), ["first-early", "last"]);
+  assert.equal(selected.days.get(1), 1);
+  assert.deepEqual(getLessonMonth(lessons, { ...month, month: 11 }).lessons.map((row) => row.id), ["outside"]);
+  assert.deepEqual(lessons.map((row) => row.id), ["last", "first-late", "outside", "canceled", "first-early"]);
+});
 
 const work = {
   id: "work",
