@@ -6,7 +6,8 @@ const key = import.meta.env.VITE_TUTOR_SUPABASE_PUBLISHABLE_KEY;
 export const configured = !!url && !!key && !url.includes("your-project");
 const cabinetFetch: typeof fetch = (input, init) => {
   if (typeof input === "string" && url && input === `${url.replace(/\/$/, "")}/rest/v1/rpc/tutor_api`) {
-    return fetch(`${url.replace(/\/$/, "")}/functions/v1/tutor-student-access?route=cabinet`, init);
+    // Use the same endpoint as code sign-in, including its URL for preflight.
+    return fetch(`${url.replace(/\/$/, "")}/functions/v1/tutor-student-access`, init);
   }
   return fetch(input, init);
 };
