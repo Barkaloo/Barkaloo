@@ -57,6 +57,33 @@ Deno.serve(async (request) => {
     return new Response(null, { status: 204, headers });
   if (request.method !== "POST")
     return response({ error: "Метод не поддерживается" }, 405);
+  if (new URL(request.url).searchParams.get("route") === "cabinet") {
+    const authorization = request.headers.get("authorization");
+    if (!authorization) return response({ message: "Войдите в аккаунт" }, 401);
+    const limit = 2 * 1024 * 1024;
+    if (Number(request.headers.get("content-length")) > limit)
+      return response({ message: "Слишком большой запрос" }, 413);
+    try {
+      const body = await request.arrayBuffer();
+      if (body.byteLength > limit)
+        return response({ message: "Слишком большой запрос" }, 413);
+      // Keep the caller's identity and all existing database access checks.
+      const upstream = await fetch(`${Deno.env.get("SUPABASE_URL")}/rest/v1/rpc/tutor_api`, {
+        method: "POST",
+        headers: {
+          authorization,
+          apikey: Deno.env.get("SUPABASE_ANON_KEY")!,
+          "content-type": "application/json",
+        },
+        body,
+        redirect: "error",
+        signal: AbortSignal.timeout(25_000),
+      });
+      return new Response(upstream.body, { status: upstream.status, headers });
+    } catch {
+      return response({ message: "Нет связи с сервером кабинета. Повторите попытку." }, 502);
+    }
+  }
   try {
     if (Number(request.headers.get("content-length")) > 8192)
       return response({ error: "Слишком большой запрос" }, 413);

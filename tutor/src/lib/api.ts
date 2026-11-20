@@ -4,6 +4,12 @@ import { browserTabAuth } from "./tab-auth";
 const url = import.meta.env.VITE_TUTOR_SUPABASE_URL;
 const key = import.meta.env.VITE_TUTOR_SUPABASE_PUBLISHABLE_KEY;
 export const configured = !!url && !!key && !url.includes("your-project");
+const cabinetFetch: typeof fetch = (input, init) => {
+  if (typeof input === "string" && url && input === `${url.replace(/\/$/, "")}/rest/v1/rpc/tutor_api`) {
+    return fetch(`${url.replace(/\/$/, "")}/functions/v1/tutor-student-access?route=cabinet`, init);
+  }
+  return fetch(input, init);
+};
 export const supabase: SupabaseClient =
   (import.meta.hot &&
   import.meta.hot.data.supabaseClientUrl === url &&
@@ -14,6 +20,9 @@ export const supabase: SupabaseClient =
     configured ? url : "https://unconfigured.supabase.co",
     configured ? key : "unconfigured",
     {
+      ...(window.location.origin === "https://barkaloo88.sourcecraft.site"
+        ? { global: { fetch: cabinetFetch } }
+        : {}),
       auth: {
         ...browserTabAuth(
           `barkaloo-tutor-${configured ? new URL(url).hostname.split(".")[0] : "unconfigured"}-auth`,
