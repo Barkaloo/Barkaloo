@@ -5,12 +5,12 @@ body {
 }
 
 .main-content {
-  max-width: var(--content-width);
+  max-width: none;
   padding: clamp(26px, 3vw, 44px) var(--content-gutter) 48px;
 }
 
 .topbar {
-  padding-inline: max(var(--content-gutter), calc((100% - var(--content-width)) / 2 + var(--content-gutter)));
+  padding-inline: var(--content-gutter);
   border-bottom: 1px solid var(--line);
   background: var(--bg);
 }

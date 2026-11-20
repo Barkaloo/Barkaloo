@@ -162,7 +162,6 @@
   --dialog-radius: 12px;
   --control-height: 40px;
   --content-gutter: clamp(24px, 2.6vw, 40px);
-  --content-width: 1440px;
   --ease-ui: 160ms ease;
   --font-mono: "Cascadia Mono", Consolas, ui-monospace, monospace;
   --overlay-shadow: 0 14px 40px #0002;
