@@ -33,9 +33,14 @@ import { AppContext } from "./context";
 import { Busy, ErrorBox } from "./components/ui";
 import Auth from "./pages/Auth";
 import StudentSetup from "./pages/StudentSetup";
-import { SectionPage, Modules } from "./pages/Catalog";
 import { Dashboard, Statistics } from "./pages/Overview";
-import Settings from "./pages/Settings";
+const SectionPage = lazy(() =>
+  import("./pages/Catalog").then((m) => ({ default: m.SectionPage })),
+);
+const Modules = lazy(() =>
+  import("./pages/Catalog").then((m) => ({ default: m.Modules })),
+);
+const Settings = lazy(() => import("./pages/Settings"));
 const Editor = lazy(() => import("./pages/Editor"));
 const Students = lazy(() =>
   import("./pages/Students").then((m) => ({ default: m.Students })),

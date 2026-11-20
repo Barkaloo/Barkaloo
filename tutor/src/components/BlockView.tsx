@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import katex from "katex";
+import "katex/dist/katex.min.css";
 import Prism from "prismjs";
 import "prismjs/components/prism-python";
 import "prismjs/components/prism-javascript";

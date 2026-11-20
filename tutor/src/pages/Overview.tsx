@@ -13,14 +13,24 @@ import { type Attempt } from "../types";
 import { Empty } from "../components/ui";
 import ActivityChart from "../components/ActivityChart";
 import ReviewModal from "../components/ReviewModal";
-import { ModuleCard } from "./Catalog";
+import { ModuleCard } from "../components/ModuleCard";
 import HomeworkHighlights from "../components/HomeworkHighlights";
 import TeacherOverview from "../components/TeacherOverview";
 function StudentMetrics() {
   const { data } = useApp();
   const graded = data.attempts.filter((a) => a.status !== "pending"),
     correct = graded.filter((a) => a.status === "correct");
-  const complete = data.progress.filter((p) => p.completed_at).length;
+  const completedProgress = data.progress.filter((p) => p.completed_at);
+  const complete = completedProgress.length;
+  const completedModuleIds = new Set(completedProgress.map((p) => p.module_id));
+  const topicsWithModules = new Set<string>();
+  const topicsWithIncompleteModules = new Set<string>();
+  for (const module of data.modules) {
+    topicsWithModules.add(module.topic_id);
+    if (!completedModuleIds.has(module.id)) {
+      topicsWithIncompleteModules.add(module.topic_id);
+    }
+  }
   const cards = [
     {
       label: "Изучено модулей",
@@ -46,15 +56,9 @@ function StudentMetrics() {
     },
     {
       label: "Завершено тем",
-      value: data.topics.filter((t) => {
-        const modules = data.modules.filter((m) => m.topic_id === t.id);
-        return (
-          modules.length > 0 &&
-          modules.every((m) =>
-            data.progress.some((p) => p.module_id === m.id && p.completed_at),
-          )
-        );
-      }).length,
+      value: data.topics.filter(
+        (t) => topicsWithModules.has(t.id) && !topicsWithIncompleteModules.has(t.id),
+      ).length,
       icon: TrendingUp,
       detail: `Из ${data.topics.length} доступных`,
     },
