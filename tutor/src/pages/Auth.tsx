@@ -254,13 +254,9 @@ export default function Auth({
         </div>
       </section>
       <aside className="auth-art" aria-hidden="true">
-        <div className="auth-art-grid" />
-        <div className="auth-orbit auth-orbit-outer"><i /><i /></div>
-        <div className="auth-orbit auth-orbit-inner"><i /></div>
+        <div className="auth-orbit auth-orbit-outer" />
+        <div className="auth-orbit auth-orbit-inner" />
         <div className="auth-art-symbol"><BrandMark /></div>
-        <span className="auth-art-token auth-token-top">01</span>
-        <span className="auth-art-token auth-token-bottom">27</span>
-        <span className="auth-art-caption">ИНФОРМАТИКА / КЕГЭ</span>
       </aside>
       </div>
     </main>
