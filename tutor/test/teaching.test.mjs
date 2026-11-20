@@ -352,7 +352,26 @@ test("Teaching: invitations, private access, immutable homework, review, lessons
   await assert.rejects(api("lesson_save", { id: lesson.id, student_id: student, status: "canceled" }), /недоступен/);
   await as(owner);
   const record = (await data()).lessons.find((l) => l.id === lesson.id);
+  const blockedDay = { day: "2026-11-16", time_zone: "Europe/Moscow", blocked: true };
+  const blockedRequest = {
+    student_id: student,
+    starts_at: "2026-11-15T22:00:00Z",
+    duration_minutes: 60,
+  };
+  await api("lesson_block_day", blockedDay);
+  assert.deepEqual((await data()).blocked_lesson_days, [blockedDay.day]);
+  await assert.rejects(api("lesson_save", blockedRequest), /Дата закрыта/);
+  await assert.rejects(api("lesson_save", { ...record, starts_at: blockedRequest.starts_at }), /Дата закрыта/);
+  await as(student);
+  assert.equal((await data()).blocked_lesson_days, undefined);
+  await assert.rejects(api("lesson_block_day", blockedDay), /роль преподавателя/);
+  await as(otherTeacher);
+  assert.deepEqual((await data()).blocked_lesson_days, []);
+  await as(owner);
   await api("lesson_save", { ...record, status: "completed" });
+  await api("lesson_block_day", { day: blockedDay.day, blocked: false });
+  assert.deepEqual((await data()).blocked_lesson_days, []);
+  await api("lesson_save", { ...record, starts_at: blockedRequest.starts_at, status: "completed" });
   assert.equal((await data()).lessons[0].status, "completed");
   await api("publish", { module_id: module.id, revision: draft.revision });
   const linked = await api("homework_create", { student_id: student, lesson_id: lesson.id, title: "Linked fixture", task_ids: [number.id] });

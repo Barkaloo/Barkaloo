@@ -1,6 +1,7 @@
 /* Interaction states shared by navigation, controls, and content rows. */
 :where(.btn, .icon-btn, .text-btn, .back-link, .tabs button, .sidebar nav button,
-       .student-row, .bank-numbers > button, .homework-card, .auth-audience button) {
+       .student-row, .bank-numbers > button, .homework-card, .auth-audience button,
+       .lesson-calendar-day) {
   transition: background-color var(--ease-ui), color var(--ease-ui),
     border-color var(--ease-ui), box-shadow var(--ease-ui);
 }
@@ -21,7 +22,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   :where(.btn, .icon-btn, .text-btn, .back-link, .tabs button, .sidebar nav button,
-         .student-row, .bank-numbers > button, .homework-card, .auth-audience button) {
+         .student-row, .bank-numbers > button, .homework-card, .auth-audience button,
+       .lesson-calendar-day) {
     transition: none;
   }
   .spin { animation: none; }

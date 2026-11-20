@@ -161,6 +161,15 @@
   --radius: 8px;
   --dialog-radius: 12px;
   --control-height: 40px;
+  --control-compact: 34px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --type-caption: 13px;
+  --type-control: 14px;
+  --type-section: 17px;
   --content-gutter: clamp(24px, 2.6vw, 40px);
   --ease-ui: 160ms ease;
   --font-mono: "Cascadia Mono", Consolas, ui-monospace, monospace;
@@ -238,9 +247,9 @@ h1 {
   letter-spacing: -0.7px;
 }
 h2 {
-  font-size: 17px;
-  font-weight: 650;
-  letter-spacing: -0.25px;
+  font-size: var(--type-section);
+  font-weight: 600;
+  letter-spacing: -.02em;
 }
 h3 {
   font-size: 15px;
@@ -369,15 +378,15 @@ hr {
 }
 .btn.small {
   font-size: 12px;
-  min-height: 36px;
-  padding: 7px 12px;
+  min-height: var(--control-compact);
+  padding: 6px var(--space-3);
 }
 .icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: var(--control-compact);
+  height: var(--control-compact);
   border-radius: var(--radius);
   color: var(--muted);
   padding: 4px;
@@ -453,7 +462,7 @@ hr {
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: none;
-  padding: 20px;
+  padding: var(--space-5);
 }
 .field {
   display: flex;

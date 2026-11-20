@@ -134,6 +134,7 @@ export type Data = {
   invites: StudentInvite[];
   homeworks: Homework[];
   lessons: LessonRecord[];
+  blocked_lesson_days?: string[];
   student_progress: Progress[];
   assignable_tasks: Task[];
 };

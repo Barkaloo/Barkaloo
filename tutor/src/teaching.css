@@ -288,30 +288,6 @@
   overflow: hidden;
   white-space: pre-wrap;
 }
-.lesson-record-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-.lesson-record h2 {
-  font-size: 17px;
-}
-.lesson-record .spread > .actions > svg {
-  color: var(--accent);
-}
-.lesson-record-meta {
-  display: flex;
-  align-items: center;
-  gap: 17px;
-  flex-wrap: wrap;
-  font-size: 12px;
-  margin: 17px 0;
-  color: var(--muted);
-}
-.lesson-record-meta strong {
-  font-weight: 550;
-  color: var(--text);
-}
 .topic-tags {
   display: flex;
   align-items: center;
@@ -426,13 +402,6 @@
   }
   .student-card-stats {
     font-size: 12px;
-  }
-  .lesson-record h2 {
-    font-size: 15px;
-  }
-  .lesson-record-meta {
-    font-size: 12px;
-    gap: 10px;
   }
   .results-list strong {
     font-size: 12px;
@@ -693,31 +662,10 @@
 .homework-item-heading > span {
   display: none;
 }
-.lesson-record-list {
-  gap: 0;
-  border-top: 1px solid var(--line);
-}
-.lesson-record {
-  padding: 20px 0;
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid var(--line);
-  border-radius: 0;
-}
-.lesson-record h2 {
-  font-size: 15px;
-}
-.lesson-record-meta {
-  margin: 12px 0;
-  font-size: 13px;
-}
 .lesson-record-homework {
   margin-top: 12px;
   padding-top: 12px;
   font-size: 12px;
-}
-.lesson-record .private-note {
-  margin: 12px 0;
 }
 .choice-fieldset {
   border-radius: var(--radius);
@@ -847,84 +795,12 @@
 .homework-status.pending { background: var(--accent-soft); color: var(--accent); }
 .homework-status.overdue { background: color-mix(in srgb, var(--amber) 12%, var(--surface)); color: var(--amber); }
 .homework-status.uncompleted, .homework-status.canceled { background: var(--soft); color: var(--muted); }
-.lesson-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; white-space: nowrap; }
-.lesson-status.planned { color: var(--accent); }
-.lesson-status.completed { color: var(--success); }
-.lesson-status.canceled { color: var(--muted); }
-
 .student-detail-links {
   margin-top: 24px;
   padding-top: 20px;
   border-top: 1px solid var(--line);
 }
 
-.lesson-calendar {
-  margin-bottom: 20px;
-}
-
-.lesson-calendar h2 {
-  text-transform: capitalize;
-}
-
-.lesson-calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 4px;
-  margin-top: 12px;
-}
-
-.lesson-calendar-weekday, .lesson-calendar-day {
-  text-align: center;
-}
-.lesson-calendar-weekday {
-  color: var(--muted);
-  font-size: 0.8125rem;
-}
-.lesson-calendar-day {
-  display: grid;
-  position: relative;
-  place-items: center;
-  min-height: 44px;
-  border-radius: var(--radius);
-  border: 1px solid var(--line);
-  font-variant-numeric: tabular-nums;
-}
-.lesson-calendar-day.has-lesson {
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-weight: 650;
-}
-.lesson-calendar-day[aria-current="date"] {
-  border-color: var(--accent);
-}
-.lesson-calendar-dot {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-}
-.lesson-calendar-day .lesson-calendar-dot {
-  position: absolute;
-  bottom: 4px;
-}
-.lesson-calendar-legend {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--muted);
-  font-size: 0.8125rem;
-  margin-top: 14px;
-}
-.lesson-month-filter {
-  display: grid;
-  grid-template-columns: minmax(0, 200px) minmax(0, 112px);
-}
-.lesson-month-filter select { min-width: 0; }
-.lesson-record > .spread { flex-wrap: wrap; align-items: flex-start; }
-.lesson-actions { gap: 16px; margin-top: 16px; }
-.lesson-homeworks { margin-top: 14px; border-top: 1px solid var(--line); }
-.lesson-homeworks .homework-highlight:last-child { padding-bottom: 0; }
 .compact-homeworks .homework-card { padding: 18px; }
 @media (max-width: 760px) {
   .homework-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 12px; }

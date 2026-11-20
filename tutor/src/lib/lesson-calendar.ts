@@ -6,6 +6,11 @@ export function localLessonMonth(date: Date): LessonMonth {
   return { year: date.getFullYear(), month: date.getMonth() };
 }
 
+export function lessonDayKey({ year, month }: LessonMonth, day: number): string {
+  const monthNumber = String(month + 1).padStart(2, "0");
+  return `${year}-${monthNumber}-${String(day).padStart(2, "0")}`;
+}
+
 export function getLessonMonth(
   lessons: readonly LessonRecord[],
   selected: LessonMonth,
