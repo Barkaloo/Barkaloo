@@ -28,6 +28,18 @@ body {
   font-weight: 625;
   letter-spacing: -.035em;
   line-height: 1.15;
+  padding-bottom: 10px;
+  position: relative;
+}
+.page-heading h1::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  bottom: 0;
+  width: clamp(32px, 3vw, 42px);
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent);
 }
 .page-heading > .btn { flex-shrink: 0; }
 
@@ -222,18 +234,15 @@ input:focus, select:focus, textarea:focus {
   --booked-day-ink: #171717;
   --booked-day-border: #609476;
   --lesson-count-bg: #276448;
-  --blocked-day: #f2dddd;
-  --blocked-day-ink: #7b3838;
-  --blocked-day-border: #c98a8a;
+  --calendar-day-border: color-mix(in srgb, var(--line) 75%, var(--muted));
+  --calendar-lock: #a03838;
   width: 100%;
   min-width: 0;
 }
 :root[data-theme="dark"] .lesson-calendar {
   --booked-day-border: #fff;
   --lesson-count-bg: #303030;
-  --blocked-day: #382527;
-  --blocked-day-ink: #f2c5c5;
-  --blocked-day-border: #8b575b;
+  --calendar-lock: #f48787;
 }
 .lesson-schedule {
   min-width: 0;
@@ -308,7 +317,7 @@ input:focus, select:focus, textarea:focus {
   gap: 4px;
   min-height: clamp(48px, 3.4vw, 64px);
   padding: 0 var(--space-3);
-  border: 1px solid transparent;
+  border: 1px solid var(--calendar-day-border);
   border-radius: var(--radius);
   background: color-mix(in srgb, var(--soft) 65%, var(--surface));
   font-size: clamp(16px, 1.1vw, 19px);
@@ -321,11 +330,6 @@ input:focus, select:focus, textarea:focus {
   color: var(--booked-day-ink);
   border-color: var(--booked-day-border);
   font-weight: 700;
-}
-.lesson-calendar-day.blocked {
-  background: var(--blocked-day);
-  color: var(--blocked-day-ink);
-  border-color: var(--blocked-day-border);
 }
 .lesson-calendar-day:hover {
   box-shadow: inset 0 0 0 1px currentColor;
@@ -342,6 +346,11 @@ input:focus, select:focus, textarea:focus {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+.lesson-day-indicators > svg {
+  width: 18px;
+  height: 18px;
+  color: var(--calendar-lock);
 }
 .lesson-day-count {
   min-width: 21px;
@@ -477,7 +486,7 @@ input:focus, select:focus, textarea:focus {
   }
   .lesson-day-indicators:empty { display: none; }
   .lesson-day-indicators { gap: 2px; }
-  .lesson-day-indicators > svg { width: 10px; height: 10px; }
+  .lesson-day-indicators > svg { width: 13px; height: 13px; }
   .lesson-day-count { min-width: 15px; padding: 2px 3px; font-size: 10px; }
   .lesson-record-heading {
     grid-template-columns: minmax(58px, 70px) minmax(0, 1fr);
