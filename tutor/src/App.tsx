@@ -394,6 +394,7 @@ export default function App() {
                     : ""
                 }
                 key={p}
+                data-section={p}
                 aria-current={
                   active === p || (p === "students" && active === "student") || (p === "catalog" && ["section", "modules", "lesson", "practice", "mistakes"].includes(active))
                     ? "page"

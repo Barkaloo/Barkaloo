@@ -4,6 +4,13 @@ body {
   line-height: 1.55;
 }
 
+.app-body {
+  background: linear-gradient(145deg, var(--surface), var(--bg) 65%);
+}
+:root[data-theme="dark"] .app-body {
+  background: radial-gradient(ellipse 1100px 720px at top right, #1f1f1f, #080808 82%);
+}
+
 .main-content {
   max-width: none;
   padding: clamp(26px, 3vw, 44px) var(--content-gutter) 48px;
@@ -49,14 +56,24 @@ body {
   line-height: 1.4;
   font-size: var(--type-control);
 }
-.sidebar nav button > svg { color: var(--muted); }
-.sidebar nav button:hover > svg { color: var(--text); }
+.sidebar nav [data-section="dashboard"] { --nav-icon-color: #8b5b23; }
+.sidebar nav [data-section="students"] { --nav-icon-color: #376d54; }
+.sidebar nav [data-section="lessons"] { --nav-icon-color: #825b8d; }
+.sidebar nav [data-section="homework"] { --nav-icon-color: #975446; }
+.sidebar nav [data-section="theory"] { --nav-icon-color: #3a6c66; }
+.sidebar nav [data-section="catalog"] { --nav-icon-color: #79682d; }
+.sidebar nav [data-section="connect"] { --nav-icon-color: #89536b; }
+.sidebar nav button > svg {
+  color: var(--nav-icon-color, var(--muted));
+}
+:root[data-theme="dark"] .sidebar nav button > svg {
+  color: color-mix(in srgb, var(--nav-icon-color, var(--muted)) 64%, var(--text));
+}
 :root .sidebar nav button.active {
   background: var(--accent-soft);
   color: var(--text);
   box-shadow: inset 2px 0 var(--accent);
 }
-.sidebar nav button.active > svg { color: currentColor; }
 .sidebar-profile { min-height: 56px; padding-top: 14px; }
 .sidebar-profile .avatar {
   border: 1px solid var(--line);
@@ -203,14 +220,20 @@ input:focus, select:focus, textarea:focus {
 .lesson-calendar {
   --booked-day: #fff;
   --booked-day-ink: #171717;
-  --blocked-day: #eee0e0;
-  --blocked-day-ink: #603b3b;
+  --booked-day-border: #609476;
+  --lesson-count-bg: #276448;
+  --blocked-day: #f2dddd;
+  --blocked-day-ink: #7b3838;
+  --blocked-day-border: #c98a8a;
   width: 100%;
   min-width: 0;
 }
 :root[data-theme="dark"] .lesson-calendar {
+  --booked-day-border: #fff;
+  --lesson-count-bg: #303030;
   --blocked-day: #382527;
-  --blocked-day-ink: #edd0d0;
+  --blocked-day-ink: #f2c5c5;
+  --blocked-day-border: #8b575b;
 }
 .lesson-schedule {
   min-width: 0;
@@ -274,48 +297,60 @@ input:focus, select:focus, textarea:focus {
 }
 .lesson-calendar-weekday {
   padding: 4px var(--space-3);
-  color: var(--muted);
-  font-size: var(--type-caption);
-  font-weight: 550;
+  color: var(--text);
+  font-size: var(--type-control);
+  font-weight: 600;
 }
 .lesson-calendar-day {
-  position: relative;
   display: flex;
   align-items: center;
-  min-height: clamp(44px, 3.4vw, 59px);
+  justify-content: space-between;
+  gap: 4px;
+  min-height: clamp(48px, 3.4vw, 64px);
   padding: 0 var(--space-3);
   border: 1px solid transparent;
   border-radius: var(--radius);
-  background: color-mix(in srgb, var(--soft) 48%, var(--surface));
-  font-size: clamp(14px, 1vw, 17px);
+  background: color-mix(in srgb, var(--soft) 65%, var(--surface));
+  font-size: clamp(16px, 1.1vw, 19px);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   line-height: 1;
-}
-.lesson-calendar-day:hover {
-  border-color: var(--control-line);
-  background: var(--soft);
 }
 .lesson-calendar-day.has-lesson {
   background: var(--booked-day);
   color: var(--booked-day-ink);
-  border-color: var(--line);
+  border-color: var(--booked-day-border);
   font-weight: 700;
 }
 .lesson-calendar-day.blocked {
   background: var(--blocked-day);
   color: var(--blocked-day-ink);
+  border-color: var(--blocked-day-border);
 }
-.lesson-calendar-day[aria-current="date"] { border-color: var(--control-line); }
+.lesson-calendar-day:hover {
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+.lesson-calendar-day[aria-current="date"] .lesson-day-number {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
 .lesson-calendar-day[aria-pressed="true"] {
   box-shadow: inset 0 0 0 2px currentColor;
-  font-weight: 700;
 }
-.lesson-calendar-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  margin-inline-start: 6px;
-  background: currentColor;
+.lesson-day-indicators {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.lesson-day-count {
+  min-width: 21px;
+  border-radius: 999px;
+  padding: 4px 5px;
+  background: var(--lesson-count-bg);
+  color: #fff;
+  font-size: 12px;
+  text-align: center;
 }
 .lesson-month-filter {
   display: grid;
@@ -434,7 +469,16 @@ input:focus, select:focus, textarea:focus {
     padding-inline: 0;
     text-align: center;
   }
-  .lesson-calendar-day { min-height: 40px; }
+  .lesson-calendar-day {
+    flex-direction: column;
+    gap: 5px;
+    min-height: 50px;
+    padding-block: 5px;
+  }
+  .lesson-day-indicators:empty { display: none; }
+  .lesson-day-indicators { gap: 2px; }
+  .lesson-day-indicators > svg { width: 10px; height: 10px; }
+  .lesson-day-count { min-width: 15px; padding: 2px 3px; font-size: 10px; }
   .lesson-record-heading {
     grid-template-columns: minmax(58px, 70px) minmax(0, 1fr);
   }

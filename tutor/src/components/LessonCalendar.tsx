@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Lock } from "lucide-react";
 import { lessonDayKey, localLessonMonth, type LessonMonth } from "../lib/lesson-calendar";
 
 const monthName = new Intl.DateTimeFormat("ru-RU", { month: "long" });
@@ -51,8 +51,11 @@ export default function LessonCalendar({ selected, days, years, onChange, select
               aria-pressed={selectedDay === day}
               onClick={() => onDayChange(selectedDay === day ? null : day)}
             >
-              {day}
-              {blocked && count && <span className="lesson-calendar-dot" aria-hidden="true" />}
+              <span className="lesson-day-number">{day}</span>
+              <span className="lesson-day-indicators" aria-hidden="true">
+                {blocked && <Lock size={14} />}
+                {count !== undefined && <span className="lesson-day-count">{count > 99 ? "99+" : count}</span>}
+              </span>
             </button>
           );
         })}
