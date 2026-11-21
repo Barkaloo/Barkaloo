@@ -8,4 +8,5 @@ node_modules/
 supabase/.temp/
 tutor/test-results/
 tutor/.output/
+tutor/public/python-runner/runtime/
 tools/

@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
-import { ArrowLeft, ArrowRight, Code2, PenLine, Play, Square } from "lucide-react";
+import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { ArrowLeft, ArrowRight, Code2, PenLine } from "lucide-react";
 import { useApp } from "../context";
 import { api } from "../lib/api";
 import { dateTime, lessonLabels, studentName } from "../lib/teaching";
 import { Busy, Empty, ErrorBox } from "../components/ui";
 import { LessonBoard, type BoardMark } from "../components/LessonBoard";
+import { LessonPython } from "../components/LessonPython";
 
 type Area = "teacher" | "student";
 type Mode = "board" | "code";
@@ -250,12 +251,8 @@ function WorkspacePane({ area, lessonId, remote, editable, connected, updateArea
         <LessonBoard marks={draft.board} editable={canEdit} onChange={(board) => change({ board })} />
       ) : (
         <div className="lesson-code-workspace">
-          <textarea className="lesson-room-code" aria-label={`Python: ${title.toLowerCase()}`}
-            placeholder="Код Python" spellCheck={false} maxLength={30000} readOnly={!canEdit}
-            value={draft.code} onChange={(event) => change({ code: event.target.value })} />
-          {editable && (window.location.hostname === "barkaloo88.sourcecraft.site" ? (
-            <p className="muted">На этом адресе запуск Python недоступен.</p>
-          ) : <PythonRunner code={draft.code} />)}
+          <LessonPython label={`Python: ${title.toLowerCase()}`} code={draft.code} canRun={editable}
+            onChange={canEdit ? (code) => change({ code }) : undefined} />
           <details>
             <summary>Заметки</summary>
             <textarea aria-label="Заметки к коду" rows={3} maxLength={12000} value={draft.notes}
@@ -264,53 +261,5 @@ function WorkspacePane({ area, lessonId, remote, editable, connected, updateArea
         </div>
       )}
     </section>
-  );
-}
-function PythonRunner({ code }: { code: string }) {
-  const frame = useRef<HTMLIFrameElement>(null);
-  const [ready, setReady] = useState(false);
-  const [running, setRunning] = useState(false);
-  const [output, setOutput] = useState("");
-  const [input, setInput] = useState("");
-  useEffect(() => {
-    const receive = (event: MessageEvent) => {
-      if (event.source !== frame.current?.contentWindow || event.origin !== "null") return;
-      const message = event.data;
-      if (message?.type === "python-ready") setReady(true);
-      if (message?.type === "python-result" && typeof message.text === "string") {
-        setOutput(message.text);
-        setRunning(false);
-      }
-    };
-    window.addEventListener("message", receive);
-    const target = frame.current?.contentWindow;
-    target?.postMessage({ type: "python-ready?" }, "*");
-    return () => window.removeEventListener("message", receive);
-  }, []);
-  const run = () => {
-    setOutput("Запуск Python…");
-    setRunning(true);
-    frame.current?.contentWindow?.postMessage({ type: "python-run", code, input }, "*");
-  };
-  return (
-    <>
-      <iframe ref={frame} src={import.meta.env.BASE_URL + "python-runner/index.html?v=2"}
-        title="Изолированная среда Python" sandbox="allow-scripts" referrerPolicy="no-referrer" hidden />
-      <details>
-        <summary>Входные данные для input()</summary>
-        <textarea aria-label="Входные данные Python" rows={2} maxLength={10000}
-          value={input} onChange={(event) => setInput(event.target.value)} />
-      </details>
-      <div className="actions">
-        <button className="btn primary small" type="button" disabled={!ready || running || !code.trim()} onClick={run}>
-          <Play size={15} aria-hidden="true" />Запустить
-        </button>
-        <button className="btn small" type="button" disabled={!running}
-          onClick={() => frame.current?.contentWindow?.postMessage({ type: "python-stop" }, "*")}>
-          <Square size={14} aria-hidden="true" />Остановить
-        </button>
-      </div>
-      {output && <pre role="status" className="lesson-room-output">{output}</pre>}
-    </>
   );
 }

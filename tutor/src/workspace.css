@@ -668,7 +668,31 @@ input:focus, select:focus, textarea:focus {
   line-height: 1.6;
 }
 .lesson-code-workspace .lesson-room-code { flex: 1; min-height: 280px; padding: 15px; tab-size: 4; resize: vertical; }
-.lesson-room-output { max-height: 220px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.lesson-python { display: grid; gap: 10px; }
+.lesson-python .actions > .muted { font-size: 13px; }
+.lesson-python-console { border: 1px solid var(--line); border-radius: 9px; background: var(--bg); overflow: hidden; }
+.lesson-python-console-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 12px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+.lesson-python-console-header .icon-btn { width: 32px; height: 32px; margin-inline-start: auto; }
+.lesson-room-output {
+  min-height: 58px;
+  max-height: 220px;
+  margin: 0;
+  padding: 10px 12px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+.lesson-python-error { color: var(--danger); }
 .lesson-code-workspace details textarea { margin-top: var(--space-2); }
 @media (max-width: 760px) {
   .lesson-room-grid { grid-template-columns: minmax(0, 1fr); }

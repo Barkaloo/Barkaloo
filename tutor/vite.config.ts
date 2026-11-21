@@ -7,7 +7,21 @@ export default defineConfig(({ mode }) => {
   return {
     root: resolve(import.meta.dirname),
     base: "/tutor/",
-    plugins: [react(), tailwindcss()],
+    plugins: [
+      react(),
+      tailwindcss(),
+      {
+        name: "tutor-python-runtime",
+        configureServer(server) {
+          server.middlewares.use((request, response, next) => {
+            if (/^\/(?:tutor\/)?python-runner\/runtime\/0\.27\.7\//.test(request.url ?? "")) {
+              response.setHeader("Access-Control-Allow-Origin", "*");
+            }
+            next();
+          });
+        },
+      },
+    ],
     build: {
       outDir: "../dist/tutor",
       emptyOutDir: true,
