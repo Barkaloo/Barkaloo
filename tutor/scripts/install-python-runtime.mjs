@@ -1,7 +1,8 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdir, readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { gzipSync } from "node:zlib";
 
 const version = "0.27.7";
 const digest = "RUSVJlhQdfWfgO9hVHCiXoG+nVZQRS5D9FzgpLJ/VcgGBLSAKoPL8kTiOikxbHQm1kRISeWUBdulEgO26qpSRA==";
@@ -26,3 +27,8 @@ await mkdir(target, { recursive: true });
 execFileSync("tar", [
   "-xzf", "-", "-C", target, "--strip-components=1", ...files.map((file) => `package/${file}`),
 ], { input: bytes });
+
+const contents = await Promise.all(files.map((file) => readFile(resolve(target, file))));
+const lengths = Buffer.alloc(contents.length * 4);
+contents.forEach((file, index) => lengths.writeUInt32LE(file.length, index * 4));
+await writeFile(resolve(target, "runtime-v1.bin"), gzipSync(Buffer.concat([lengths, ...contents]), { level: 9 }));

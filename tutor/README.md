@@ -298,12 +298,14 @@ HTML/SVG/исполняемые приложения не принимаются
 `20261121171559_tutor_lesson_workspaces.sql`.
 
 Python выполняется в браузере в отдельном Web Worker внутри iframe с
-`sandbox="allow-scripts"`. SourceCraft открывает iframe с
-`https://barkaloo-tutor.vercel.app`, который должен быть разрешён в `frame-src`
-страницы Tutor. На Vercel политика встраивания разрешает только этот же
-адрес и основной сайт SourceCraft. Сборка Vercel добавляет
-[Pyodide 0.27.7](https://github.com/pyodide/pyodide/tree/0.27.7) к статическим
-файлам после проверки контрольной суммы пакета.
+`sandbox="allow-scripts"`. На SourceCraft разместите
+`python-runner/runtime/0.27.7/runtime-v1.bin` и разрешите
+`https://barkaloo.github.io` и `https://barkaloo-tutor.vercel.app` в `frame-src`.
+Ветка `tutor-python-pages` публикует только HTML и JS среды. На SourceCraft
+кабинет скачивает архив Python со своего адреса и передаёт его в первый
+ответивший iframe. Среда хранит файлы в памяти до выхода из режима «Код».
+Сборка Vercel добавляет файлы [Pyodide 0.27.7](https://github.com/pyodide/pyodide/tree/0.27.7)
+после проверки контрольной суммы пакета.
 
 Для локального запуска подготовьте среду из корня репозитория:
 
