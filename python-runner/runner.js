@@ -3,6 +3,36 @@
   if (window.parent === window ||
       (parentOrigin !== location.origin && parentOrigin !== "https://barkaloo88.sourcecraft.site")) return;
   const runtime = new URL("./runtime/0.27.7/", location.href).href;
+  const files = ["pyodide.js", "pyodide.asm.js", "pyodide.asm.wasm", "python_stdlib.zip", "pyodide-lock.json"];
+  let cachedRuntime;
+  const fetchRuntime = async (bundle) => {
+    if (typeof DecompressionStream !== "function") {
+      return Promise.all(files.map(async (file) => {
+        const response = await fetch(runtime + file);
+        if (!response.ok) throw new Error("Python runtime file unavailable");
+        return response.arrayBuffer();
+      }));
+    }
+    const response = bundle ? new Response(bundle) : await fetch(runtime + "runtime-v1.bin");
+    if (!response.ok || !response.body) throw new Error("Python runtime bundle unavailable");
+    const bytes = await new Response(response.body.pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
+    const lengths = new DataView(bytes);
+    let offset = files.length * 4;
+    const pieces = files.map((_, index) => {
+      const size = lengths.getUint32(index * 4, true);
+      const end = offset + size;
+      if (!size || end > bytes.byteLength) throw new Error("Incomplete Python runtime bundle");
+      const piece = bytes.slice(offset, end);
+      offset = end;
+      return piece;
+    });
+    if (offset !== bytes.byteLength) throw new Error("Unexpected Python runtime bundle size");
+    return pieces;
+  };
+  const getRuntime = (bundle) => cachedRuntime ??= fetchRuntime(bundle).catch((error) => {
+    cachedRuntime = undefined;
+    throw error;
+  });
 
   const workerScript = String.raw`
     self.onmessage = async ({ data }) => {
@@ -28,7 +58,24 @@
       };
       let python;
       try {
-        importScripts(data.runtime + "pyodide.js");
+        const [loader, glue, wasm, stdlib, lock] = data.files;
+        for (const script of [loader, glue]) {
+          const url = URL.createObjectURL(new Blob([script], { type: "application/javascript" }));
+          try { importScripts(url); } finally { URL.revokeObjectURL(url); }
+        }
+        // Serve the pinned runtime bytes from memory. Each execution still gets a fresh worker.
+        const resources = new Map([
+          [data.runtime + "pyodide.asm.wasm", [wasm, "application/wasm"]],
+          [data.runtime + "python_stdlib.zip", [stdlib, "application/zip"]],
+          [data.runtime + "pyodide-lock.json", [lock, "application/json"]],
+        ]);
+        const browserFetch = self.fetch.bind(self);
+        self.fetch = (request, options) => {
+          const key = typeof request === "string" ? request : (request?.url || request?.href);
+          const file = resources.get(key);
+          return file ? Promise.resolve(new Response(file[0], { headers: { "Content-Type": file[1] } }))
+            : browserFetch(request, options);
+        };
         python = await loadPyodide({
           indexURL: data.runtime,
           stdin: () => lines[index++],
@@ -64,7 +111,7 @@
     send(job.id, type, text);
   };
 
-  port.onmessage = ({ data }) => {
+  port.onmessage = async ({ data }) => {
     if (!data || !Number.isSafeInteger(data.id)) return;
     if (data.type === "stop" && active?.id === data.id) {
       finish(active, "stopped");
@@ -76,9 +123,12 @@
     const job = { id: data.id, remaining: 16000 };
     active = job;
     try {
+      job.timer = setTimeout(() => finish(job, "error", "Python загружался слишком долго. Проверьте подключение и попробуйте снова."), 90000);
+      const bundle = data.bundle instanceof ArrayBuffer && data.bundle.byteLength < 6500000 ? data.bundle : undefined;
+      const assets = await getRuntime(bundle);
+      if (active !== job) return;
       job.asset = URL.createObjectURL(new Blob([workerScript], { type: "text/javascript" }));
       job.worker = new Worker(job.asset);
-      job.timer = setTimeout(() => finish(job, "error", "Python загружался слишком долго. Проверьте подключение и попробуйте снова."), 90000);
       job.worker.onmessage = ({ data: message }) => {
         if (active !== job || !message) return;
         switch (message.type) {
@@ -110,9 +160,9 @@
         }
       };
       job.worker.onerror = () => finish(job, "error", "Среда Python остановилась. Попробуйте запустить снова.");
-      job.worker.postMessage({ code: data.code, input: data.input, runtime });
+      job.worker.postMessage({ code: data.code, input: data.input, runtime, files: assets });
     } catch {
-      finish(job, "error", "Браузер не смог запустить среду Python.");
+      finish(job, "error", "Не удалось загрузить или запустить Python. Проверьте подключение и повторите запуск.");
     }
   };
   window.parent.postMessage({ type: "python-ready" }, parentOrigin, [parentPort]);
