@@ -1,0 +1,8 @@
+project_id = "barkaloo-tutor"
+
+[functions.tutor-student-access]
+# Login authenticates the permanent code itself. Teacher actions additionally
+# verify the user's Bearer token with Auth.getUser and the database teacher role.
+verify_jwt = false
+entrypoint = "./functions/tutor-student-access/index.ts"
+import_map = "./functions/tutor-student-access/deno.json"

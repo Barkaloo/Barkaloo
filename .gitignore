@@ -1,2 +1,12 @@
 dist/
 node_modules/
+.env
+.env.*
+!.env.example
+.vercel/
+.supabase/
+supabase/.temp/
+tutor/test-results/
+tutor/.output/
+tutor/public/python-runner/runtime/
+tools/

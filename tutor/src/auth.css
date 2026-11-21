@@ -1,0 +1,88 @@
+/* Shared mark remains readable at favicon-sized scales. */
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  padding: 0;
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.brand-mark svg { display: block; width: 100%; height: 100%; }
+.auth-entry {
+  overflow: hidden;
+  background: var(--bg);
+}
+.auth-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  width: min(1240px, 100%);
+  min-height: 100svh;
+  padding: 64px 48px;
+  gap: clamp(48px, 7vw, 112px);
+}
+.auth-entry .auth-form-side { padding: 0; }
+.auth-entry .auth-card { max-width: 480px; }
+.auth-entry .auth-brand { gap: 12px; margin-bottom: 36px; }
+.auth-entry .auth-brand .brand-mark { width: 46px; height: 46px; border-radius: 12px; }
+.auth-entry .auth-brand strong { font-size: 24px; letter-spacing: -.8px; }
+.auth-entry .auth-card h1 {
+  font-size: clamp(30px, 3.4vw, 42px);
+  line-height: 1.15;
+  letter-spacing: -1.6px;
+  margin: 0 0 14px;
+  overflow-wrap: anywhere;
+}
+.auth-entry .auth-card > p { font-size: 16px; margin: 0 0 24px; line-height: 1.6; }
+.auth-entry .auth-audience { margin: 24px 0; padding: 4px; border-radius: var(--radius); }
+.auth-entry .auth-audience button { min-height: 46px; font-size: 15px; border-radius: 8px; }
+.auth-entry .field { font-size: 15px; margin: 24px 0; }
+.auth-entry .field > span { font-size: 14px; line-height: 1.4; }
+.auth-entry .field input { min-height: 56px; border-radius: 10px; font-size: 17px; padding: 14px 16px; }
+.auth-entry .field .student-code-input { font-size: 28px; letter-spacing: .38em; padding-inline: 20px 10px; }
+.auth-entry .code-input-wrap { gap: 12px; }
+.auth-entry .code-input-wrap .icon-btn { width: 44px; height: 44px; flex-shrink: 0; }
+.auth-entry .auth-submit { min-height: 54px; font-size: 16px; border-radius: 10px; gap: 12px; margin-top: 8px; }
+.auth-entry .forgot { font-size: 14px; margin-bottom: 24px; min-height: 30px; }
+.auth-entry .auth-switch { font-size: 14px; line-height: 1.6; margin-top: 26px; }
+.auth-entry .auth-switch button { min-height: 40px; }
+/* The sign-in illustration uses the same outline as the product mark. */
+.auth-art {
+  position: relative;
+  width: min(100%, 380px);
+  aspect-ratio: 1;
+  justify-self: center;
+  pointer-events: none;
+}
+.auth-orbit {
+  position: absolute;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+}
+.auth-orbit-outer { inset: 4%; }
+.auth-orbit-inner { inset: 17%; border-style: dashed; }
+.auth-art-symbol { position: absolute; inset: 29%; display: grid; place-items: center; }
+.auth-art-symbol .brand-mark {
+  width: 100%;
+  height: 100%;
+  border-radius: 24%;
+}
+@media (max-width: 900px) {
+  .auth-layout { grid-template-columns: 1fr; width: min(600px, 100%); padding: 48px 32px; gap: 0; }
+  .auth-entry .auth-card { max-width: none; }
+  .auth-art { display: none; }
+}
+@media (max-width: 480px) {
+  .auth-layout { padding: 40px 24px; }
+  .auth-entry .auth-brand { margin-bottom: 42px; gap: 12px; }
+  .auth-entry .auth-brand strong { font-size: 22px; }
+  .auth-entry .auth-card h1 { font-size: 36px; letter-spacing: -1px; }
+  .auth-entry .auth-card > p { font-size: 15px; }
+  .auth-entry .auth-audience button { font-size: 14px; }
+  .auth-entry .field .student-code-input { font-size: 26px; letter-spacing: .3em; }
+}
+@media (prefers-contrast: more) {
+  .auth-art { display: none; }
+}
