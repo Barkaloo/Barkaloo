@@ -1,7 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Plus, Download, ExternalLink, Archive, FileText, Play, Copy, Code2 } from 'lucide-react';
-import Prism from 'prismjs';
-import 'prismjs/components/prism-python';
 import { useApp } from '../context';
 import { supabase, videoEmbed } from '../lib/api';
 import { theoryAccept, theoryFile, type TheoryMaterial } from '../lib/theory';
@@ -25,11 +23,20 @@ for x in 0, 1:
                 if f == 1: # если в таблице F = 1 (замени 1 на 0, если F = 0)
                     print(x, y, z, w)`;
 
-const pythonGrammar = Prism.languages.python;
-const highlightedTemplate = Prism.highlight(pythonTemplate, {
-  ...pythonGrammar,
-  keyword: [{ pattern: /\bprint(?=\s*\()/, alias: 'builtin' }, pythonGrammar.keyword as RegExp],
-}, 'python');
+// The fixed template uses a small set of tokens. Keep highlighting independent
+// of the full lesson editor and render the source as text nodes.
+const pythonToken = /(?<comment>#[^\n]*)|(?<string>'[^'\n]*')|(?<keyword>\b(?:for|in|if)\b)|(?<builtin>\bprint\b)|(?<number>\b\d+\b)/g;
+const highlightedTemplate: ReactNode[] = [];
+let textStart = 0;
+for (const match of pythonTemplate.matchAll(pythonToken)) {
+  const kind = Object.keys(match.groups ?? {}).find((key) => match.groups?.[key] !== undefined);
+  highlightedTemplate.push(
+    pythonTemplate.slice(textStart, match.index),
+    <span className={`token ${kind}`} key={match.index}>{match[0]}</span>,
+  );
+  textStart = match.index + match[0].length;
+}
+highlightedTemplate.push(pythonTemplate.slice(textStart));
 
 function LogicalOperators() {
   const { notify } = useApp();
@@ -75,7 +82,7 @@ function LogicalOperators() {
             <Copy size={15} aria-hidden="true" />Скопировать
           </button>
         </div>
-        <pre tabIndex={0} aria-label="Шаблон кода на Python"><code dangerouslySetInnerHTML={{ __html: highlightedTemplate }} /></pre>
+        <pre tabIndex={0} aria-label="Шаблон кода на Python"><code>{highlightedTemplate}</code></pre>
       </div>
       {copyError && <ErrorBox message="Не удалось скопировать. Выделите код и скопируйте вручную." />}
     </section>
