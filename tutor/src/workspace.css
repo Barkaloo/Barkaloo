@@ -71,6 +71,7 @@ body {
 .sidebar nav [data-section="dashboard"] { --nav-icon-color: #8b5b23; }
 .sidebar nav [data-section="students"] { --nav-icon-color: #376d54; }
 .sidebar nav [data-section="lessons"] { --nav-icon-color: #825b8d; }
+.sidebar nav [data-section="lesson-room"] { --nav-icon-color: #795144; }
 .sidebar nav [data-section="homework"] { --nav-icon-color: #975446; }
 .sidebar nav [data-section="theory"] { --nav-icon-color: #3a6c66; }
 .sidebar nav [data-section="catalog"] { --nav-icon-color: #79682d; }
@@ -565,4 +566,30 @@ input:focus, select:focus, textarea:focus {
     grid-column: 2;
     justify-content: flex-start;
   }
+}
+@media (min-width: 761px) {
+  .app-shell.sidebar-collapsed .sidebar { display: none; }
+  .app-shell.sidebar-collapsed .app-body { margin-left: 0; }
+}
+.lesson-room-entry { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.lesson-room-entry p { margin-top: 4px; font-size: var(--type-caption); }
+.lesson-room-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+.lesson-room-pane { min-width: 0; }
+.lesson-room-code, .lesson-room-peer, .lesson-room-output {
+  font-family: var(--font-mono);
+  line-height: 1.6;
+}
+.lesson-room-code { tab-size: 4; }
+.lesson-room-peer { min-height: 170px; max-height: 440px; }
+.lesson-room-notes, .lesson-room-output { white-space: pre-wrap; overflow-wrap: anywhere; }
+.lesson-room-output { margin: var(--space-3) 0; max-height: 260px; overflow: auto; }
+.lesson-room-pane details { margin-bottom: var(--space-3); }
+.lesson-room-pane details textarea { margin-top: var(--space-2); }
+@media (max-width: 900px) {
+  .lesson-room-grid { grid-template-columns: minmax(0, 1fr); }
 }

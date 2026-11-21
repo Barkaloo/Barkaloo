@@ -127,6 +127,9 @@ export default function Lessons({ initialStudent = "" }: { initialStudent?: stri
                       <span className="lesson-record-duration"><Clock size={14} aria-hidden="true" />{l.duration_minutes} мин.</span>
                     </div>
                     <div className="actions lesson-record-controls">
+                      {!preview && status !== "canceled" && (
+                        <button className="btn small" type="button" onClick={() => navigate(`lesson-room/${l.id}`)}>Открыть урок</button>
+                      )}
                       <span className={`lesson-status ${status}`}><StatusIcon size={14} aria-hidden="true" />{lessonLabels[status]}</span>
                       {teacher && <button className="icon-btn" aria-label="Редактировать занятие" title="Редактировать занятие" disabled={!editable || busy === l.id} onClick={() => setModal(l)}><Pencil size={16} /></button>}
                     </div>

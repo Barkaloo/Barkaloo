@@ -16,6 +16,8 @@ import {
   Settings as SettingsIcon,
   Eye,
   Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
   X,
   LogOut,
   Sun,
@@ -25,6 +27,7 @@ import {
   Users,
   ClipboardList,
   CalendarDays,
+  Presentation,
   UserPlus,
 } from "lucide-react";
 import { api, loadData, supabase } from "./lib/api";
@@ -62,6 +65,7 @@ const HomeworkPage = lazy(() =>
 );
 const Theory = lazy(() => import("./pages/Theory"));
 const Lessons = lazy(() => import("./pages/Lessons"));
+const LessonRoom = lazy(() => import("./pages/LessonRoom"));
 const TeacherStatistics = lazy(() => import("./pages/TeacherStatistics"));
 const Learning = lazy(() =>
   import("./pages/Learning").then((m) => ({ default: m.Lesson })),
@@ -75,6 +79,7 @@ const Mistakes = lazy(() =>
 const nav = [
   { path: "dashboard", title: "Главная", icon: LayoutDashboard },
   { path: "lessons", title: "Журнал занятий", icon: CalendarDays },
+  { path: "lesson-room", title: "Урок", icon: Presentation },
   { path: "homework", title: "Домашние задания", icon: ClipboardList },
   { path: "theory", title: "Теоретический материал", icon: BookOpen },
   { path: "catalog", title: "Каталог КЕГЭ", icon: Library },
@@ -95,6 +100,7 @@ export default function App() {
     [toast, setToast] = useState("");
   const [path, setPath] = useState(readPath),
     [sidebar, setSidebar] = useState(false),
+    [sidebarCollapsed, setSidebarCollapsed] = useState(false),
     [offline, setOffline] = useState(!navigator.onLine);
   const unsaved = useRef(false),
     sequence = useRef(0);
@@ -104,7 +110,7 @@ export default function App() {
   const mayLeave = () =>
     !unsaved.current ||
     window.confirm(
-      "В модуле есть несохранённые изменения. Продолжить без сохранения?",
+      "Есть несохранённые изменения. Продолжить без сохранения?",
     );
   const navigate = useCallback((next: string) => {
     if (!mayLeave()) return;
@@ -275,10 +281,9 @@ export default function App() {
     ? [
         nav[0],
         { path: "students", title: "Ученики", icon: Users },
-        { path: "lessons", title: "Журнал занятий", icon: CalendarDays },
-        ...nav.filter((n) => ["homework", "theory", "catalog"].includes(n.path)),
+        ...nav.slice(1, -1),
       ]
-    : nav;
+    : preview ? nav.filter((item) => item.path !== "lesson-room") : nav;
   const mode = () => {
     if (!mayLeave()) return;
     unsaved.current = false;
@@ -340,6 +345,8 @@ export default function App() {
         ) : (
           <HomeworkList />
         );
+      case "lesson-room":
+        return <LessonRoom key={id ?? "list"} id={id} />;
       case "lessons":
         return <Lessons key={id ?? "all"} initialStudent={id} />;
       case "settings":
@@ -352,7 +359,7 @@ export default function App() {
     <AppContext.Provider
       value={{ data, preview, teacher, refresh, notify, navigate, setUnsaved }}
     >
-      <div className={`app-shell ${preview ? "preview-mode" : ""}`}>
+      <div className={`app-shell ${preview ? "preview-mode" : ""}${sidebarCollapsed ? " sidebar-collapsed" : ""}`}>
         {sidebar && (
           <button
             className="sidebar-shade"
@@ -360,7 +367,7 @@ export default function App() {
             onClick={() => setSidebar(false)}
           />
         )}
-        <aside className={`sidebar ${sidebar ? "open" : ""}`}>
+        <aside id="tutor-sidebar" className={`sidebar ${sidebar ? "open" : ""}`}>
           <div className="brand">
             <button
               className="brand-home"
@@ -446,6 +453,17 @@ export default function App() {
                 onClick={() => setSidebar(true)}
               >
                 <Menu size={21} />
+              </button>
+              <button
+                type="button"
+                className="icon-btn desktop-only sidebar-toggle"
+                aria-label={sidebarCollapsed ? "Развернуть меню" : "Свернуть меню"}
+                aria-expanded={!sidebarCollapsed}
+                aria-controls="tutor-sidebar"
+                title={sidebarCollapsed ? "Развернуть меню" : "Свернуть меню"}
+                onClick={() => setSidebarCollapsed((value) => !value)}
+              >
+                {sidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
               </button>
               <span>{teacher ? "Кабинет преподавателя" : "ЕГЭ · Информатика"}</span>
             </div>

@@ -352,6 +352,20 @@ test("Teaching: invitations, private access, immutable homework, review, lessons
   await assert.rejects(api("lesson_save", { id: lesson.id, student_id: student, status: "canceled" }), /недоступен/);
   await as(owner);
   const record = (await data()).lessons.find((l) => l.id === lesson.id);
+  const room = { lesson_id: lesson.id };
+  assert.deepEqual(await api("lesson_room_read", room), {});
+  await api("lesson_room_save", { ...room, code: "print(42)", notes: "Example", revision: 0 });
+  await assert.rejects(api("lesson_room_save", { ...room, code: "stale", revision: 0 }), /другой вкладке/);
+  await as(student);
+  assert.equal((await api("lesson_room_read", room)).teacher.code, "print(42)");
+  await api("lesson_room_save", { ...room, code: "print(6 * 7)", notes: "My answer", revision: 0 });
+  await as(stranger);
+  await assert.rejects(api("lesson_room_read", room), /Урок недоступен/);
+  await assert.rejects(api("lesson_room_save", { ...room, code: "print(1)", revision: 0 }), /Урок недоступен/);
+  await as(owner);
+  const drafts = await api("lesson_room_read", room);
+  assert.equal(drafts.teacher.code, "print(42)");
+  assert.equal(drafts.student.notes, "My answer");
   const blockedDay = { day: "2026-11-16", time_zone: "Europe/Moscow", blocked: true };
   const blockedRequest = {
     student_id: student,
@@ -382,6 +396,7 @@ test("Teaching: invitations, private access, immutable homework, review, lessons
   await as(owner);
   const rescheduled = (await data()).lessons[0];
   await api("lesson_save", { ...rescheduled, status: "canceled" });
+  await assert.rejects(api("lesson_room_read", room), /Урок недоступен/);
   await assert.rejects(api("homework_create", { student_id: student, lesson_id: lesson.id, title: "Invalid link", task_ids: [number.id] }), /доступное занятие/);
   await api("unpublish", { module_id: module.id });
   await as(student);
