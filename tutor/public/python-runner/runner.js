@@ -78,7 +78,7 @@
     try {
       job.asset = URL.createObjectURL(new Blob([workerScript], { type: "text/javascript" }));
       job.worker = new Worker(job.asset);
-      job.timer = setTimeout(() => finish(job, "error", "Python не загрузился. Попробуйте запустить снова."), 40000);
+      job.timer = setTimeout(() => finish(job, "error", "Python загружался слишком долго. Проверьте подключение и попробуйте снова."), 90000);
       job.worker.onmessage = ({ data: message }) => {
         if (active !== job || !message) return;
         switch (message.type) {

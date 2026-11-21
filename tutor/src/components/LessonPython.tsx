@@ -6,7 +6,7 @@ type Phase = "idle" | "connecting" | "loading" | "running" | "done" | "stopped" 
 const statuses: Record<Phase, string> = {
   idle: "Готов к запуску",
   connecting: "Подключаем среду Python…",
-  loading: "Загружаем Python…",
+  loading: "Загружаем Python… Первый запуск может занять больше времени.",
   running: "Выполняем программу…",
   done: "Готово",
   stopped: "Выполнение остановлено",
@@ -18,7 +18,7 @@ function getRunnerUrl() {
   const origin = window.location.origin;
   const runnerHost = origin === mainHost ? "https://barkaloo-tutor.vercel.app" : origin;
   const url = new URL(import.meta.env.BASE_URL + "python-runner/index.html", runnerHost);
-  url.search = new URLSearchParams({ v: "3", parent: origin }).toString();
+  url.search = new URLSearchParams({ v: "4", parent: origin }).toString();
   return url.href;
 }
 
@@ -53,7 +53,7 @@ export function LessonPython({ label, code, canRun, onChange }: {
       setPhase("error");
       setError(connected ? "Среда перестала отвечать. Повторите запуск." :
         "Не удалось связаться со средой Python. Проверьте подключение и повторите запуск.");
-    }, connected ? 55000 : 12000);
+    }, connected ? 105000 : 25000);
   }, []);
 
   useEffect(() => {
