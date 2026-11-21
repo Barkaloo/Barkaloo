@@ -75,6 +75,7 @@ function LogicalOperators() {
           </tbody>
         </table>
       </div>
+      <h3>Шаблон решения</h3>
       <div className="code-block theory-python-template">
         <div>
           <span className="theory-python-label"><Code2 size={16} aria-hidden="true" />Python</span>

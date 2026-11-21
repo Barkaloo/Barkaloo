@@ -226,13 +226,14 @@ input:focus, select:focus, textarea:focus {
   background: var(--accent-soft);
   color: var(--accent);
 }
+.theory-logical-operators h3 { margin-top: var(--space-4); }
 .theory-python-template {
   --python-keyword: #7133a4;
   --python-string: #9d3b23;
   --python-number: #08685b;
   --python-function: #76521a;
   --python-comment: #506c52;
-  margin-top: var(--space-4);
+  margin-top: var(--space-2);
   background: var(--surface);
 }
 :root[data-theme="dark"] .theory-python-template {
