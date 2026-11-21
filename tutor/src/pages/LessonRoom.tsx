@@ -1,13 +1,29 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Code2, Play, Square } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { ArrowLeft, ArrowRight, Code2, PenLine, Play, Square } from "lucide-react";
 import { useApp } from "../context";
 import { api } from "../lib/api";
 import { dateTime, lessonLabels, studentName } from "../lib/teaching";
-import { Busy, Empty, ErrorBox, Field } from "../components/ui";
+import { Busy, Empty, ErrorBox } from "../components/ui";
+import { LessonBoard, type BoardMark } from "../components/LessonBoard";
 
-type Draft = { code: string; notes: string; revision: number };
-type Room = Partial<Record<"teacher" | "student", Draft>>;
-const emptyDraft: Draft = { code: "", notes: "", revision: 0 };
+type Area = "teacher" | "student";
+type Mode = "board" | "code";
+type Draft = { code: string; notes: string; revision: number; mode: Mode; board: BoardMark[] };
+type Room = Record<Area, Draft>;
+const emptyDraft: Draft = { code: "", notes: "", revision: 0, mode: "board", board: [] };
+
+function readDraft(draft?: Draft): Draft {
+  if (!draft) return emptyDraft;
+  const board = Array.isArray(draft.board) ? draft.board.filter((mark) =>
+    mark && typeof mark.id === "string" &&
+    ["pen", "line", "rectangle", "ellipse", "text"].includes(mark.kind) &&
+    Array.isArray(mark.points) && mark.points.length > 0 && mark.points.length <= 1000 &&
+    mark.points.every((point) => Array.isArray(point) && point.length === 2 &&
+      point.every((value) => Number.isInteger(value) && value >= 0 && value <= 1000)) &&
+    (mark.kind !== "text" || typeof mark.text === "string"),
+  ) : [];
+  return { ...draft, mode: draft.mode === "code" ? "code" : "board", board };
+}
 
 export default function LessonRoom({ id }: { id?: string }) {
   return id ? <LessonWorkspace id={id} /> : <LessonRoomList />;
@@ -56,15 +72,19 @@ function LessonWorkspace({ id }: { id: string }) {
   const { data, teacher, preview, navigate, setUnsaved } = useApp();
   const lesson = data.lessons.find((item) => item.id === id && item.status !== "canceled");
   const available = Boolean(lesson) && !preview;
-  const ownRole = teacher ? "teacher" : "student";
-  const otherRole = teacher ? "student" : "teacher";
-  const [draft, setDraft] = useState<Draft | null>(null);
-  const [other, setOther] = useState(emptyDraft);
+  const [room, setRoom] = useState<Room | null>(null);
   const [readError, setReadError] = useState("");
-  const [saveError, setSaveError] = useState("");
-  const [saving, setSaving] = useState(false);
-  const saved = useRef(emptyDraft);
-  const initialized = useRef(false);
+  const [dirty, setDirty] = useState({ teacher: false, student: false });
+
+  const updateArea = useCallback((area: Area, draft: Draft) => {
+    setRoom((current) => !current || draft.revision < current[area].revision
+      ? current
+      : { ...current, [area]: draft });
+  }, []);
+  const load = useCallback(async () => {
+    const result = await api<Partial<Room>>("lesson_room_read", { lesson_id: id }, AbortSignal.timeout(12000));
+    return { teacher: readDraft(result.teacher), student: readDraft(result.student) };
+  }, [id]);
 
   useEffect(() => {
     if (!available) return;
@@ -74,14 +94,12 @@ function LessonWorkspace({ id }: { id: string }) {
       if (reading || document.visibilityState === "hidden") return;
       reading = true;
       try {
-        const room = await api<Room>("lesson_room_read", { lesson_id: id }, AbortSignal.timeout(12000));
+        const next = await load();
         if (!active) return;
-        if (!initialized.current) {
-          saved.current = room[ownRole] ?? emptyDraft;
-          setDraft(saved.current);
-          initialized.current = true;
-        }
-        setOther(room[otherRole] ?? emptyDraft);
+        setRoom((current) => current ? {
+          teacher: next.teacher.revision > current.teacher.revision ? next.teacher : current.teacher,
+          student: next.student.revision > current.student.revision ? next.student : current.student,
+        } : next);
         setReadError("");
       } catch (error) {
         if (active) setReadError((error as Error).message);
@@ -97,100 +115,157 @@ function LessonWorkspace({ id }: { id: string }) {
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", refresh);
     };
-  }, [available, id, ownRole, otherRole]);
+  }, [available, load]);
 
-  const dirty = draft !== null && (
-    draft.revision !== saved.current.revision ||
-    draft.code !== saved.current.code || draft.notes !== saved.current.notes
-  );
-  const save = useCallback(async () => {
-    if (!draft || !dirty || saving || readError) return;
-    setSaving(true);
-    setSaveError("");
-    try {
-      const { revision } = await api<{ revision: number }>("lesson_room_save", {
-        lesson_id: id,
-        code: draft.code,
-        notes: draft.notes,
-        revision: draft.revision,
-      }, AbortSignal.timeout(12000));
-      saved.current = { ...draft, revision };
-      setDraft((current) => current && { ...current, revision });
-    } catch (error) {
-      setSaveError((error as Error).message);
-    } finally {
-      setSaving(false);
-    }
-  }, [draft, dirty, id, readError, saving]);
-
+  const hasChanges = dirty.teacher || dirty.student;
   useEffect(() => {
-    if (!dirty || saving || saveError || readError) return;
-    const timer = window.setTimeout(() => { void save(); }, 650);
-    return () => window.clearTimeout(timer);
-  }, [dirty, save, saving, saveError, readError]);
-  useEffect(() => {
-    setUnsaved(dirty);
-    if (!dirty) return;
+    setUnsaved(hasChanges);
+    if (!hasChanges) return;
     const warn = (event: BeforeUnloadEvent) => event.preventDefault();
     window.addEventListener("beforeunload", warn);
     return () => {
       window.removeEventListener("beforeunload", warn);
       setUnsaved(false);
     };
-  }, [dirty, setUnsaved]);
+  }, [hasChanges, setUnsaved]);
 
   if (!lesson || preview) return <Empty title="Урок недоступен" action="Журнал занятий" onAction={() => navigate("lessons")} />;
-  const updateDraft = (change: Partial<Draft>) => {
-    setSaveError("");
-    setDraft((current) => current && { ...current, ...change });
-  };
 
   return (
-    <>
-      <button className="back-link" type="button" onClick={() => navigate("lesson-room")}>
-        <ArrowLeft size={16} />К списку уроков
-      </button>
-      <div className="page-heading">
-        <div><h1>Режим урока</h1><p>{dateTime(lesson.starts_at)}</p></div>
-        {draft && (
-          <div className="actions">
-            <span className="muted" role="status">{saving ? "Сохраняем…" : dirty ? "Есть изменения" : "Сохранено"}</span>
-            <button className="btn" type="button" disabled={!dirty || saving || Boolean(readError)} onClick={() => void save()}>Сохранить</button>
-          </div>
-        )}
-      </div>
+    <div className="lesson-room">
+      <header className="lesson-room-header">
+        <button className="back-link" type="button" onClick={() => navigate("lesson-room")}>
+          <ArrowLeft size={16} aria-hidden="true" />К списку уроков
+        </button>
+        <h1>Урок <span>{dateTime(lesson.starts_at)}</span></h1>
+      </header>
       {readError && <ErrorBox message={readError} />}
-      {saveError && <ErrorBox message={saveError} />}
-      {!draft && !readError && <Busy text="Открываем урок…" />}
-      {draft && (
+      {!room && !readError && <Busy text="Открываем урок…" />}
+      {room && (
         <div className="lesson-room-grid">
-          <section className="panel lesson-room-pane" aria-labelledby="own-workspace">
-            <h2 id="own-workspace">Моя рабочая область</h2>
-            <Field label="Python">
-              <textarea className="lesson-room-code" rows={12} spellCheck={false} maxLength={30000}
-                value={draft.code} onChange={(event) => updateDraft({ code: event.target.value })} disabled={Boolean(readError)} />
-            </Field>
-            <PythonRunner code={draft.code} />
-            <Field label="Заметки">
-              <textarea rows={4} maxLength={12000} value={draft.notes}
-                onChange={(event) => updateDraft({ notes: event.target.value })} disabled={Boolean(readError)} />
-            </Field>
-          </section>
-          <section className="panel lesson-room-pane" aria-labelledby="other-workspace">
-            <h2 id="other-workspace">{teacher ? "Рабочая область ученика" : "Рабочая область преподавателя"}</h2>
-            <div className="code-block">
-              <div><Code2 size={16} aria-hidden="true" />Python</div>
-              <pre className="lesson-room-peer" tabIndex={0} aria-label="Код второго участника"><code>{other.code || "Кода пока нет"}</code></pre>
-            </div>
-            <h3>Заметки</h3>
-            <p className="lesson-room-notes">{other.notes || "Заметок пока нет"}</p>
-          </section>
+          <WorkspacePane area="teacher" lessonId={id} remote={room.teacher} editable={teacher}
+            connected={!readError} updateArea={updateArea} load={load} setDirty={setDirty} />
+          <WorkspacePane area="student" lessonId={id} remote={room.student} editable
+            connected={!readError} updateArea={updateArea} load={load} setDirty={setDirty} />
         </div>
       )}
-    </>
+    </div>
   );
 }
 
+function WorkspacePane({ area, lessonId, remote, editable, connected, updateArea, load, setDirty }: {
+  area: Area;
+  lessonId: string;
+  remote: Draft;
+  editable: boolean;
+  connected: boolean;
+  updateArea: (area: Area, draft: Draft) => void;
+  load: () => Promise<Room>;
+  setDirty: Dispatch<SetStateAction<Record<Area, boolean>>>;
+}) {
+  const [local, setLocal] = useState<Draft | null>(null);
+  const [view, setView] = useState<{ mode: Mode; remoteMode: Mode } | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const draft = local ?? remote;
+  const conflicting = local !== null && (local.revision < remote.revision || error.startsWith("Область уже изменили"));
+  const mode = !editable && view?.remoteMode === remote.mode ? view.mode : draft.mode;
+  const title = area === "teacher" ? "Область преподавателя" : "Область ученика";
+  const canEdit = editable && connected && !conflicting;
+
+  useEffect(() => {
+    setDirty((current) => current[area] === Boolean(local) ? current : { ...current, [area]: Boolean(local) });
+  }, [area, local, setDirty]);
+
+  const save = useCallback(async () => {
+    if (!local || saving || conflicting || !connected) return;
+    setSaving(true);
+    setError("");
+    try {
+      const { revision } = await api<{ revision: number }>("lesson_room_save", {
+        lesson_id: lessonId, area, ...local,
+      }, AbortSignal.timeout(12000));
+      updateArea(area, { ...local, revision });
+      setLocal((current) => current && current !== local ? { ...current, revision } : null);
+    } catch (cause) {
+      setError((cause as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }, [area, conflicting, connected, lessonId, local, saving, updateArea]);
+
+  useEffect(() => {
+    if (!local || error || saving || conflicting || !connected) return;
+    const timer = window.setTimeout(() => { void save(); }, 650);
+    return () => window.clearTimeout(timer);
+  }, [connected, conflicting, error, local, save, saving]);
+
+  const change = (patch: Partial<Draft>) => {
+    if (!canEdit) return;
+    setError("");
+    setLocal((current) => ({ ...(current ?? remote), ...patch }));
+  };
+
+  const reload = async () => {
+    setSaving(true);
+    try {
+      updateArea(area, (await load())[area]);
+      setLocal(null);
+      setError("");
+    } catch (cause) {
+      setError((cause as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <section className="lesson-room-pane" aria-label={title}>
+      <header className="lesson-pane-header">
+        <div>
+          <h2>{title}</h2>
+          {editable && <span className="muted" role="status">{saving ? "Сохраняем…" : local ? "Есть изменения" : "Сохранено"}</span>}
+          {!editable && <span className="muted">Только просмотр</span>}
+        </div>
+        <div className="lesson-pane-modes" role="group" aria-label={`Режим: ${title.toLowerCase()}`}>
+          {([["board", "Доска", PenLine], ["code", "Код", Code2]] as const).map(([value, label, Icon]) => (
+            <button key={value} type="button" aria-pressed={mode === value} disabled={editable && !canEdit}
+              onClick={() => {
+                if (!editable) setView({ mode: value, remoteMode: remote.mode });
+                else if (value !== mode) change({ mode: value });
+              }}><Icon size={16} aria-hidden="true" />{label}</button>
+          ))}
+        </div>
+      </header>
+      {(conflicting || error) && (
+        <div className="lesson-pane-feedback">
+          <ErrorBox message={conflicting ? "Область уже изменили. Скопируйте нужное перед загрузкой актуальной версии." : error} />
+          <button className="btn small" type="button" disabled={saving || !connected}
+            onClick={() => void (conflicting ? reload() : save())}>
+            {conflicting ? "Загрузить актуальную версию" : "Повторить сохранение"}
+          </button>
+        </div>
+      )}
+      {mode === "board" ? (
+        <LessonBoard marks={draft.board} editable={canEdit} onChange={(board) => change({ board })} />
+      ) : (
+        <div className="lesson-code-workspace">
+          <textarea className="lesson-room-code" aria-label={`Python: ${title.toLowerCase()}`}
+            placeholder="Код Python" spellCheck={false} maxLength={30000} readOnly={!canEdit}
+            value={draft.code} onChange={(event) => change({ code: event.target.value })} />
+          {editable && (window.location.hostname === "barkaloo88.sourcecraft.site" ? (
+            <p className="muted">На этом адресе запуск Python недоступен.</p>
+          ) : <PythonRunner code={draft.code} />)}
+          <details>
+            <summary>Заметки</summary>
+            <textarea aria-label="Заметки к коду" rows={3} maxLength={12000} value={draft.notes}
+              readOnly={!canEdit} onChange={(event) => change({ notes: event.target.value })} />
+          </details>
+        </div>
+      )}
+    </section>
+  );
+}
 function PythonRunner({ code }: { code: string }) {
   const frame = useRef<HTMLIFrameElement>(null);
   const [ready, setReady] = useState(false);

@@ -355,9 +355,13 @@ test("Teaching: invitations, private access, immutable homework, review, lessons
   const room = { lesson_id: lesson.id };
   assert.deepEqual(await api("lesson_room_read", room), {});
   await api("lesson_room_save", { ...room, code: "print(42)", notes: "Example", revision: 0 });
-  await assert.rejects(api("lesson_room_save", { ...room, code: "stale", revision: 0 }), /другой вкладке/);
+  await assert.rejects(api("lesson_room_save", { ...room, code: "stale", revision: 0 }), /другая вкладка|другой вкладке/);
   await as(student);
-  assert.equal((await api("lesson_room_read", room)).teacher.code, "print(42)");
+  const teacherDraft = (await api("lesson_room_read", room)).teacher;
+  assert.equal(teacherDraft.code, "print(42)");
+  assert.equal(teacherDraft.mode, "board");
+  assert.deepEqual(teacherDraft.board, []);
+  await assert.rejects(api("lesson_room_save", { ...room, area: "teacher", code: "changed", revision: 1 }), /только для просмотра/);
   await api("lesson_room_save", { ...room, code: "print(6 * 7)", notes: "My answer", revision: 0 });
   await as(stranger);
   await assert.rejects(api("lesson_room_read", room), /Урок недоступен/);
@@ -366,6 +370,20 @@ test("Teaching: invitations, private access, immutable homework, review, lessons
   const drafts = await api("lesson_room_read", room);
   assert.equal(drafts.teacher.code, "print(42)");
   assert.equal(drafts.student.notes, "My answer");
+  const board = [{ id: randomUUID(), kind: "line", points: [[10, 20], [300, 400]] }];
+  await assert.rejects(api("lesson_room_save", { ...room, area: "student", board: {}, revision: 1 }), /Неверный формат/);
+  assert.deepEqual(await api("lesson_room_save", { ...room, area: "student", board, revision: 1 }), { revision: 2 });
+  await as(student);
+  await assert.rejects(api("lesson_room_save", { ...room, area: "student", board: [], revision: 1 }), /другой вкладке/);
+  assert.deepEqual(await api("lesson_room_save", { ...room, area: "student", mode: "code", revision: 2 }), { revision: 3 });
+  const shared = await api("lesson_room_read", room);
+  assert.equal(shared.teacher.mode, "board");
+  assert.equal(shared.student.mode, "code");
+  assert.equal(shared.student.code, "print(6 * 7)");
+  assert.deepEqual(shared.student.board, board);
+  await as(otherTeacher);
+  await assert.rejects(api("lesson_room_save", { ...room, area: "student", board: [], revision: 3 }), /Урок недоступен/);
+  await as(owner);
   const blockedDay = { day: "2026-11-16", time_zone: "Europe/Moscow", blocked: true };
   const blockedRequest = {
     student_id: student,

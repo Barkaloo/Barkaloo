@@ -573,23 +573,105 @@ input:focus, select:focus, textarea:focus {
 }
 .lesson-room-entry { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
 .lesson-room-entry p { margin-top: 4px; font-size: var(--type-caption); }
+.main-content:has(.lesson-room) { padding: 0; }
+.lesson-room-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px 24px;
+  flex-wrap: wrap;
+  padding: 12px var(--content-gutter);
+  border-bottom: 1px solid var(--line);
+}
+.lesson-room-header .back-link { margin: 0; }
+.lesson-room-header h1 { margin: 0; font-size: 18px; }
+.lesson-room-header h1 span { margin-left: 8px; color: var(--muted); font-size: 13px; font-weight: 400; }
+.lesson-room > .error-box { margin: 12px var(--content-gutter); }
 .lesson-room-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4);
-  align-items: start;
+  align-items: stretch;
 }
-.lesson-room-pane { min-width: 0; }
-.lesson-room-code, .lesson-room-peer, .lesson-room-output {
+.lesson-room-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: max(470px, calc(100dvh - 120px));
+  background: var(--surface);
+}
+.lesson-room-pane + .lesson-room-pane { border-inline-start: 1px solid var(--line); }
+.lesson-pane-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 12px clamp(12px, 1.5vw, 24px);
+  border-bottom: 1px solid var(--line);
+}
+.lesson-pane-header h2 { font-size: 15px; margin: 0; }
+.lesson-pane-header .muted { display: block; font-size: 12px; }
+.lesson-pane-modes { display: inline-flex; padding: 3px; gap: 2px; border: 1px solid var(--line); border-radius: 9px; background: var(--bg); }
+.lesson-pane-modes button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 35px;
+  padding: 0 10px;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.lesson-pane-modes button[aria-pressed="true"],
+.lesson-board-toolbar button[aria-pressed="true"] { background: var(--accent-soft); color: var(--text); }
+.lesson-pane-feedback { padding: 8px 14px; }
+.lesson-board { flex: 1; position: relative; display: flex; min-height: 380px; }
+.lesson-board-surface { flex: 1; width: 100%; min-height: 100%; color: var(--text); }
+.lesson-board-surface[data-tool] { touch-action: none; cursor: crosshair; }
+.lesson-board-surface[data-tool="text"] { cursor: text; }
+.lesson-board-surface[data-tool="erase"] { cursor: cell; }
+.lesson-board-toolbar {
+  position: absolute;
+  z-index: 1;
+  inset-block-start: 12px;
+  inset-inline-start: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  max-width: calc(100% - 24px);
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg);
+}
+.lesson-board-toolbar .icon-btn { width: 36px; height: 36px; }
+.lesson-board-undo { margin-inline-start: 3px; border-inline-start: 1px solid var(--line); }
+.lesson-board-text {
+  position: absolute;
+  z-index: 1;
+  inset: 65px auto auto 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: min(360px, calc(100% - 24px));
+}
+.lesson-board-text input { min-width: 0; background: var(--bg); }
+.lesson-code-workspace {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: clamp(12px, 1.5vw, 24px);
+}
+.lesson-room-code, .lesson-room-output {
   font-family: var(--font-mono);
   line-height: 1.6;
 }
-.lesson-room-code { tab-size: 4; }
-.lesson-room-peer { min-height: 170px; max-height: 440px; }
-.lesson-room-notes, .lesson-room-output { white-space: pre-wrap; overflow-wrap: anywhere; }
-.lesson-room-output { margin: var(--space-3) 0; max-height: 260px; overflow: auto; }
-.lesson-room-pane details { margin-bottom: var(--space-3); }
-.lesson-room-pane details textarea { margin-top: var(--space-2); }
-@media (max-width: 900px) {
+.lesson-code-workspace .lesson-room-code { flex: 1; min-height: 280px; padding: 15px; tab-size: 4; resize: vertical; }
+.lesson-room-output { max-height: 220px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.lesson-code-workspace details textarea { margin-top: var(--space-2); }
+@media (max-width: 760px) {
   .lesson-room-grid { grid-template-columns: minmax(0, 1fr); }
+  .lesson-room-pane { min-height: min(600px, max(465px, 68dvh)); }
+  .lesson-room-pane + .lesson-room-pane { border-inline-start: 0; border-block-start: 1px solid var(--line); }
 }
