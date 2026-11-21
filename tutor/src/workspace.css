@@ -187,6 +187,75 @@ input:focus, select:focus, textarea:focus {
   box-shadow: none;
 }
 
+.theory-logical-operators {
+  max-width: 840px;
+  margin-bottom: var(--space-6);
+}
+.theory-logical-operators h2 { margin-bottom: var(--space-3); }
+.theory-table-frame {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.theory-table-frame table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.theory-table-frame :is(th, td) {
+  padding: var(--space-3) clamp(8px, 2vw, 20px);
+  border-bottom: 1px solid var(--line);
+  text-align: start;
+}
+.theory-table-frame thead { background: var(--soft); }
+.theory-table-frame thead th { font-size: var(--type-control); }
+.theory-table-frame tbody th { font-weight: 500; }
+.theory-table-frame tbody tr:last-child > * { border-bottom: 0; }
+.theory-table-frame .theory-operator-symbol {
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: 650;
+}
+.theory-logical-operators code {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+.theory-table-frame code {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.theory-python-template {
+  --python-keyword: #7133a4;
+  --python-string: #9d3b23;
+  --python-number: #08685b;
+  --python-function: #76521a;
+  --python-comment: #506c52;
+  margin-top: var(--space-4);
+  background: var(--surface);
+}
+:root[data-theme="dark"] .theory-python-template {
+  --python-keyword: #d2a2ed;
+  --python-string: #edaa8d;
+  --python-number: #a4d9bd;
+  --python-function: #ead99a;
+  --python-comment: #91ae91;
+}
+.theory-python-template > div {
+  justify-content: space-between;
+  background: var(--soft);
+  font-size: var(--type-caption);
+  font-weight: 600;
+}
+.theory-python-label { display: inline-flex; align-items: center; gap: var(--space-2); }
+.theory-python-template pre { font-size: var(--type-caption); }
+.theory-python-template .token.keyword { color: var(--python-keyword); }
+.theory-python-template .token.string { color: var(--python-string); font-style: normal; }
+.theory-python-template .token.number { color: var(--python-number); }
+.theory-python-template .token:is(.builtin, .function) { color: var(--python-function); }
+.theory-python-template .token.comment { color: var(--python-comment); }
+
 .student-list-head {
   border-radius: 0;
   background: var(--surface);

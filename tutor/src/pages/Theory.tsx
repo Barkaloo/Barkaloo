@@ -1,9 +1,86 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Plus, Download, ExternalLink, Archive, FileText, Play } from 'lucide-react';
+import { Plus, Download, ExternalLink, Archive, FileText, Play, Copy, Code2 } from 'lucide-react';
+import Prism from 'prismjs';
+import 'prismjs/components/prism-python';
 import { useApp } from '../context';
 import { supabase, videoEmbed } from '../lib/api';
 import { theoryAccept, theoryFile, type TheoryMaterial } from '../lib/theory';
 import { Busy, Empty, ErrorBox, Field, Modal } from '../components/ui';
+
+const logicalOperators = [
+  ['¬', 'Отрицание', 'not A'],
+  ['∧', 'Конъюнкция', 'A and B'],
+  ['∨', 'Дизъюнкция', 'A or B'],
+  ['→', 'Импликация', 'A <= B'],
+  ['≡', 'Эквиваленция', 'A == B'],
+] as const;
+
+const pythonTemplate = `print('x y z w')
+for x in 0, 1:
+    for y in 0, 1:
+        for z in 0, 1:
+            for w in 0, 1:
+                f = ... # вставь функцию сюда
+
+                if f == 1: # если в таблице F = 1 (замени 1 на 0, если F = 0)
+                    print(x, y, z, w)`;
+
+const pythonGrammar = Prism.languages.python;
+const highlightedTemplate = Prism.highlight(pythonTemplate, {
+  ...pythonGrammar,
+  keyword: [{ pattern: /\bprint(?=\s*\()/, alias: 'builtin' }, pythonGrammar.keyword as RegExp],
+}, 'python');
+
+function LogicalOperators() {
+  const { notify } = useApp();
+  const [copyError, setCopyError] = useState(false);
+
+  const copyTemplate = async () => {
+    try {
+      await navigator.clipboard.writeText(pythonTemplate);
+      setCopyError(false);
+      notify('Шаблон скопирован');
+    } catch {
+      setCopyError(true);
+    }
+  };
+
+  return (
+    <section className="theory-logical-operators" aria-labelledby="logical-operators-title">
+      <h2 id="logical-operators-title">Логические операторы</h2>
+      <div className="theory-table-frame">
+        <table aria-labelledby="logical-operators-title">
+          <thead>
+            <tr>
+              <th scope="col">В математике</th>
+              <th scope="col">Название</th>
+              <th scope="col">В Python</th>
+            </tr>
+          </thead>
+          <tbody>
+            {logicalOperators.map(([symbol, name, example]) => (
+              <tr key={symbol}>
+                <td className="theory-operator-symbol">{symbol}</td>
+                <th scope="row">{name}</th>
+                <td><code>{example}</code></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="code-block theory-python-template">
+        <div>
+          <span className="theory-python-label"><Code2 size={16} aria-hidden="true" />Python</span>
+          <button className="btn small" type="button" onClick={() => void copyTemplate()}>
+            <Copy size={15} aria-hidden="true" />Скопировать
+          </button>
+        </div>
+        <pre tabIndex={0} aria-label="Шаблон кода на Python"><code dangerouslySetInnerHTML={{ __html: highlightedTemplate }} /></pre>
+      </div>
+      {copyError && <ErrorBox message="Не удалось скопировать. Выделите код и скопируйте вручную." />}
+    </section>
+  );
+}
 
 export default function Theory() {
   const { data, teacher, notify } = useApp();
@@ -45,6 +122,7 @@ export default function Theory() {
     await reload(); notify('Материал убран из раздела');
   };
   const rows = materials.filter((m) => m.section_id === section);
+  const showLogicalOperators = data.sections.some((s) => s.id === section && s.number === 2);
   return <>
     <div className="page-heading">
       <h1>Теоретический материал</h1>
@@ -53,6 +131,7 @@ export default function Theory() {
     <div className="filter-bar"><select aria-label="Номер задания" value={section} onChange={(e) => setSection(e.target.value)}>
       {data.sections.map((s) => <option key={s.id} value={s.id}>{s.title}</option>)}
     </select></div>
+    {showLogicalOperators && <LogicalOperators />}
     {error && <ErrorBox message={error} />}
     {loading ? <Busy /> : rows.length ? <div className="theory-list">
       {rows.map((m) => <article className="theory-row" key={m.id}>
@@ -65,7 +144,7 @@ export default function Theory() {
           {teacher && m.owner_id === data.profile.user_id && <button className="icon-btn" aria-label={`Убрать ${m.title}`} title="Убрать из раздела" onClick={() => void archive(m).catch((e) => setError(e.message))}><Archive size={17} /></button>}
         </div>
       </article>)}
-    </div> : <Empty title="Материалов пока нет">{teacher ? 'Добавьте файлы или медиа к выбранному заданию.' : 'Здесь появятся материалы вашего преподавателя.'}</Empty>}
+    </div> : !showLogicalOperators && !error && <Empty title="Материалов пока нет">{teacher ? 'Добавьте файлы или медиа к выбранному заданию.' : 'Здесь появятся материалы вашего преподавателя.'}</Empty>}
     {adding && <AddMaterial section={section} onClose={() => setAdding(false)} onSaved={reload} />}
     {view && <MaterialView material={view} onClose={() => setView(null)} onDownload={() => void download(view)} />}
   </>;
