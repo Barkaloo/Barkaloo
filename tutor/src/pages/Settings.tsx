@@ -76,6 +76,11 @@ export default function Settings() {
           <p className="muted">
             Роль: {data.role === "teacher" ? "преподаватель" : "ученик"}
           </p>
+          {data.role === "teacher" && (
+            <p><a className="text-btn" href="?role=student" target="_blank" rel="noopener">
+              Открыть вход ученика в новой вкладке
+            </a></p>
+          )}
           {error && <ErrorBox message={error} />}
           <button className="btn primary" disabled={busy}>
             <CheckCircle2 size={16} />

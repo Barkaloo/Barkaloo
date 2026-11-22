@@ -1,9 +1,14 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient, navigatorLock, type SupabaseClient } from "@supabase/supabase-js";
 import type { Data } from "../types";
-import { browserTabAuth } from "./tab-auth";
+import { browserTabAuth, hasRememberedTeacher, selectAuthAudience, teacherSessionKey } from "./tab-auth";
 const url = import.meta.env.VITE_TUTOR_SUPABASE_URL;
 const key = import.meta.env.VITE_TUTOR_SUPABASE_PUBLISHABLE_KEY;
 export const configured = !!url && !!key && !url.includes("your-project");
+const projectKey = `barkaloo-tutor-${configured ? new URL(url).hostname.split(".")[0] : "unconfigured"}-auth`;
+export const authAudience = selectAuthAudience(
+  new URLSearchParams(location.search).get("role"), location.hash, hasRememberedTeacher(projectKey),
+);
+const authMode = `role-v2:${authAudience}`;
 const cabinetFetch: typeof fetch = (input, init) => {
   if (typeof input === "string" && url && input === `${url.replace(/\/$/, "")}/rest/v1/rpc/tutor_api`) {
     // Use the same endpoint as code sign-in, including its URL for preflight.
@@ -14,7 +19,7 @@ const cabinetFetch: typeof fetch = (input, init) => {
 export const supabase: SupabaseClient =
   (import.meta.hot &&
   import.meta.hot.data.supabaseClientUrl === url &&
-  import.meta.hot.data.supabaseClientMode === "tab-v1"
+  import.meta.hot.data.supabaseClientMode === authMode
     ? import.meta.hot.data.supabaseClient
     : undefined) ??
   createClient(
@@ -25,9 +30,9 @@ export const supabase: SupabaseClient =
         ? { global: { fetch: cabinetFetch } }
         : {}),
       auth: {
-        ...browserTabAuth(
-          `barkaloo-tutor-${configured ? new URL(url).hostname.split(".")[0] : "unconfigured"}-auth`,
-        ),
+        ...(authAudience === "teacher"
+          ? { storageKey: teacherSessionKey(projectKey), ...(navigator.locks ? { lock: navigatorLock } : {}) }
+          : browserTabAuth(projectKey)),
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
@@ -37,7 +42,7 @@ export const supabase: SupabaseClient =
 if (import.meta.hot) {
   import.meta.hot.data.supabaseClient = supabase;
   import.meta.hot.data.supabaseClientUrl = url;
-  import.meta.hot.data.supabaseClientMode = "tab-v1";
+  import.meta.hot.data.supabaseClientMode = authMode;
 }
 export async function api<T = Record<string, unknown>>(
   action: string,

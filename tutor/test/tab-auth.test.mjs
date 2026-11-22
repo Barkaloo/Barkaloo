@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createClient } from "@supabase/supabase-js";
-import { createTabAuth } from "../src/lib/tab-auth.ts";
+import { createTabAuth, selectAuthAudience, teacherSessionKey } from "../src/lib/tab-auth.ts";
 
 function tabStorage(seed = []) {
   const values = new Map(seed);
@@ -69,6 +69,15 @@ test("Tab auth has isolated in-memory storage when browser storage is unavailabl
   assert.throws(() => a.storage.getItem("other-project"), /Unexpected/);
   a.storage.removeItem(a.storageKey);
   assert.equal(a.storage.getItem(a.storageKey), null);
+});
+
+test("A remembered teacher opens by default while the student URL stays isolated", () => {
+  assert.equal(selectAuthAudience(null, "#/lesson-room", true), "teacher");
+  assert.equal(selectAuthAudience("student", "#/lesson-room", true), "student");
+  assert.equal(selectAuthAudience("teacher", "", false), "teacher");
+  assert.equal(selectAuthAudience(null, "", false), "student");
+  assert.equal(selectAuthAudience(null, "#type=recovery", false), "teacher");
+  assert.notEqual(teacherSessionKey("test"), createTabAuth("test", tabStorage(), "navigate", "tab").storageKey);
 });
 
 test("Real Supabase SDK isolates sign-in, refresh, reload and local sign-out across tabs", async (t) => {

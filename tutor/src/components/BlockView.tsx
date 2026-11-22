@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import katex from "katex";
 import "katex/dist/katex.min.css";
-import Prism from "prismjs";
-import "prismjs/components/prism-python";
-import "prismjs/components/prism-javascript";
+import { useHighlightedCode } from "../lib/code-highlight";
 import { Info, AlertTriangle, ImageOff, Code2 } from "lucide-react";
 import type { Block } from "../types";
 import { supabase, videoEmbed } from "../lib/api";
@@ -65,6 +63,19 @@ function ImageBlock({ block }: { block: Block }) {
     </figure>
   );
 }
+function CodeBlock({ block }: { block: Block }) {
+  const language = block.language ?? "python";
+  const code = block.text ?? "";
+  const highlighted = useHighlightedCode(code, language);
+  return (
+    <div className="code-block">
+      <div><Code2 size={14} />{language === "python" ? "Python" : language}</div>
+      <pre>{highlighted === null ? <code>{code}</code> :
+        <code dangerouslySetInnerHTML={{ __html: highlighted }} />}</pre>
+    </div>
+  );
+}
+
 export default function BlockView({ block }: { block: Block }) {
   switch (block.type) {
     case "heading":
@@ -96,25 +107,8 @@ export default function BlockView({ block }: { block: Block }) {
       return <ImageBlock block={block} />;
     case "formula":
       return <Formula text={block.text ?? ""} />;
-    case "code": {
-      const lang = block.language ?? "python";
-      const grammar = Prism.languages[lang] ?? Prism.languages.plain;
-      return (
-        <div className="code-block">
-          <div>
-            <Code2 size={14} />
-            {lang === "python" ? "Python" : lang}
-          </div>
-          <pre>
-            <code
-              dangerouslySetInnerHTML={{
-                __html: Prism.highlight(block.text ?? "", grammar, lang),
-              }}
-            />
-          </pre>
-        </div>
-      );
-    }
+    case "code":
+      return <CodeBlock block={block} />;
     case "table":
       return (
         <div className="table-scroll">

@@ -1,6 +1,5 @@
-import { useMemo, useRef, type KeyboardEvent } from "react";
-import Prism from "prismjs";
-import "prismjs/components/prism-python";
+import { useRef, type KeyboardEvent } from "react";
+import { useHighlightedCode } from "../lib/code-highlight";
 
 const indent = "    ";
 const codeLimit = 30000;
@@ -13,7 +12,7 @@ export function PythonEditor({ label, code, onChange, onRun }: {
 }) {
   const mirror = useRef<HTMLPreElement>(null);
   const tabLeavesEditor = useRef(false);
-  const highlighted = useMemo(() => Prism.highlight(code, Prism.languages.python, "python"), [code]);
+  const highlighted = useHighlightedCode(code, "python");
 
   const keyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
@@ -63,7 +62,8 @@ export function PythonEditor({ label, code, onChange, onRun }: {
   return (
     <div className="lesson-python-editor">
       <pre ref={mirror} className="lesson-python-highlight" aria-hidden="true">
-        <code dangerouslySetInnerHTML={{ __html: highlighted + "\n" }} />
+        {highlighted === null ? <code>{code + "\n"}</code> :
+          <code dangerouslySetInnerHTML={{ __html: highlighted + "\n" }} />}
       </pre>
       <textarea className="lesson-room-code" aria-label={label}
         title="Tab — отступ, Shift+Tab — убрать отступ, Esc затем Tab — выйти из редактора"

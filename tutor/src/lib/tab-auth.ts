@@ -3,6 +3,28 @@ type StorageLike = Pick<
   "getItem" | "setItem" | "removeItem" | "key" | "length"
 >;
 
+export function teacherSessionKey(projectKey: string) {
+  return `${projectKey}-teacher`;
+}
+
+export function selectAuthAudience(
+  explicitRole: string | null,
+  hash: string,
+  rememberedTeacher: boolean,
+): "teacher" | "student" {
+  if (new URLSearchParams(hash.slice(1)).get("type") === "recovery") return "teacher";
+  if (explicitRole === "teacher" || explicitRole === "student") return explicitRole;
+  return rememberedTeacher ? "teacher" : "student";
+}
+
+export function hasRememberedTeacher(projectKey: string) {
+  try {
+    return Boolean(window.localStorage.getItem(teacherSessionKey(projectKey)));
+  } catch {
+    return false;
+  }
+}
+
 export function createTabAuth(
   projectKey: string,
   storage: StorageLike | undefined,

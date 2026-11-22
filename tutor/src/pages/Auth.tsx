@@ -5,7 +5,7 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import { configured, studentAccess, supabase } from "../lib/api";
+import { authAudience, configured, studentAccess, supabase } from "../lib/api";
 import { Field, ErrorBox } from "../components/ui";
 import BrandMark from "../components/BrandMark";
 const translate = (message: string) =>
@@ -25,7 +25,6 @@ export default function Auth({
   recovery?: boolean;
   onRecovered: () => void;
 }) {
-  const [audience, setAudience] = useState<"student" | "teacher">("student");
   const [mode, setMode] = useState<"signin" | "reset">("signin");
   const [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
@@ -34,7 +33,7 @@ export default function Auth({
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [message, setMessage] = useState("");
-  const student = audience === "student" && !recovery;
+  const student = authAudience === "student" && !recovery;
   const submit = async () => {
     setBusy(true);
     setError("");
@@ -75,10 +74,10 @@ export default function Auth({
     }
   };
   const change = (value: "student" | "teacher") => {
-    setAudience(value);
-    setMode("signin");
-    setError("");
-    setMessage("");
+    if (value === authAudience) return;
+    const url = new URL(location.href);
+    url.searchParams.set("role", value);
+    location.replace(url);
   };
   return (
     <main className="auth-page auth-entry">
