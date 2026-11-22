@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from "react";
-import { ArrowLeft, ArrowRight, Code2, PenLine } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { ArrowLeft, ArrowRight, Code2, Maximize, Minimize, PenLine } from "lucide-react";
 import { useApp } from "../context";
 import { api } from "../lib/api";
 import { dateTime, lessonLabels, studentName } from "../lib/teaching";
@@ -10,18 +10,23 @@ import { LessonPython } from "../components/LessonPython";
 type Area = "teacher" | "student";
 type Mode = "board" | "code";
 type Draft = { code: string; notes: string; revision: number; mode: Mode; board: BoardMark[] };
-type Room = Record<Area, Draft>;
+type Layout = { student_visible: boolean; revision: number };
+type Room = Record<Area, Draft> & { layout: Layout };
+const defaultLayout: Layout = { student_visible: true, revision: 0 };
 const emptyDraft: Draft = { code: "", notes: "", revision: 0, mode: "board", board: [] };
 
-function readDraft(draft?: Draft): Draft {
+function readDraft(lessonId: string, area: Area, draft?: Draft): Draft {
   if (!draft) return emptyDraft;
   const board = Array.isArray(draft.board) ? draft.board.filter((mark) =>
     mark && typeof mark.id === "string" &&
-    ["pen", "line", "rectangle", "ellipse", "text"].includes(mark.kind) &&
+    ["pen", "line", "rectangle", "ellipse", "text", "image"].includes(mark.kind) &&
     Array.isArray(mark.points) && mark.points.length > 0 && mark.points.length <= 1000 &&
     mark.points.every((point) => Array.isArray(point) && point.length === 2 &&
       point.every((value) => Number.isInteger(value) && value >= 0 && value <= 1000)) &&
-    (mark.kind !== "text" || typeof mark.text === "string"),
+    (mark.kind !== "text" || typeof mark.text === "string") &&
+    (mark.kind !== "image" || (typeof mark.path === "string" && mark.points.length === 2 &&
+      mark.path.startsWith(`${lessonId}/${area}/`) &&
+      /^[0-9a-f-]{36}\.(png|jpg|webp)$/.test(mark.path.split("/").at(-1) ?? ""))),
   ) : [];
   return { ...draft, mode: draft.mode === "code" ? "code" : "board", board };
 }
@@ -75,6 +80,8 @@ function LessonWorkspace({ id }: { id: string }) {
   const available = Boolean(lesson) && !preview;
   const [room, setRoom] = useState<Room | null>(null);
   const [readError, setReadError] = useState("");
+  const [layoutError, setLayoutError] = useState("");
+  const [layoutSaving, setLayoutSaving] = useState(false);
   const [dirty, setDirty] = useState({ teacher: false, student: false });
 
   const updateArea = useCallback((area: Area, draft: Draft) => {
@@ -84,7 +91,8 @@ function LessonWorkspace({ id }: { id: string }) {
   }, []);
   const load = useCallback(async () => {
     const result = await api<Partial<Room>>("lesson_room_read", { lesson_id: id }, AbortSignal.timeout(12000));
-    return { teacher: readDraft(result.teacher), student: readDraft(result.student) };
+    return { teacher: readDraft(id, "teacher", result.teacher), student: readDraft(id, "student", result.student),
+      layout: result.layout ?? defaultLayout };
   }, [id]);
 
   useEffect(() => {
@@ -100,6 +108,7 @@ function LessonWorkspace({ id }: { id: string }) {
         setRoom((current) => current ? {
           teacher: next.teacher.revision > current.teacher.revision ? next.teacher : current.teacher,
           student: next.student.revision > current.student.revision ? next.student : current.student,
+          layout: next.layout.revision > current.layout.revision ? next.layout : current.layout,
         } : next);
         setReadError("");
       } catch (error) {
@@ -132,6 +141,22 @@ function LessonWorkspace({ id }: { id: string }) {
 
   if (!lesson || preview) return <Empty title="Урок недоступен" action="Журнал занятий" onAction={() => navigate("lessons")} />;
 
+  const toggleStudent = async () => {
+    if (!room || layoutSaving) return;
+    setLayoutSaving(true);
+    setLayoutError("");
+    try {
+      const { layout } = await api<{ layout: Layout }>("lesson_room_layout", {
+        lesson_id: id, student_visible: !room.layout.student_visible,
+      }, AbortSignal.timeout(12000));
+      setRoom((current) => current && layout.revision > current.layout.revision ? { ...current, layout } : current);
+    } catch (cause) {
+      setLayoutError((cause as Error).message);
+    } finally {
+      setLayoutSaving(false);
+    }
+  };
+
   return (
     <div className="lesson-room">
       <header className="lesson-room-header">
@@ -139,14 +164,20 @@ function LessonWorkspace({ id }: { id: string }) {
           <ArrowLeft size={16} aria-hidden="true" />К списку уроков
         </button>
         <h1>Урок <span>{dateTime(lesson.starts_at)}</span></h1>
+        {teacher && room && <button type="button" className="btn small lesson-layout-toggle"
+          disabled={layoutSaving || Boolean(readError)} onClick={() => void toggleStudent()}>
+          {room.layout.student_visible ? "Скрыть область ученика" : "Показать область ученика"}
+        </button>}
       </header>
       {readError && <ErrorBox message={readError} />}
+      {layoutError && <ErrorBox message={layoutError} />}
       {!room && !readError && <Busy text="Открываем урок…" />}
       {room && (
-        <div className="lesson-room-grid">
+        <div className={`lesson-room-grid${room.layout.student_visible ? "" : " single-area"}`}>
           <WorkspacePane area="teacher" lessonId={id} remote={room.teacher} editable={teacher}
             connected={!readError} updateArea={updateArea} load={load} setDirty={setDirty} />
           <WorkspacePane area="student" lessonId={id} remote={room.student} editable
+            hidden={!room.layout.student_visible}
             connected={!readError} updateArea={updateArea} load={load} setDirty={setDirty} />
         </div>
       )}
@@ -154,12 +185,13 @@ function LessonWorkspace({ id }: { id: string }) {
   );
 }
 
-function WorkspacePane({ area, lessonId, remote, editable, connected, updateArea, load, setDirty }: {
+function WorkspacePane({ area, lessonId, remote, editable, connected, updateArea, load, setDirty, hidden = false }: {
   area: Area;
   lessonId: string;
   remote: Draft;
   editable: boolean;
   connected: boolean;
+  hidden?: boolean;
   updateArea: (area: Area, draft: Draft) => void;
   load: () => Promise<Room>;
   setDirty: Dispatch<SetStateAction<Record<Area, boolean>>>;
@@ -168,11 +200,65 @@ function WorkspacePane({ area, lessonId, remote, editable, connected, updateArea
   const [view, setView] = useState<{ mode: Mode; remoteMode: Mode } | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [fullscreen, setFullscreen] = useState(false);
+  const [fallbackFullscreen, setFallbackFullscreen] = useState(false);
+  const pane = useRef<HTMLElement>(null);
+  const fullscreenButton = useRef<HTMLButtonElement>(null);
   const draft = local ?? remote;
   const conflicting = local !== null && (local.revision < remote.revision || error.startsWith("Область уже изменили"));
   const mode = !editable && view?.remoteMode === remote.mode ? view.mode : draft.mode;
   const title = area === "teacher" ? "Область преподавателя" : "Область ученика";
   const canEdit = editable && connected && !conflicting;
+  const expanded = !hidden && (fullscreen || fallbackFullscreen);
+
+  useEffect(() => {
+    const node = pane.current;
+    const sync = () => setFullscreen(document.fullscreenElement === node);
+    document.addEventListener("fullscreenchange", sync);
+    return () => {
+      document.removeEventListener("fullscreenchange", sync);
+      if (document.fullscreenElement === node) void document.exitFullscreen().catch(() => {});
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hidden) return;
+    setFallbackFullscreen(false);
+    if (document.fullscreenElement === pane.current) void document.exitFullscreen().catch(() => {});
+  }, [hidden]);
+
+  useEffect(() => {
+    if (!fallbackFullscreen || hidden) return;
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setFallbackFullscreen(false);
+        fullscreenButton.current?.focus();
+      }
+    };
+    const retainFocus = (event: FocusEvent) => {
+      if (!pane.current?.contains(event.target as Node)) fullscreenButton.current?.focus();
+    };
+    document.addEventListener("keydown", escape);
+    document.addEventListener("focusin", retainFocus);
+    return () => {
+      document.removeEventListener("keydown", escape);
+      document.removeEventListener("focusin", retainFocus);
+    };
+  }, [fallbackFullscreen, hidden]);
+
+  const toggleFullscreen = async () => {
+    if (fullscreen) {
+      await document.exitFullscreen().catch(() => {});
+      fullscreenButton.current?.focus();
+    } else if (fallbackFullscreen) {
+      setFallbackFullscreen(false);
+    } else if (pane.current?.requestFullscreen) {
+      try { await pane.current.requestFullscreen(); }
+      catch { setFallbackFullscreen(true); }
+    } else {
+      setFallbackFullscreen(true);
+    }
+  };
 
   useEffect(() => {
     setDirty((current) => current[area] === Boolean(local) ? current : { ...current, [area]: Boolean(local) });
@@ -221,21 +307,30 @@ function WorkspacePane({ area, lessonId, remote, editable, connected, updateArea
   };
 
   return (
-    <section className="lesson-room-pane" aria-label={title}>
+    <section ref={pane} hidden={hidden} className={`lesson-room-pane${expanded ? " is-fullscreen" : ""}`} aria-label={title}>
       <header className="lesson-pane-header">
         <div>
           <h2>{title}</h2>
           {editable && <span className="muted" role="status">{saving ? "Сохраняем…" : local ? "Есть изменения" : "Сохранено"}</span>}
           {!editable && <span className="muted">Только просмотр</span>}
         </div>
-        <div className="lesson-pane-modes" role="group" aria-label={`Режим: ${title.toLowerCase()}`}>
+        <div className="lesson-pane-controls">
+          <div className="lesson-pane-modes" role="group" aria-label={`Режим: ${title.toLowerCase()}`}>
           {([["board", "Доска", PenLine], ["code", "Код", Code2]] as const).map(([value, label, Icon]) => (
             <button key={value} type="button" aria-pressed={mode === value} disabled={editable && !canEdit}
               onClick={() => {
                 if (!editable) setView({ mode: value, remoteMode: remote.mode });
                 else if (value !== mode) change({ mode: value });
+                if (value === "board") requestAnimationFrame(() => pane.current?.querySelector<HTMLElement>(".lesson-board")?.focus());
               }}><Icon size={16} aria-hidden="true" />{label}</button>
           ))}
+          </div>
+          <button ref={fullscreenButton} type="button" className="icon-btn"
+            aria-label={expanded ? "Выйти из полноэкранного режима" : "На весь экран"}
+            title={expanded ? "Выйти из полноэкранного режима" : "На весь экран"}
+            onClick={() => void toggleFullscreen()}>
+            {expanded ? <Minimize size={18} aria-hidden="true" /> : <Maximize size={18} aria-hidden="true" />}
+          </button>
         </div>
       </header>
       {(conflicting || error) && (
@@ -248,7 +343,14 @@ function WorkspacePane({ area, lessonId, remote, editable, connected, updateArea
         </div>
       )}
       {mode === "board" ? (
-        <LessonBoard marks={draft.board} editable={canEdit} onChange={(board) => change({ board })} />
+        <LessonBoard marks={draft.board} editable={canEdit && !hidden} lessonId={lessonId} area={area}
+          onChange={(update) => {
+            setError("");
+            setLocal((current) => {
+              const base = current ?? remote;
+              return { ...base, board: update(base.board) };
+            });
+          }} />
       ) : (
         <div className="lesson-code-workspace">
           <LessonPython label={`Python: ${title.toLowerCase()}`} code={draft.code} canRun={editable}

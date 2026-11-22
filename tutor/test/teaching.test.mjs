@@ -353,7 +353,7 @@ test("Teaching: invitations, private access, immutable homework, review, lessons
   await as(owner);
   const record = (await data()).lessons.find((l) => l.id === lesson.id);
   const room = { lesson_id: lesson.id };
-  assert.deepEqual(await api("lesson_room_read", room), {});
+  assert.deepEqual(await api("lesson_room_read", room), { layout: { student_visible: true, revision: 0 } });
   await api("lesson_room_save", { ...room, code: "print(42)", notes: "Example", revision: 0 });
   await assert.rejects(api("lesson_room_save", { ...room, code: "stale", revision: 0 }), /другая вкладка|другой вкладке/);
   await as(student);
@@ -381,9 +381,36 @@ test("Teaching: invitations, private access, immutable homework, review, lessons
   assert.equal(shared.student.mode, "code");
   assert.equal(shared.student.code, "print(6 * 7)");
   assert.deepEqual(shared.student.board, board);
+  await assert.rejects(api("lesson_room_layout", { ...room, student_visible: false }), /Урок недоступен/);
+  const image = `${lesson.id}/student/${randomUUID()}.png`;
+  const teacherImage = `${lesson.id}/teacher/${randomUUID()}.png`;
+  const uploadBoardImage = (name) => db.query(
+    "insert into storage.objects(bucket_id, name) values('tutor-lesson-board', $1)", [name],
+  );
+  const boardImages = async () => (await db.query(
+    "select name from storage.objects where bucket_id = 'tutor-lesson-board' order by name",
+  )).rows.map(({ name }) => name);
+  await uploadBoardImage(image);
+  await assert.rejects(uploadBoardImage(teacherImage), /row-level security/);
   await as(otherTeacher);
   await assert.rejects(api("lesson_room_save", { ...room, area: "student", board: [], revision: 3 }), /Урок недоступен/);
+  await assert.rejects(api("lesson_room_layout", { ...room, student_visible: false }), /Урок недоступен/);
+  assert.deepEqual(await boardImages(), []);
   await as(owner);
+  await uploadBoardImage(teacherImage);
+  assert.deepEqual(await boardImages(), [image, teacherImage]);
+  assert.deepEqual(await api("lesson_room_layout", { ...room, student_visible: false }), {
+    layout: { student_visible: false, revision: 1 },
+  });
+  await as(student);
+  const hiddenRoom = await api("lesson_room_read", room);
+  assert.deepEqual(hiddenRoom.layout, { student_visible: false, revision: 1 });
+  assert.deepEqual(hiddenRoom.student.board, board);
+  assert.deepEqual(await boardImages(), [image, teacherImage]);
+  await as(owner);
+  assert.deepEqual(await api("lesson_room_layout", { ...room, student_visible: true }), {
+    layout: { student_visible: true, revision: 2 },
+  });
   const blockedDay = { day: "2026-11-16", time_zone: "Europe/Moscow", blocked: true };
   const blockedRequest = {
     student_id: student,
