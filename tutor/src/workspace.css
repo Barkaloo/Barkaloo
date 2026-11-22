@@ -640,10 +640,23 @@ body:has(.lesson-room-pane.is-fullscreen) { overflow: hidden; }
 .lesson-board { flex: 1; position: relative; display: flex; min-height: 380px; }
 .lesson-board:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .lesson-board-zoom, .lesson-board-feedback { position: absolute; z-index: 2; inset-block-end: 12px; }
-.lesson-board-zoom { inset-inline-end: 12px; }
+.lesson-board-zoom {
+  inset-inline-end: 12px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg);
+}
+.lesson-board-zoom .icon-btn { width: 34px; height: 34px; }
+.lesson-board-zoom .lesson-board-percent { width: 48px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.lesson-board-zoom button[aria-pressed="true"] { background: var(--accent-soft); color: var(--text); }
 .lesson-board-feedback {
   inset-inline-start: 12px;
-  max-width: calc(100% - 110px);
+  inset-block-end: 61px;
+  max-width: calc(100% - 24px);
   margin: 0;
   padding: 6px 10px;
   border-radius: 6px;
@@ -655,6 +668,17 @@ body:has(.lesson-room-pane.is-fullscreen) { overflow: hidden; }
 .lesson-board-surface[data-tool] { touch-action: none; cursor: crosshair; }
 .lesson-board-surface[data-tool="text"] { cursor: text; }
 .lesson-board-surface[data-tool="erase"] { cursor: cell; }
+.lesson-board-surface[data-tool="select"] { cursor: default; }
+.lesson-board-surface[data-tool="select"] [data-image] { cursor: move; }
+.lesson-board-surface[data-tool="select"] [data-mark]:not([data-image]) { pointer-events: none; }
+.lesson-board-surface[data-tool="pan"] { cursor: grab; }
+.lesson-board-surface[data-panning="true"] { cursor: grabbing; }
+.lesson-board-selection { pointer-events: none; }
+.lesson-board-selection-outline { fill: none; stroke: var(--accent); stroke-width: 1.5; }
+.lesson-board-handle { pointer-events: all; }
+.lesson-board-handle ellipse { fill: var(--bg); stroke: var(--accent); stroke-width: 1.5; }
+.lesson-board-handle[data-corner="nw"], .lesson-board-handle[data-corner="se"] { cursor: nwse-resize; }
+.lesson-board-handle[data-corner="ne"], .lesson-board-handle[data-corner="sw"] { cursor: nesw-resize; }
 .lesson-board-toolbar {
   position: absolute;
   z-index: 1;
