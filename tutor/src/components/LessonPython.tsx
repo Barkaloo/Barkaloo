@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Copy, Play, Square } from "lucide-react";
+import { Copy, Play, Square, X } from "lucide-react";
+import { PythonEditor } from "./PythonEditor";
 
-type Run = { id: number; code: string; input: string };
+type Run = { id: number; code: string; input: string; attachments: File[]; seconds: number };
 type Phase = "idle" | "connecting" | "loading" | "running" | "done" | "stopped" | "error";
 const statuses: Record<Phase, string> = {
   idle: "Готов к запуску",
@@ -13,6 +14,9 @@ const statuses: Record<Phase, string> = {
   error: "Ошибка",
 };
 const mainHost = "https://barkaloo88.sourcecraft.site";
+const maxFiles = 8;
+const maxBytes = 16 * 1024 * 1024;
+const maxOutput = 64000;
 let bundleRequest: Promise<ArrayBuffer | undefined> | undefined;
 
 function sourceCraftRuntime() {
@@ -38,7 +42,7 @@ function getRunnerUrls() {
   ] : [runnerPath];
   return paths.map((path) => {
     const url = new URL(path, origin);
-    url.search = new URLSearchParams({ v: "5", parent: origin }).toString();
+    url.search = new URLSearchParams({ v: "6", parent: origin }).toString();
     return url.href;
   });
 }
@@ -56,15 +60,20 @@ export function LessonPython({ label, code, canRun, onChange }: {
   const sequence = useRef(0);
   const watchdog = useRef<number | undefined>(undefined);
   const [runnerUrls, setRunnerUrls] = useState<string[]>([]);
+  const [connectionId, setConnectionId] = useState(0);
   const [phase, setPhase] = useState<Phase>("idle");
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
   const [input, setInput] = useState("");
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [fileError, setFileError] = useState("");
+  const [seconds, setSeconds] = useState(30);
+  const [truncated, setTruncated] = useState(false);
   const [copyStatus, setCopyStatus] = useState("");
   const consoleOutput = useRef<HTMLPreElement>(null);
   const busy = phase === "connecting" || phase === "loading" || phase === "running";
 
-  const watch = useCallback((id: number, connected: boolean) => {
+  const watch = useCallback((id: number, timeout: number, message: string) => {
     window.clearTimeout(watchdog.current);
     watchdog.current = window.setTimeout(() => {
       port.current?.postMessage({ type: "stop", id });
@@ -74,14 +83,13 @@ export function LessonPython({ label, code, canRun, onChange }: {
       active.current = null;
       setRunnerUrls([]);
       setPhase("error");
-      setError(connected ? "Среда перестала отвечать. Повторите запуск." :
-        "Не удалось связаться со средой Python. Проверьте подключение и повторите запуск.");
-    }, connected ? 105000 : 25000);
+      setError(message);
+    }, timeout);
   }, []);
 
   const launch = useCallback(async (channel: MessagePort, request: Run) => {
     setPhase("loading");
-    watch(request.id, true);
+    watch(request.id, 105000, "Среда Python не загрузилась. Проверьте подключение и повторите запуск.");
     const bundle = loadedBundle.current ? undefined : await sourceCraftRuntime();
     if (active.current?.id !== request.id || port.current !== channel) return;
     channel.postMessage({ type: "run", ...request, bundle });
@@ -90,7 +98,7 @@ export function LessonPython({ label, code, canRun, onChange }: {
 
   useEffect(() => {
     const receive = (event: MessageEvent) => {
-      if (event.origin !== "null" || event.data?.type !== "python-ready" ||
+      if (event.origin !== "null" || event.data?.type !== "python-ready" || event.data.version !== 6 ||
           !event.ports[0] || !active.current || port.current) return;
       const matchingFrame = [...frames.current].find(([, frame]) => event.source === frame.contentWindow);
       if (!matchingFrame) return;
@@ -99,10 +107,14 @@ export function LessonPython({ label, code, canRun, onChange }: {
       setRunnerUrls([matchingFrame[0]]);
       channel.onmessage = ({ data }) => {
         if (!active.current || data?.id !== active.current.id) return;
-        if (data.type === "running") setPhase("running");
-        if (data.type === "output" && typeof data.text === "string") {
-          setOutput((previous) => (previous + data.text).slice(0, 16000));
+        if (data.type === "running") {
+          setPhase("running");
+          watch(data.id, (active.current.seconds + 5) * 1000, "Среда перестала отвечать. Повторите запуск.");
         }
+        if (data.type === "output" && typeof data.text === "string") {
+          setOutput((previous) => (previous + data.text).slice(0, maxOutput));
+        }
+        if (data.type === "truncated") setTruncated(true);
         if (data.type === "error" || data.type === "done" || data.type === "stopped") {
           window.clearTimeout(watchdog.current);
           active.current = null;
@@ -124,7 +136,7 @@ export function LessonPython({ label, code, canRun, onChange }: {
       port.current = null;
       active.current = null;
     };
-  }, [launch]);
+  }, [launch, watch]);
 
   useEffect(() => {
     if (consoleOutput.current) consoleOutput.current.scrollTop = consoleOutput.current.scrollHeight;
@@ -132,18 +144,20 @@ export function LessonPython({ label, code, canRun, onChange }: {
 
   const run = () => {
     if (!canRun || !code.trim() || active.current) return;
-    const request = { id: ++sequence.current, code, input };
+    const request = { id: ++sequence.current, code, input, attachments, seconds };
     active.current = request;
     setOutput("");
     setError("");
+    setTruncated(false);
     setCopyStatus("");
     if (port.current) {
       void launch(port.current, request);
     } else {
       void sourceCraftRuntime();
       setPhase("connecting");
+      setConnectionId(request.id);
       setRunnerUrls(getRunnerUrls());
-      watch(request.id, false);
+      watch(request.id, 25000, "Не удалось связаться со средой Python. Проверьте подключение и повторите запуск.");
     }
   };
 
@@ -156,21 +170,27 @@ export function LessonPython({ label, code, canRun, onChange }: {
     setPhase("stopped");
   };
 
+  const addAttachments = (files: File[]) => {
+    const next = [...attachments, ...files];
+    if (next.length > maxFiles || next.reduce((size, file) => size + file.size, 0) > maxBytes) {
+      setFileError("Можно добавить до 8 файлов общим размером до 16 МБ.");
+    } else if (next.some(({ name }) => name.length > 160 || name === "." || name === ".." || /[/\\\u0000-\u001f]/.test(name))) {
+      setFileError("В имени файла допустимо до 160 символов. Уберите разделители пути.");
+    } else if (new Set(next.map(({ name }) => name)).size !== next.length) {
+      setFileError("Файлы с одинаковыми именами добавлять нельзя.");
+    } else {
+      setAttachments(next);
+      setFileError("");
+    }
+  };
+
   return (
     <>
-      <textarea className="lesson-room-code" aria-label={label}
-        placeholder="Код Python" spellCheck={false} autoCapitalize="off" maxLength={30000} readOnly={!onChange}
-        value={code} onChange={(event) => onChange?.(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
-            event.preventDefault();
-            run();
-          }
-        }} />
+      <PythonEditor label={label} code={code} onChange={onChange} onRun={run} />
       {canRun && (
         <div className="lesson-python">
           {runnerUrls.map((url) => (
-            <iframe key={url} ref={(frame) => {
+            <iframe key={`${connectionId}:${url}`} ref={(frame) => {
               if (frame) frames.current.set(url, frame);
               else frames.current.delete(url);
             }} src={url} hidden
@@ -186,11 +206,6 @@ export function LessonPython({ label, code, canRun, onChange }: {
             </button>}
             <span className="muted" role="status">{statuses[phase]}</span>
           </div>
-          <details>
-            <summary>Ввод для input()</summary>
-            <textarea aria-label="Входные данные Python" placeholder="Каждое значение с новой строки"
-              rows={2} maxLength={10000} value={input} onChange={(event) => setInput(event.target.value)} />
-          </details>
           {phase !== "idle" && (
             <div className="lesson-python-console">
               <div className="lesson-python-console-header">
@@ -212,8 +227,45 @@ export function LessonPython({ label, code, canRun, onChange }: {
                 {output}{error && <span className="lesson-python-error">{error}</span>}
                 {!output && !error && phase === "done" && "Программа завершилась без вывода."}
               </pre>
+              {truncated && <p className="lesson-python-truncated muted">Показаны первые 64 КБ вывода.</p>}
             </div>
           )}
+          <details className="lesson-python-inputs">
+            <summary>Входные данные и файлы{attachments.length > 0 && ` · ${attachments.length}`}</summary>
+            <label>
+              Стандартный ввод
+              <textarea aria-label="Входные данные Python" placeholder="Вставьте данные для input() или sys.stdin"
+                rows={4} maxLength={250000} value={input} onChange={(event) => setInput(event.target.value)} />
+            </label>
+            <label>
+              Файлы для программы
+              <input type="file" multiple aria-label="Файлы для программы" onChange={(event) => {
+                addAttachments(Array.from(event.currentTarget.files ?? []));
+                event.currentTarget.value = "";
+              }} />
+            </label>
+            <p className="muted">Файлы доступны по имени через <code>open()</code> в этой вкладке.</p>
+            {attachments.length > 0 && <ul className="lesson-python-files">
+              {attachments.map((file) => (
+                <li key={file.name}><code>{file.name}</code>
+                  <button className="icon-btn" type="button" aria-label={`Убрать файл ${file.name}`}
+                    onClick={() => {
+                      setAttachments((current) => current.filter((item) => item !== file));
+                      setFileError("");
+                    }}><X size={14} aria-hidden="true" /></button>
+                </li>
+              ))}
+            </ul>}
+            {fileError && <p className="lesson-python-error" role="alert">{fileError}</p>}
+            <label className="lesson-python-timeout">
+              Лимит выполнения
+              <select value={seconds} aria-label="Лимит выполнения" onChange={(event) => setSeconds(Number(event.target.value))}>
+                <option value={10}>10 с</option>
+                <option value={30}>30 с</option>
+                <option value={60}>60 с</option>
+              </select>
+            </label>
+          </details>
         </div>
       )}
     </>

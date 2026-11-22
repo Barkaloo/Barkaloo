@@ -228,16 +228,15 @@ input:focus, select:focus, textarea:focus {
   color: var(--accent);
 }
 .theory-logical-operators h3 { margin-top: var(--space-4); }
-.theory-python-template {
+:is(.theory-python-template, .lesson-python-highlight) {
   --python-keyword: #7133a4;
   --python-string: #9d3b23;
   --python-number: #08685b;
   --python-function: #76521a;
   --python-comment: #506c52;
-  margin-top: var(--space-2);
-  background: var(--surface);
 }
-:root[data-theme="dark"] .theory-python-template {
+.theory-python-template { margin-top: var(--space-2); background: var(--surface); }
+:root[data-theme="dark"] :is(.theory-python-template, .lesson-python-highlight) {
   --python-keyword: #d2a2ed;
   --python-string: #edaa8d;
   --python-number: #a4d9bd;
@@ -252,11 +251,11 @@ input:focus, select:focus, textarea:focus {
 }
 .theory-python-label { display: inline-flex; align-items: center; gap: var(--space-2); }
 .theory-python-template pre { font-size: var(--type-caption); }
-.theory-python-template .token.keyword { color: var(--python-keyword); }
-.theory-python-template .token.string { color: var(--python-string); font-style: normal; }
-.theory-python-template .token.number { color: var(--python-number); }
-.theory-python-template .token:is(.builtin, .function) { color: var(--python-function); }
-.theory-python-template .token.comment { color: var(--python-comment); }
+:is(.theory-python-template, .lesson-python-highlight) .token.keyword { color: var(--python-keyword); }
+:is(.theory-python-template, .lesson-python-highlight) .token.string { color: var(--python-string); font-style: normal; }
+:is(.theory-python-template, .lesson-python-highlight) .token:is(.number, .boolean) { color: var(--python-number); }
+:is(.theory-python-template, .lesson-python-highlight) .token:is(.builtin, .function) { color: var(--python-function); }
+:is(.theory-python-template, .lesson-python-highlight) .token.comment { color: var(--python-comment); }
 
 .student-list-head {
   border-radius: 0;
@@ -667,7 +666,46 @@ input:focus, select:focus, textarea:focus {
   font-family: var(--font-mono);
   line-height: 1.6;
 }
-.lesson-code-workspace .lesson-room-code { flex: 1; min-height: 280px; padding: 15px; tab-size: 4; resize: vertical; }
+.lesson-python-editor {
+  flex: 1;
+  min-height: 280px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg);
+}
+.lesson-python-editor:focus-within { border-color: var(--accent); }
+.lesson-python-editor .lesson-room-code, .lesson-python-highlight {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: 0;
+  padding: 14px;
+  font: 14px/1.6 var(--font-mono);
+  tab-size: 4;
+  letter-spacing: normal;
+  white-space: pre;
+  overflow: auto;
+}
+.lesson-python-editor .lesson-room-code {
+  resize: none;
+  color: transparent;
+  caret-color: var(--text);
+  background: transparent;
+  outline: none;
+  box-shadow: none;
+}
+.lesson-python-editor .lesson-room-code::selection { background: var(--accent-soft); color: var(--text); }
+.lesson-python-highlight { pointer-events: none; scrollbar-width: none; color: var(--text); }
+.lesson-python-highlight code { font: inherit; background: none; color: inherit; padding: 0; }
+.lesson-python-highlight .token { font-weight: normal; font-style: normal; }
+@media (forced-colors: active) {
+  .lesson-python-highlight { visibility: hidden; }
+  .lesson-python-editor .lesson-room-code { color: CanvasText; }
+}
 .lesson-python { display: grid; gap: 10px; }
 .lesson-python .actions > .muted { font-size: 13px; }
 .lesson-python-console { border: 1px solid var(--line); border-radius: 9px; background: var(--bg); overflow: hidden; }
@@ -693,6 +731,14 @@ input:focus, select:focus, textarea:focus {
   font-size: 13px;
 }
 .lesson-python-error { color: var(--danger); }
+.lesson-python-inputs > label { display: grid; gap: 5px; margin-top: 10px; font-size: 13px; }
+.lesson-python-inputs > p, .lesson-python-truncated { font-size: 12px; }
+.lesson-python-truncated { margin: 0; padding: 0 12px 10px; }
+.lesson-python-files { list-style: none; margin: 8px 0; padding: 0; }
+.lesson-python-files li { display: flex; align-items: center; gap: 6px; overflow-wrap: anywhere; }
+.lesson-python-files .icon-btn { height: 30px; width: 30px; flex: none; }
+.lesson-python-inputs .lesson-python-timeout { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.lesson-python-timeout select { width: auto; }
 .lesson-code-workspace details textarea { margin-top: var(--space-2); }
 @media (max-width: 760px) {
   .lesson-room-grid { grid-template-columns: minmax(0, 1fr); }

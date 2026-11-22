@@ -4,6 +4,7 @@
       (parentOrigin !== location.origin && parentOrigin !== "https://barkaloo88.sourcecraft.site")) return;
   const runtime = new URL("./runtime/0.27.7/", location.href).href;
   const files = ["pyodide.js", "pyodide.asm.js", "pyodide.asm.wasm", "python_stdlib.zip", "pyodide-lock.json"];
+  const outputLimit = 64000;
   let cachedRuntime;
   const fetchRuntime = async (bundle) => {
     if (typeof DecompressionStream !== "function") {
@@ -36,25 +37,31 @@
 
   const workerScript = String.raw`
     self.onmessage = async ({ data }) => {
-      const source = data.input.replace(/\r\n/g, "\n");
-      const lines = source ? source.split("\n") : [];
-      if (source.endsWith("\n")) lines.pop();
-      let index = 0;
-      let remaining = 16000;
+      const input = new TextEncoder().encode(data.input);
+      let inputRead = false;
+      let remaining = data.outputLimit;
       let pending = "";
-      let sent = false;
+      let sentOutput = false;
       const flush = () => {
         if (!pending) return;
         self.postMessage({ type: "output", text: pending });
         pending = "";
-        sent = true;
+        sentOutput = true;
       };
-      const write = (line) => {
-        const text = String(line) + "\n";
-        pending += text.slice(0, remaining);
-        remaining -= Math.min(remaining, text.length);
-        if (!sent || pending.length >= 512 || !remaining) flush();
-        if (!remaining) self.postMessage({ type: "limit" });
+      const decoders = [new TextDecoder(), new TextDecoder()];
+      let truncated = false;
+      const write = (decoder) => (bytes) => {
+        const kept = Math.min(remaining, bytes.length);
+        if (kept) {
+          pending += decoder.decode(bytes.subarray(0, kept), { stream: true });
+          remaining -= kept;
+          if (!sentOutput || pending.length >= 1024 || !remaining) flush();
+        }
+        if (kept < bytes.length && !truncated) {
+          truncated = true;
+          self.postMessage({ type: "truncated" });
+        }
+        return bytes.length;
       };
       let python;
       try {
@@ -78,24 +85,37 @@
         };
         python = await loadPyodide({
           indexURL: data.runtime,
-          stdin: () => lines[index++],
-          stdout: write,
-          stderr: write,
         });
+        python.setStdin({ stdin: () => {
+          if (inputRead || !input.length) return undefined;
+          inputRead = true;
+          return input;
+        } });
+        python.setStdout({ write: write(decoders[0]), isatty: true });
+        python.setStderr({ write: write(decoders[1]), isatty: true });
+        python.FS.mkdir("/tmp/tutor");
+        python.FS.chdir("/tmp/tutor");
+        for (const attachment of data.attachments) {
+          python.FS.writeFile(attachment.name, new Uint8Array(await attachment.arrayBuffer()), { canOwn: true });
+        }
       } catch {
         self.postMessage({ type: "boot-error" });
         return;
       }
       self.postMessage({ type: "running" });
+      let failure = "";
       try {
         const result = python.runPython(data.code, { filename: "lesson.py" });
         if (result?.destroy) result.destroy();
-        flush();
-        self.postMessage({ type: "done" });
       } catch (error) {
-        flush();
-        self.postMessage({ type: "error", text: String(error).slice(0, 4000) });
+        failure = String(error).slice(0, 4000);
       }
+      try {
+        python.runPython("__import__('sys').stdout.flush()\n__import__('sys').stderr.flush()");
+      } catch { /* The script may have closed or redirected its streams. */ }
+      for (const decoder of decoders) pending += decoder.decode();
+      flush();
+      self.postMessage(failure ? { type: "error", text: failure } : { type: "done" });
     };
   `;
 
@@ -117,10 +137,23 @@
       finish(active, "stopped");
       return;
     }
-    if (data.type !== "run" || typeof data.code !== "string" || data.code.length > 30000 ||
-        typeof data.input !== "string" || data.input.length > 10000) return;
+    if (data.type !== "run") return;
+    const seconds = data.seconds ?? 10;
+    const attachments = data.attachments ?? [];
+    if (typeof data.code !== "string" || data.code.length > 30000 || typeof data.input !== "string" ||
+        data.input.length > 250000 || ![10, 30, 60].includes(seconds) || !Array.isArray(attachments)) {
+      send(data.id, "error", "Неверные параметры запуска.");
+      return;
+    }
+    if (attachments.length > 8 || attachments.some((file) => !(file instanceof File) || !file.name ||
+        file.name.length > 160 || file.name === "." || file.name === ".." || /[/\\\u0000-\u001f]/.test(file.name)) ||
+        new Set(attachments.map((file) => file.name)).size !== attachments.length ||
+        attachments.reduce((total, file) => total + file.size, 0) > 16 * 1024 * 1024) {
+      send(data.id, "error", "Проверьте имена и общий размер файлов.");
+      return;
+    }
     if (active) finish(active, "stopped");
-    const job = { id: data.id, remaining: 16000 };
+    const job = { id: data.id, remaining: outputLimit };
     active = job;
     try {
       job.timer = setTimeout(() => finish(job, "error", "Python загружался слишком долго. Проверьте подключение и попробуйте снова."), 90000);
@@ -134,7 +167,10 @@
         switch (message.type) {
           case "running":
             clearTimeout(job.timer);
-            job.timer = setTimeout(() => finish(job, "error", "Программа работала дольше 10 секунд."), 10000);
+            job.timer = setTimeout(
+              () => finish(job, "error", `Превышен лимит выполнения (${seconds} с).`),
+              seconds * 1000,
+            );
             send(job.id, "running");
             break;
           case "output": {
@@ -142,11 +178,10 @@
             const text = message.text.slice(0, job.remaining);
             job.remaining -= text.length;
             if (text) send(job.id, "output", text);
-            if (!job.remaining) finish(job, "error", "Достигнут предел вывода.");
             break;
           }
-          case "limit":
-            finish(job, "error", "Достигнут предел вывода.");
+          case "truncated":
+            send(job.id, "truncated");
             break;
           case "boot-error":
             finish(job, "error", "Не удалось загрузить Python. Проверьте подключение и повторите запуск.");
@@ -160,10 +195,10 @@
         }
       };
       job.worker.onerror = () => finish(job, "error", "Среда Python остановилась. Попробуйте запустить снова.");
-      job.worker.postMessage({ code: data.code, input: data.input, runtime, files: assets });
+      job.worker.postMessage({ code: data.code, input: data.input, attachments, runtime, files: assets, outputLimit });
     } catch {
       finish(job, "error", "Не удалось загрузить или запустить Python. Проверьте подключение и повторите запуск.");
     }
   };
-  window.parent.postMessage({ type: "python-ready" }, parentOrigin, [parentPort]);
+  window.parent.postMessage({ type: "python-ready", version: 6 }, parentOrigin, [parentPort]);
 })();
